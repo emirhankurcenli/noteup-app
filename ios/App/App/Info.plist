@@ -28,6 +28,19 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+
+	<!-- APPLE PRIVACY PURPOSE STRINGS -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>NoteUp notlarınıza fotoğraf eklemek ve profil resminizi güncellemek için fotoğraf kitaplığınıza erişim gereklidir.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>NoteUp notlarınıza anında fotoğraf çekip eklemek için kamera erişimi gereklidir.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Notlarınıza eklediğiniz görselleri galerinize kaydetmek için erişim gereklidir.</string>
+
+	<!-- EXPORT COMPLIANCE -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>
@@ -47,15 +60,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Notlarınıza fotoğraf eklemek ve görsel çekmek için kamera erişimi gereklidir.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Galerenizden notlarınıza fotoğraf eklemek için erişim gereklidir.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Görselleri galerinize kaydetmek için izin gereklidir.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>Size uygun kişiselleştirilmiş reklamlar sunabilmek için izin gereklidir.</string>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 </dict>
 </plist>
