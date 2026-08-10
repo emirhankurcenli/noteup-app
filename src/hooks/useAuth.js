@@ -339,20 +339,23 @@ export default function useAuth() {
 
             if (authCode) {
               setToast({ title: "⏳ Doğrulanıyor...", msg: "Giriş bilgileri doğrulanıyor." });
-              const { error } = await supabase.auth.exchangeCodeForSession(authCode);
+              const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(authCode);
               if (error) throw error;
+              if (sessionData?.session) {
+                await handleAuthChange(sessionData.session);
+              }
               setToast({ title: "🔑 Giriş Başarılı", msg: "Başarıyla oturum açıldı." });
             } else if (accessToken && refreshToken) {
-              const tokenRegex = /^[A-Za-z0-9\-_.~+\/=]+$/;
-              if (tokenRegex.test(accessToken) && tokenRegex.test(refreshToken)) {
-                setToast({ title: "⏳ Doğrulanıyor...", msg: "Giriş bilgileri doğrulanıyor." });
-                const { error } = await supabase.auth.setSession({
-                  access_token: accessToken,
-                  refresh_token: refreshToken
-                });
-                if (error) throw error;
-                setToast({ title: "🔑 Giriş Başarılı", msg: "Başarıyla oturum açıldı." });
+              setToast({ title: "⏳ Doğrulanıyor...", msg: "Giriş bilgileri doğrulanıyor." });
+              const { data: sessionData, error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+              });
+              if (error) throw error;
+              if (sessionData?.session) {
+                await handleAuthChange(sessionData.session);
               }
+              setToast({ title: "🔑 Giriş Başarılı", msg: "Başarıyla oturum açıldı." });
             }
           }
         } catch (err) {
