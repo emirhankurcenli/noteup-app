@@ -338,7 +338,33 @@ const useFriendManager = ({
     playChime();
   };
 
-  // ── SEND FRIEND REQUEST (with Supabase profile code validation) ──────────
+  // ── SUPABASE REALTIME SUBSCRIPTION FOR INSTANT NOTIFICATIONS ─────────────
+  useEffect(() => {
+    if (!myCode) return;
+
+    // Realtime channel for instant (sub-second) updates on friend_requests
+    const channel = supabase
+      .channel(`social_realtime_${myCode}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen for INSERT, UPDATE
+          schema: 'public',
+          table: 'friend_requests'
+        },
+        () => {
+          // Immediately trigger state refresh when DB changes
+          pollFriendRequests();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [myCode, pollFriendRequests]);
+
+  // ── SEND FRIEND REQUEST (via Supabase RPC Function) ────────────────────────
   const handleSendFriendRequest = async (onInputError) => {
     if (!partnerCodeInput.trim() || isSendingRequest) return;
     const targetCode = sanitizeFriendCode(partnerCodeInput);
@@ -351,84 +377,39 @@ const useFriendManager = ({
       if (onInputError) onInputError("Kendi kodunuza istek gönderemezsiniz.");
       return;
     }
-    if (friends.some(f => f.code === targetCode)) {
-      if (onInputError) onInputError("Bu kişi zaten arkadaş listenizde.");
-      return;
-    }
 
-    const currentReqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
-    if (currentReqs.some(r => r.fromCode === myCode && r.toCode === targetCode && !r.processed)) {
-      if (onInputError) onInputError("Bu kişiye zaten istek gönderdiniz.");
-      return;
-    }
-
-    // ── SUPABASE PROFILE CODE EXISTENCE CHECK ────────────────────────────
     setIsSendingRequest(true);
     try {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, name')
-        .eq('friend_code', targetCode)
-        .maybeSingle();
+      // Call Postgres Atomic Stored Procedure (send_friend_request)
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('send_friend_request', {
+        p_from_code: myCode,
+        p_to_code: targetCode,
+        p_from_name: profileName || 'Arkadaş (' + myCode.substring(9) + ')'
+      });
 
-      if (profileError) {
-        console.warn("Profile check error:", profileError);
-        // If we can't reach Supabase, fall through optimistically
-      } else if (!profileData) {
-        // Profile code does not exist in database
-        setIsSendingRequest(false);
-        if (onInputError) onInputError("Bu profil kodu bulunamadı. Kodu kontrol edip tekrar deneyin.");
+      if (rpcErr) {
+        console.error("RPC send_friend_request error:", rpcErr);
+        if (onInputError) onInputError("İstek gönderilemedi. Lütfen bağlantınızı kontrol edin.");
         return;
       }
 
-      const resolvedName = profileData?.name || targetCode;
-
-      const newReq = {
-        id: 'freq-' + Date.now(),
-        fromCode: myCode,
-        fromName: profileName || 'Arkadaş (' + myCode.substring(9) + ')',
-        toCode: targetCode,
-        toName: resolvedName,
-        processed: false,
-        status: 'pending'
-      };
-
-      // Write to localStorage
-      const updatedReqs = [...currentReqs, newReq];
-      localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
-      setFriendRequests(updatedReqs);
-
-      // Also write to Supabase for cross-device delivery
-      const { error: insertError } = await supabase.from('friend_requests').insert({
-        id: newReq.id,
-        from_code: myCode,
-        from_name: newReq.fromName,
-        to_code: targetCode,
-        to_name: resolvedName,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      });
-
-      if (insertError) {
-        // Supabase'e yazma başarısız — hata kodu ve mesajı logla
-        console.error('❌ Supabase friend_request insert FAILED:', insertError.code, insertError.message, insertError.details);
-        // Kullanıcıya göster (geliştirme aşamasında debug için)
-        setToast({
-          title: `⚠️ Supabase Hata: ${insertError.code}`,
-          msg: insertError.message || 'Bilinmeyen hata'
-        });
-        // localStorage'a yazıldı, istek gönderildi sayılır — Supabase sync olmadan devam
+      if (rpcRes && rpcRes.success === false) {
+        // Business logic error returned directly from Database (ALREADY_PENDING, ALREADY_FRIENDS, NOT_FOUND, etc.)
+        if (onInputError) onInputError(rpcRes.message || "İstek gönderilemedi.");
+        return;
       }
 
+      // Success! Clear input and refresh requests
       setPartnerCodeInput('HUB-');
       setToast({
         title: "✉️ İstek Gönderildi",
-        msg: `${resolvedName} adlı kullanıcıya arkadaşlık daveti gönderildi.`
+        msg: `${rpcRes?.to_name || targetCode} adlı kullanıcıya arkadaşlık daveti gönderildi.`
       });
       playChime();
+      pollFriendRequests();
     } catch (err) {
-      console.error("handleSendFriendRequest error:", err);
-      setToast({ title: "❌ Hata", msg: "İstek gönderilirken bir sorun oluştu." });
+      console.error("handleSendFriendRequest exception:", err);
+      if (onInputError) onInputError("Bir hata oluştu.");
     } finally {
       setIsSendingRequest(false);
     }
