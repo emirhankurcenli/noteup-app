@@ -241,6 +241,19 @@ export default function useAuth() {
         }
       };
 
+      // Robust platform detection — Capacitor + User-Agent çift kontrol
+      // Apple Sign-In OAuth callback web context'inden gelince
+      // Capacitor.getPlatform() yanlış 'web' veya 'android' dönebilir
+      const detectPlatform = () => {
+        const cap = Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
+        if (cap === 'ios' || cap === 'android') return cap;
+        // Capacitor 'web' dönüyorsa User-Agent'a bak
+        const ua = navigator.userAgent || '';
+        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return 'ios';
+        if (/android/i.test(ua)) return 'android';
+        return cap; // 'web' olarak kalsın
+      };
+
       // Upsert profile row in Supabase
       const nowIso = new Date().toISOString();
       try {
@@ -250,7 +263,7 @@ export default function useAuth() {
           name: userData.name,
           photo_url: userData.photoURL,
           my_code: userCode,
-          platform: Capacitor.getPlatform(),
+          platform: detectPlatform(),
           country: getCountry(),
           last_seen: nowIso,
           last_seen_at: nowIso
