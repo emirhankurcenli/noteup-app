@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 
 const cleanText = (text) => {
   if (typeof text !== 'string') return text || '';
@@ -24,10 +24,25 @@ const SocialSubTab = ({
   isPrimaryUltra,
   isGiftedUltra,
   handleGrantUltraGift,
+  isSendingRequest,
   lang,
   isLight,
   t,
 }) => {
+  const [inputError, setInputError] = useState('');
+  const [isShaking, setIsShaking] = useState(false);
+  const inputRef = useRef(null);
+
+  const triggerInputError = (msg) => {
+    setInputError(msg);
+    setIsShaking(true);
+    // Remove shake class after animation ends so it can be re-triggered
+    setTimeout(() => setIsShaking(false), 550);
+    // Clear error message after 3 seconds
+    setTimeout(() => setInputError(''), 3000);
+    if (inputRef.current) inputRef.current.focus();
+  };
+
   const pendingRequests = friendRequests.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
 
   return (
@@ -186,45 +201,95 @@ const SocialSubTab = ({
           <span style={{ fontSize: '0.88rem', fontWeight: 700, color: isLight ? '#0F172A' : 'var(--text-primary)' }}>{t('addFriendLabel')}</span>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input 
-            type="text" 
-            placeholder="HUB-XXXX-XXXX" 
-            value={partnerCodeInput}
-            onChange={(e) => setPartnerCodeInput(formatFriendCode(e.target.value))}
-            autoCapitalize="characters"
-            autoCorrect="off"
-            autoComplete="off"
-            spellCheck="false"
-            style={{ 
-              flex: 1,
-              padding: '10px 14px',
-              borderRadius: '10px',
-              fontSize: '0.85rem',
-              fontFamily: 'monospace',
-              letterSpacing: '0.5px',
-              background: isLight ? '#F8FAFC' : 'rgba(0,0,0,0.2)',
-              border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.1)',
-              color: isLight ? '#0F172A' : '#FFF'
-            }}
-          />
-          <button 
-            onClick={handleSendFriendRequest}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '10px',
-              border: 'none',
-              background: 'linear-gradient(135deg, #10B981, #059669)',
-              color: '#FFF',
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
-            }}
-          >
-            {t('sendInviteBtn')}
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input 
+              ref={inputRef}
+              type="text" 
+              placeholder="HUB-XXXX-XXXX" 
+              value={partnerCodeInput}
+              onChange={(e) => {
+                setPartnerCodeInput(formatFriendCode(e.target.value));
+                if (inputError) setInputError('');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isSendingRequest) {
+                  handleSendFriendRequest(triggerInputError);
+                }
+              }}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              autoComplete="off"
+              spellCheck="false"
+              className={isShaking ? 'input-shake-error' : ''}
+              style={{ 
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: '10px',
+                fontSize: '0.85rem',
+                fontFamily: 'monospace',
+                letterSpacing: '0.5px',
+                background: isLight ? '#F8FAFC' : 'rgba(0,0,0,0.2)',
+                border: inputError
+                  ? '1.5px solid #EF4444'
+                  : isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.1)',
+                color: inputError ? '#EF4444' : (isLight ? '#0F172A' : '#FFF'),
+                transition: 'border-color 0.2s ease, color 0.2s ease',
+                outline: 'none'
+              }}
+            />
+            <button 
+              onClick={() => handleSendFriendRequest(triggerInputError)}
+              disabled={isSendingRequest}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                border: 'none',
+                background: isSendingRequest
+                  ? 'rgba(148, 163, 184, 0.3)'
+                  : 'linear-gradient(135deg, #10B981, #059669)',
+                color: isSendingRequest ? '#94A3B8' : '#FFF',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: isSendingRequest ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap',
+                boxShadow: isSendingRequest ? 'none' : '0 2px 8px rgba(16, 185, 129, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {isSendingRequest ? (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  {lang === 'tr' ? 'Kontrol...' : 'Checking...'}
+                </>
+              ) : t('sendInviteBtn')}
+            </button>
+          </div>
+
+          {/* Error message under input */}
+          {inputError && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 10px',
+              borderRadius: '8px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.25)'
+            }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#EF4444' }}>{inputError}</span>
+            </div>
+          )}
         </div>
       </div>
 

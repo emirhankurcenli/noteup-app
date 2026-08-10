@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { sanitizeFriendCode } from '../utils/securityUtils';
+import { supabase } from '../supabaseClient';
 
 // Helper to synthesize a beautiful in-app chime notification sound
 const playChime = () => {
@@ -46,6 +47,12 @@ const useFriendManager = ({
   const [friends, setFriends] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
   const [selectedFriendCodes, setSelectedFriendCodes] = useState([]);
+  const [isSendingRequest, setIsSendingRequest] = useState(false);
+  const [inputErrorCallback, setInputErrorCallback] = useState(null);
+
+  // Polling interval ref for real-time friend request updates
+  const pollingRef = useRef(null);
+  const prevRequestCountRef = useRef(0);
 
   // --- ULTRA GIFT RECORD STATE (FOR PRIMARY BUYER) ---
   const [ultraGrantRecord, setUltraGrantRecord] = useState(() => {
@@ -94,6 +101,79 @@ const useFriendManager = ({
   // Check if current user received Ultra as a gift from a friend
   const isGiftedUltra = !!ultraGiftFrom;
 
+  // ── POLL FRIEND REQUESTS FROM LOCALSTORAGE EVERY 5 SECONDS ─────────────
+  // This picks up requests sent by other users on the same device network.
+  // For cross-device: requests are also written to supabase `friend_requests` table.
+  const pollFriendRequests = useCallback(() => {
+    if (!myCode) return;
+
+    // 1. Always refresh from localStorage (same-device scenario)
+    const localReqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
+    const pendingForMe = localReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
+
+    // 2. Also fetch from Supabase for cross-device real-time (fire and forget)
+    supabase
+      .from('friend_requests')
+      .select('*')
+      .eq('to_code', myCode)
+      .eq('status', 'pending')
+      .then(({ data, error }) => {
+        if (error || !data) return;
+
+        // Merge remote requests into local storage if not already present
+        const currentLocal = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
+        let changed = false;
+        const merged = [...currentLocal];
+
+        data.forEach(remoteReq => {
+          const alreadyLocal = merged.some(l => l.id === remoteReq.id || (l.fromCode === remoteReq.from_code && l.toCode === remoteReq.to_code && !l.processed));
+          if (!alreadyLocal) {
+            merged.push({
+              id: remoteReq.id,
+              fromCode: remoteReq.from_code,
+              fromName: remoteReq.from_name || remoteReq.from_code,
+              toCode: remoteReq.to_code,
+              processed: false,
+              status: 'pending'
+            });
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          localStorage.setItem('s23_friend_requests', JSON.stringify(merged));
+          setFriendRequests(merged);
+
+          // Count new pending requests for ME and notify
+          const newPending = merged.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
+          if (newPending.length > prevRequestCountRef.current) {
+            playChime();
+            setToast({
+              title: "👥 Yeni Arkadaşlık İsteği!",
+              msg: `${newPending[newPending.length - 1]?.fromName || 'Birisi'} size arkadaşlık isteği gönderdi.`
+            });
+          }
+          prevRequestCountRef.current = newPending.length;
+        }
+      })
+      .catch(() => {
+        // Supabase not available, just use localStorage
+        setFriendRequests(localReqs);
+      });
+
+    // Notify if local pending count grew (same-device scenario)
+    const localPending = localReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
+    if (localPending.length > prevRequestCountRef.current) {
+      playChime();
+      setToast({
+        title: "👥 Yeni Arkadaşlık İsteği!",
+        msg: `${localPending[localPending.length - 1]?.fromName || 'Birisi'} size arkadaşlık isteği gönderdi.`
+      });
+      prevRequestCountRef.current = localPending.length;
+    }
+    setFriendRequests(localReqs);
+  }, [myCode, setToast]);
+
   // --- INITIAL LOAD & PERIOD VALIDATION ---
   useEffect(() => {
     if (!myCode) return;
@@ -103,7 +183,12 @@ const useFriendManager = ({
     } else {
       setFriends([]);
     }
-    setFriendRequests(JSON.parse(localStorage.getItem('s23_friend_requests') || '[]'));
+
+    // Initial load of friend requests
+    const initialReqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
+    setFriendRequests(initialReqs);
+    const initialPending = initialReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
+    prevRequestCountRef.current = initialPending.length;
 
     // Check if someone gifted Ultra to me and if it's still valid for current period
     const giftRaw = localStorage.getItem(`s23_ultra_gift_received_${myCode}`);
@@ -143,7 +228,14 @@ const useFriendManager = ({
         }
       } catch (e) {}
     }
-  }, [myCode, userPlan, setUserPlan]);
+
+    // Start polling every 5 seconds for incoming friend requests
+    pollingRef.current = setInterval(pollFriendRequests, 5000);
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [myCode, userPlan, setUserPlan, pollFriendRequests]);
 
   // --- GRANT ULTRA GIFT TO A FRIEND (Primary Ultra Buyers Only) ---
   const handleGrantUltraGift = (friendCode, friendName) => {
@@ -214,46 +306,92 @@ const useFriendManager = ({
     playChime();
   };
 
-  const handleSendFriendRequest = () => {
-    if (!partnerCodeInput.trim()) return;
+  // ── SEND FRIEND REQUEST (with Supabase profile code validation) ──────────
+  const handleSendFriendRequest = async (onInputError) => {
+    if (!partnerCodeInput.trim() || isSendingRequest) return;
     const targetCode = sanitizeFriendCode(partnerCodeInput);
-    if (targetCode.length < 5) return;
+
+    if (targetCode.length < 5) {
+      if (onInputError) onInputError("Geçerli bir profil kodu giriniz.");
+      return;
+    }
     if (targetCode === myCode) {
-      setToast({ title: "⚠️ Hata", msg: "Kendi kodunuza istek gönderemezsiniz." });
+      if (onInputError) onInputError("Kendi kodunuza istek gönderemezsiniz.");
       return;
     }
     if (friends.some(f => f.code === targetCode)) {
-      setToast({ title: "⚠️ Hata", msg: "Bu arkadaş zaten listenizde ekli." });
+      if (onInputError) onInputError("Bu kişi zaten arkadaş listenizde.");
       return;
     }
 
     const currentReqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
     if (currentReqs.some(r => r.fromCode === myCode && r.toCode === targetCode && !r.processed)) {
-      setToast({ title: "⚠️ Hata", msg: "Bu kişiye zaten arkadaşlık isteği gönderilmiş." });
+      if (onInputError) onInputError("Bu kişiye zaten istek gönderdiniz.");
       return;
     }
 
-    const newReq = {
-      id: 'freq-' + Date.now(),
-      fromCode: myCode,
-      fromName: profileName || 'Arkadaş (' + myCode.substring(9) + ')',
-      toCode: targetCode,
-      processed: false,
-      status: 'pending'
-    };
+    // ── SUPABASE PROFILE CODE EXISTENCE CHECK ────────────────────────────
+    setIsSendingRequest(true);
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('friend_code', targetCode)
+        .maybeSingle();
 
-    const updatedReqs = [...currentReqs, newReq];
-    localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
-    setFriendRequests(updatedReqs);
-    setPartnerCodeInput('HUB-');
-    setToast({
-      title: "✉️ İstek Gönderildi",
-      msg: `${targetCode} kodlu kullanıcıya arkadaşlık daveti gönderildi.`
-    });
-    playChime();
+      if (profileError) {
+        console.warn("Profile check error:", profileError);
+        // If we can't reach Supabase, fall through optimistically
+      } else if (!profileData) {
+        // Profile code does not exist in database
+        setIsSendingRequest(false);
+        if (onInputError) onInputError("Bu profil kodu bulunamadı. Kodu kontrol edip tekrar deneyin.");
+        return;
+      }
+
+      const resolvedName = profileData?.name || targetCode;
+
+      const newReq = {
+        id: 'freq-' + Date.now(),
+        fromCode: myCode,
+        fromName: profileName || 'Arkadaş (' + myCode.substring(9) + ')',
+        toCode: targetCode,
+        toName: resolvedName,
+        processed: false,
+        status: 'pending'
+      };
+
+      // Write to localStorage
+      const updatedReqs = [...currentReqs, newReq];
+      localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
+      setFriendRequests(updatedReqs);
+
+      // Also write to Supabase for cross-device delivery
+      await supabase.from('friend_requests').insert({
+        id: newReq.id,
+        from_code: myCode,
+        from_name: newReq.fromName,
+        to_code: targetCode,
+        to_name: resolvedName,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      }).catch(e => console.warn("Supabase friend_requests insert warning:", e));
+
+      setPartnerCodeInput('HUB-');
+      setToast({
+        title: "✉️ İstek Gönderildi",
+        msg: `${resolvedName} adlı kullanıcıya arkadaşlık daveti gönderildi.`
+      });
+      playChime();
+    } catch (err) {
+      console.error("handleSendFriendRequest error:", err);
+      setToast({ title: "❌ Hata", msg: "İstek gönderilirken bir sorun oluştu." });
+    } finally {
+      setIsSendingRequest(false);
+    }
   };
 
-  const handleAcceptFriendRequest = (req) => {
+  const handleAcceptFriendRequest = async (req) => {
     const newFriend = {
       code: req.fromCode,
       name: req.fromName
@@ -267,6 +405,14 @@ const useFriendManager = ({
     localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
     setFriendRequests(updatedReqs);
 
+    // Also update in Supabase
+    await supabase.from('friend_requests').update({ status: 'accepted' }).eq('id', req.id)
+      .catch(e => console.warn("Supabase accept update warning:", e));
+
+    // Update pending count ref
+    const newPending = updatedReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
+    prevRequestCountRef.current = newPending.length;
+
     setToast({
       title: "🤝 Arkadaş Eklendi",
       msg: `${req.fromName} ile artık arkadaşsınız!`
@@ -274,11 +420,19 @@ const useFriendManager = ({
     playChime();
   };
 
-  const handleRejectFriendRequest = (req) => {
+  const handleRejectFriendRequest = async (req) => {
     const reqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
     const updatedReqs = reqs.map(r => r.id === req.id ? { ...r, processed: true, status: 'declined' } : r);
     localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
     setFriendRequests(updatedReqs);
+
+    // Also update in Supabase
+    await supabase.from('friend_requests').update({ status: 'declined' }).eq('id', req.id)
+      .catch(e => console.warn("Supabase reject update warning:", e));
+
+    // Update pending count ref
+    const newPending = updatedReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
+    prevRequestCountRef.current = newPending.length;
 
     setToast({
       title: "❌ İstek Reddedildi",
@@ -374,6 +528,7 @@ const useFriendManager = ({
     ultraGiftFrom,
     isPrimaryUltra,
     isGiftedUltra,
+    isSendingRequest,
     handleGrantUltraGift,
     playChime,
     handleSendFriendRequest,
