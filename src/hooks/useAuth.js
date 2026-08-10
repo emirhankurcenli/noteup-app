@@ -153,11 +153,16 @@ export default function useAuth() {
         console.warn("plan_limits table fetch error:", e);
       }
 
+      let nameCandidate = savedPhotoURL ? (localStorage.getItem('s23_profile_name') || u.user_metadata?.full_name || u.email?.split('@')[0]) : (u.user_metadata?.full_name || u.email?.split('@')[0] || 'Kullanıcı');
+      if (nameCandidate && (nameCandidate.includes('privaterelay') || /^[a-z0-9]{8,12}$/i.test(nameCandidate))) {
+        nameCandidate = 'Apple Kullanıcısı';
+      }
+
       const photoURL = savedPhotoURL || u.user_metadata?.avatar_url || DEFAULT_AVATARS[0].url;
 
       const userData = {
         uid: u.id,
-        name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Kullanıcı',
+        name: nameCandidate,
         email: u.email || '',
         photoURL: photoURL,
         providerId: u.app_metadata?.provider || 'google'
@@ -490,10 +495,34 @@ export default function useAuth() {
   };
 
   // --- PROFILE NAME UPDATE HANDLER ---
-  const handleUpdateProfileName = (name) => {
+  const handleUpdateProfileName = async (name) => {
     const cleanName = sanitizeSingleLine(name, 50);
+    if (!cleanName) return;
     setProfileName(cleanName);
     localStorage.setItem('s23_profile_name', cleanName);
+
+    if (user) {
+      const updatedUser = { ...user, name: cleanName };
+      setUser(updatedUser);
+      localStorage.setItem('s23_user', JSON.stringify(updatedUser));
+
+      if (!isMockMode) {
+        try {
+          await supabase.from('profiles').upsert({
+            id: user.uid,
+            email: user.email || '',
+            name: cleanName,
+            photo_url: user.photoURL || '',
+            last_seen: new Date().toISOString(),
+            last_seen_at: new Date().toISOString()
+          });
+          await supabase.auth.updateUser({ data: { full_name: cleanName, display_name: cleanName } });
+        } catch (dbErr) {
+          console.warn("Profiles DB name sync warning:", dbErr);
+        }
+      }
+      setToast({ title: "✅ Profil Adı Güncellendi", msg: "Yeni isminiz başatıyla kaydedildi." });
+    }
   };
 
   return {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { getPaymentGraceStatus, getDataRetentionStatus } from '../../../utils/subscriptionGraceUtils';
 
 const cleanText = (text) => {
@@ -25,6 +25,14 @@ const AccountSubTab = ({
   lang,
   t,
 }) => {
+  const [tempName, setTempName] = useState(profileName || user?.name || '');
+
+  useEffect(() => {
+    setTempName(profileName || user?.name || '');
+  }, [profileName, user?.name]);
+
+  const isNameChanged = tempName.trim() !== '' && tempName.trim() !== (profileName || user?.name || '');
+
   const usedBytes = getStorageUsageBytes();
   const limitBytes = PLAN_STORAGE_LIMITS[userPlan] || PLAN_STORAGE_LIMITS.lite;
   const percent = Math.min(100, Math.round((usedBytes / limitBytes) * 100));
@@ -97,28 +105,69 @@ const AccountSubTab = ({
           <span style={{ fontSize: '0.85rem', color: isLight ? '#1E293B' : '#CBD5E1', fontWeight: 700, display: 'block', marginTop: '2px' }}>{user.email}</span>
         </div>
 
-        {/* Profile Name Input */}
+        {/* Profile Name Input with Apply Button */}
         <div style={{ width: '100%', borderTop: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
           <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isLight ? '#1E293B' : '#CBD5E1', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             {t('profileNameLabel')}
           </label>
-          <input 
-            type="text" 
-            className="input-field" 
-            placeholder={t('profileNamePlaceholder')} 
-            value={profileName}
-            onChange={(e) => handleUpdateProfileName(e.target.value)}
-            style={{ 
-              width: '100%',
-              padding: '10px 14px',
-              borderRadius: '12px',
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              color: isLight ? '#0F172A' : '#FFFFFF',
-              background: isLight ? '#F8FAFC' : 'rgba(0,0,0,0.2)',
-              border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.1)'
-            }}
-          />
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+            <input 
+              type="text" 
+              className="input-field" 
+              placeholder={t('profileNamePlaceholder')} 
+              value={tempName}
+              onChange={(e) => setTempName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && isNameChanged) {
+                  triggerHaptic('medium');
+                  handleUpdateProfileName(tempName);
+                }
+              }}
+              style={{ 
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: '12px',
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                color: isLight ? '#0F172A' : '#FFFFFF',
+                background: isLight ? '#F8FAFC' : 'rgba(0,0,0,0.2)',
+                border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.1)'
+              }}
+            />
+            <button
+              onClick={() => {
+                if (isNameChanged) {
+                  triggerHaptic('medium');
+                  handleUpdateProfileName(tempName);
+                }
+              }}
+              disabled={!isNameChanged}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '12px',
+                border: 'none',
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                cursor: isNameChanged ? 'pointer' : 'not-allowed',
+                background: isNameChanged 
+                  ? 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' 
+                  : (isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'),
+                color: isNameChanged ? '#FFFFFF' : (isLight ? '#94A3B8' : '#64748B'),
+                boxShadow: isNameChanged ? '0 4px 14px rgba(59,130,246,0.35)' : 'none',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                opacity: isNameChanged ? 1 : 0.6
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              {lang === 'tr' ? 'Uygula' : 'Apply'}
+            </button>
+          </div>
         </div>
       </div>
 
