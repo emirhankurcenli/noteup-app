@@ -331,16 +331,20 @@ export default function useAuth() {
             try { await Browser.close(); } catch (_) {}
 
             const urlObj = new URL(data.url);
-            const hash = urlObj.hash;
-            if (hash && hash.includes('access_token=')) {
-              const cleanHash = hash.startsWith('#') ? hash.substring(1) : hash;
-              const params = new URLSearchParams(cleanHash);
-              const accessToken = params.get('access_token');
-              const refreshToken = params.get('refresh_token');
+            const rawParams = urlObj.hash ? urlObj.hash.substring(1) : urlObj.search;
+            const params = new URLSearchParams(rawParams);
+            const accessToken = params.get('access_token');
+            const refreshToken = params.get('refresh_token');
+            const authCode = params.get('code');
 
-              // GÜVENLİK: Token format kontrolü (sanitization)
+            if (authCode) {
+              setToast({ title: "⏳ Doğrulanıyor...", msg: "Giriş bilgileri doğrulanıyor." });
+              const { error } = await supabase.auth.exchangeCodeForSession(authCode);
+              if (error) throw error;
+              setToast({ title: "🔑 Giriş Başarılı", msg: "Başarıyla oturum açıldı." });
+            } else if (accessToken && refreshToken) {
               const tokenRegex = /^[A-Za-z0-9\-_.~+\/=]+$/;
-              if (accessToken && refreshToken && tokenRegex.test(accessToken) && tokenRegex.test(refreshToken)) {
+              if (tokenRegex.test(accessToken) && tokenRegex.test(refreshToken)) {
                 setToast({ title: "⏳ Doğrulanıyor...", msg: "Giriş bilgileri doğrulanıyor." });
                 const { error } = await supabase.auth.setSession({
                   access_token: accessToken,

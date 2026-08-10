@@ -29,6 +29,19 @@
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 
+	<!-- CUSTOM URL SCHEME FOR OAUTH DEEP LINKING -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.notes.hub</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.notes.hub</string>
+			</array>
+		</dict>
+	</array>
+
 	<!-- ADMOB CONFIGURATION (REQUIRED ON IOS TO PREVENT FATAL CRASH ON STARTUP) -->
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3940256099942544~3347511713</string>
