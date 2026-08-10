@@ -2,9 +2,7 @@ import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
 
 const getRevenueCatApiKey = () => {
-  const key = import.meta.env.VITE_REVENUECAT_KEY;
-  if (!key) console.error("[Config] VITE_REVENUECAT_KEY eksik! .env dosyasını kontrol edin.");
-  return key;
+  return import.meta.env.VITE_REVENUECAT_KEY || "goog_klpvzugPjsJwnTuzpqHEafDShcM";
 };
 
 export const initRevenueCat = async (setUserPlan) => {

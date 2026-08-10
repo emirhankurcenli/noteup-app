@@ -41,7 +41,7 @@ const usePaywallBilling = ({
       try {
         setLoading(true);
         await Purchases.configure({
-          apiKey: import.meta.env.VITE_REVENUECAT_KEY,
+          apiKey: import.meta.env.VITE_REVENUECAT_KEY || "goog_klpvzugPjsJwnTuzpqHEafDShcM",
         });
         const offerings = await Purchases.getOfferings();
 

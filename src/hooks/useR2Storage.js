@@ -55,7 +55,7 @@ const useR2Storage = ({
     if (!jwt) throw new Error('Oturum bulunamadı. Lütfen tekrar giriş yapın.');
 
     // Edge Function URL’sini oluştur
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://qgrzvhejdwsmuzuwmpyj.supabase.co";
     const edgeFnUrl = `${supabaseUrl}/functions/v1/r2-proxy?filename=${encodeURIComponent(uniqueFilename)}`;
 
     // Binary veriyi doğrudan fetch ile gönder
@@ -96,7 +96,7 @@ const useR2Storage = ({
       const jwt = sessionData?.session?.access_token;
       if (!jwt) return false;
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://qgrzvhejdwsmuzuwmpyj.supabase.co";
       const edgeFnUrl = `${supabaseUrl}/functions/v1/r2-proxy?filename=${encodeURIComponent(filename)}`;
 
       // Edge Function üzerinden sil — R2 token client'a gelmez
