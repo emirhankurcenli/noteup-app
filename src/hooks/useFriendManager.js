@@ -101,17 +101,14 @@ const useFriendManager = ({
   // Check if current user received Ultra as a gift from a friend
   const isGiftedUltra = !!ultraGiftFrom;
 
-  // ── POLL FRIEND REQUESTS FROM LOCALSTORAGE EVERY 5 SECONDS ─────────────
-  // This picks up requests sent by other users on the same device network.
-  // For cross-device: requests are also written to supabase `friend_requests` table.
+  // ── POLL FRIEND REQUESTS & ACCEPTED FRIENDS FROM SUPABASE EVERY 5 SECONDS ─
   const pollFriendRequests = useCallback(() => {
     if (!myCode) return;
 
-    // 1. Always refresh from localStorage (same-device scenario)
+    // 1. Refresh from localStorage for pending requests
     const localReqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
-    const pendingForMe = localReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
 
-    // 2. Also fetch from Supabase for cross-device real-time (fire and forget)
+    // 2. Fetch incoming PENDING requests from Supabase
     supabase
       .from('friend_requests')
       .select('*')
@@ -120,7 +117,6 @@ const useFriendManager = ({
       .then(({ data, error }) => {
         if (error || !data) return;
 
-        // Merge remote requests into local storage if not already present
         const currentLocal = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
         let changed = false;
         const merged = [...currentLocal];
@@ -144,7 +140,6 @@ const useFriendManager = ({
           localStorage.setItem('s23_friend_requests', JSON.stringify(merged));
           setFriendRequests(merged);
 
-          // Count new pending requests for ME and notify
           const newPending = merged.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
           if (newPending.length > prevRequestCountRef.current) {
             playChime();
@@ -157,9 +152,46 @@ const useFriendManager = ({
         }
       })
       .catch(() => {
-        // Supabase not available, just use localStorage
         setFriendRequests(localReqs);
       });
+
+    // 3. Fetch ACCEPTED requests (where I am sender or recipient) to sync Friends List
+    supabase
+      .from('friend_requests')
+      .select('*')
+      .or(`from_code.eq.${myCode},to_code.eq.${myCode}`)
+      .eq('status', 'accepted')
+      .then(({ data, error }) => {
+        if (error || !data || data.length === 0) return;
+
+        const storedFriends = JSON.parse(localStorage.getItem('s23_friends_' + myCode) || '[]');
+        let friendsUpdated = false;
+        const currentFriends = [...storedFriends];
+
+        data.forEach(req => {
+          // Identify friend code and friend name from the accepted record
+          const isMeSender = req.from_code === myCode;
+          const friendCode = isMeSender ? req.to_code : req.from_code;
+          const friendName = isMeSender ? (req.to_name || friendCode) : (req.from_name || friendCode);
+
+          const exists = currentFriends.some(f => f.code === friendCode);
+          if (!exists) {
+            currentFriends.push({ code: friendCode, name: friendName });
+            friendsUpdated = true;
+            playChime();
+            setToast({
+              title: "🤝 İsteğiniz Kabul Edildi!",
+              msg: `${friendName} arkadaşlık isteğinizi kabul etti.`
+            });
+          }
+        });
+
+        if (friendsUpdated) {
+          localStorage.setItem('s23_friends_' + myCode, JSON.stringify(currentFriends));
+          setFriends(currentFriends);
+        }
+      })
+      .catch(() => {});
 
     // Notify if local pending count grew (same-device scenario)
     const localPending = localReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
