@@ -47,6 +47,10 @@ jobs:
           security set-keychain-settings -lut 3600 $KEYCHAIN_PATH
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
+          # Set temporary keychain as default and add to search path so xcodebuild can find the cert
+          security default-keychain -s $KEYCHAIN_PATH
+          security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | tr -d '"')
+
           security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P "$P12_PASSWORD" -A -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
@@ -73,7 +77,7 @@ jobs:
           <plist version="1.0">
           <dict>
           	<key>method</key>
-          	<string>app-store</string>
+          	<string>app-store-connect</string>
           	<key>teamID</key>
           	<string>53M4UCGVK9</string>
           	<key>uploadSymbols</key>
@@ -82,8 +86,6 @@ jobs:
           	<false/>
           	<key>signingStyle</key>
           	<string>manual</string>
-          	<key>signingCertificate</key>
-          	<string>Apple Distribution</string>
           	<key>provisioningProfiles</key>
           	<dict>
           		<key>com.noteup.notes</key>
