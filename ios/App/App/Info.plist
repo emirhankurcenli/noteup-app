@@ -29,7 +29,20 @@
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 
+	<!-- ADMOB CONFIGURATION (REQUIRED ON IOS TO PREVENT FATAL CRASH ON STARTUP) -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~3347511713</string>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr64bu5z.skadnetwork</string>
+		</dict>
+	</array>
+
 	<!-- APPLE PRIVACY PURPOSE STRINGS -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>NoteUp deneyiminizi iyileştirmek için izin gereklidir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>NoteUp notlarınıza fotoğraf eklemek ve profil resminizi güncellemek için fotoğraf kitaplığınıza erişim gereklidir.</string>
 	<key>NSCameraUsageDescription</key>
@@ -49,7 +62,7 @@
 
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
