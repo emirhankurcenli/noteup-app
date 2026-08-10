@@ -367,7 +367,7 @@ const useFriendManager = ({
       setFriendRequests(updatedReqs);
 
       // Also write to Supabase for cross-device delivery
-      await supabase.from('friend_requests').insert({
+      const { error: insertError } = await supabase.from('friend_requests').insert({
         id: newReq.id,
         from_code: myCode,
         from_name: newReq.fromName,
@@ -375,7 +375,18 @@ const useFriendManager = ({
         to_name: resolvedName,
         status: 'pending',
         created_at: new Date().toISOString()
-      }).catch(e => console.warn("Supabase friend_requests insert warning:", e));
+      });
+
+      if (insertError) {
+        // Supabase'e yazma başarısız — hata kodu ve mesajı logla
+        console.error('❌ Supabase friend_request insert FAILED:', insertError.code, insertError.message, insertError.details);
+        // Kullanıcıya göster (geliştirme aşamasında debug için)
+        setToast({
+          title: `⚠️ Supabase Hata: ${insertError.code}`,
+          msg: insertError.message || 'Bilinmeyen hata'
+        });
+        // localStorage'a yazıldı, istek gönderildi sayılır — Supabase sync olmadan devam
+      }
 
       setPartnerCodeInput('HUB-');
       setToast({
