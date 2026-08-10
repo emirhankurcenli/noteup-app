@@ -228,6 +228,9 @@ const TRANSLATIONS = {
     lastUpdated: 'Son güncelleme',
     characters: 'karakter',
     openSettings: '⚙️ Ayarları Aç',
+    selectAvatar: 'Profil Resmi Seç',
+    selectAvatarSub: 'Profiliniz için bir avatar veya özel fotoğraf seçin.',
+    closeBtn: 'Vazgeç',
   },
   en: {
     confirmDeleteTitle: 'Confirm Deletion',
@@ -456,6 +459,9 @@ const TRANSLATIONS = {
     lastUpdated: 'Last updated',
     characters: 'characters',
     openSettings: '⚙️ Open Settings',
+    selectAvatar: 'Select Avatar',
+    selectAvatarSub: 'Choose an avatar or upload a custom photo for your profile.',
+    closeBtn: 'Cancel',
   },
   de: {
     confirmDeleteTitle: 'Löschen bestätigen',
@@ -605,6 +611,9 @@ const TRANSLATIONS = {
     catDesign: 'Design / UI',
     catOther: 'Sonstiges',
     appLanguage: 'App-Sprache',
+    selectAvatar: 'Avatar auswählen',
+    selectAvatarSub: 'Wählen Sie einen Avatar oder laden Sie ein Foto hoch.',
+    closeBtn: 'Abbrechen',
   },
   es: {
     confirmDeleteTitle: 'Confirmar eliminación',
@@ -754,6 +763,9 @@ const TRANSLATIONS = {
     catDesign: 'Diseño / Interfaz',
     catOther: 'Otro',
     appLanguage: 'Idioma de la App',
+    selectAvatar: 'Seleccionar Avatar',
+    selectAvatarSub: 'Elige un avatar o sube una foto personalizada.',
+    closeBtn: 'Cancelar',
   },
   fr: {
     confirmDeleteTitle: 'Confirmer la suppression',
@@ -903,6 +915,9 @@ const TRANSLATIONS = {
     catDesign: 'Design / Interface',
     catOther: 'Autre',
     appLanguage: 'Langue de l’application',
+    selectAvatar: 'Choisir un avatar',
+    selectAvatarSub: 'Choisissez un avatar ou téléchargez une photo.',
+    closeBtn: 'Annuler',
   },
   it: {
     confirmDeleteTitle: 'Conferma eliminazione',
@@ -1052,6 +1067,9 @@ const TRANSLATIONS = {
     catDesign: 'Design / Interfaccia',
     catOther: 'Altro',
     appLanguage: 'Lingua dell’App',
+    selectAvatar: 'Seleziona Avatar',
+    selectAvatarSub: 'Scegli un avatar o carica una foto personalizzata.',
+    closeBtn: 'Annulla',
   },
   ru: {
     confirmDeleteTitle: 'Подтверждение удаления',
@@ -1201,6 +1219,9 @@ const TRANSLATIONS = {
     catDesign: 'Дизайн / Интерфейс',
     catOther: 'Другое',
     appLanguage: 'Язык Приложения',
+    selectAvatar: 'Выбрать аватар',
+    selectAvatarSub: 'Выберите аватар или загрузите свое фото.',
+    closeBtn: 'Отмена',
   },
   ar: {
     confirmDeleteTitle: 'تأكيد الحذف',
@@ -1350,6 +1371,9 @@ const TRANSLATIONS = {
     catDesign: 'التصميم / الواجهة',
     catOther: 'آخر',
     appLanguage: 'لغة التطبيق',
+    selectAvatar: 'اختر الصورة الشخصية',
+    selectAvatarSub: 'اختر صورة رمزية أو قم بتحميل صورة خاصة بك.',
+    closeBtn: 'إلغاء',
   },
   ja: {
     confirmDeleteTitle: '削除の確認',
@@ -1499,6 +1523,9 @@ const TRANSLATIONS = {
     catDesign: 'デザイン / UI',
     catOther: 'その他',
     appLanguage: 'アプリの言語',
+    selectAvatar: 'アバターを選択',
+    selectAvatarSub: 'アバターを選択するか、写真をアップロードしてください。',
+    closeBtn: 'キャンセル',
   },
   zh: {
     confirmDeleteTitle: '确认删除',
@@ -1648,7 +1675,10 @@ const TRANSLATIONS = {
     catDesign: '界面与设计',
     catOther: '其他',
     appLanguage: '应用语言',
-  }
+    selectAvatar: '选择头像',
+    selectAvatarSub: '选择一个头像或上传个性化照片。',
+    closeBtn: '取消',
+  },
 };
 
 export default TRANSLATIONS;
