@@ -1,0 +1,15 @@
+{
+  "appId": "com.noteup.notes",
+  "appName": "NoteUp",
+  "webDir": "dist",
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#4A7FA5"
+    },
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true
+    }
+  }
+}

@@ -1,0 +1,47 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local environment variables
+.env
+.env.local
+.env.*.local
+
+# Android & iOS Certificates / Keys - ASLA Git'e gitmemeli!
+*.jks
+*.keystore
+android/keystore.properties
+*.p12
+*.mobileprovision
+*.p8
+*.key
+*.cer
+*.pem
+github_secrets_values.txt
+
+# Android build çıktıları
+android/.gradle
+android/app/build
+android/build
+android/.idea

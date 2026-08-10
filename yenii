@@ -1,0 +1,20 @@
+# ─────────────────────────────────────────────────────────
+# NoteUp — Ortam Değişkenleri (.env)
+# ─────────────────────────────────────────────────────────
+# Bu dosya GIT'E EKLENMEMELİDİR (.gitignore'a ekli).
+# Paylaşmak için .env.example dosyasını kullanın.
+# ─────────────────────────────────────────────────────────
+
+# Cloudflare R2 Worker — tam URL (sonda / olmadan)
+VITE_R2_WORKER_URL=https://soft-hall-b2cd.kurkral.workers.dev
+
+# Cloudflare R2 Worker — Bearer token
+VITE_R2_TOKEN=NoteUp_R2_Secured_Token_4c96795b
+
+# Supabase — Proje URL ve Anon Key
+VITE_SUPABASE_URL=https://qgrzvhejdwsmuzuwmpyj.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_AJEZjo6jPlfypapcBOTDSw_5RvzTL2u
+
+# RevenueCat — Google Play API Key
+VITE_REVENUECAT_KEY=goog_klpvzugPjsJwnTuzpqHEafDShcM
+
