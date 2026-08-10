@@ -49,6 +49,7 @@ export default function AppWorkspaceContainer({
   triggerHaptic,
   checkAndRequestNotificationPermission,
   checkAndRequestPermission,
+  showPermissionDialog,
   requestBiometricAuth,
   persistNotes,
   setNotes,
@@ -177,6 +178,7 @@ export default function AppWorkspaceContainer({
         triggerHaptic={triggerHaptic}
         checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
         checkAndRequestPermission={checkAndRequestPermission}
+        showPermissionDialog={showPermissionDialog}
         requestBiometricAuth={requestBiometricAuth}
         persistNotes={persistNotes}
         setNotes={setNotes}

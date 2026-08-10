@@ -183,6 +183,8 @@ const BlockListRenderer = ({
   vaultUnlocked,
   setVaultUnlocked,
   requestBiometricAuth,
+  checkAndRequestPermission,
+  showPermissionDialog,
 }) => {
   const blocks = editingNote?.blocks || [];
   const focusedBlockId = focusedBlockRef?.current?.id;
@@ -580,6 +582,8 @@ const BlockListRenderer = ({
                 handleDeleteBlock={handleDeleteBlock}
                 triggerHaptic={triggerHaptic}
                 setToast={setToast}
+                checkAndRequestPermission={checkAndRequestPermission}
+                showPermissionDialog={showPermissionDialog}
                 t={t}
               />
             )}

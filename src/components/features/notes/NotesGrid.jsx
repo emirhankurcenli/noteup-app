@@ -193,6 +193,7 @@ const NotesGrid = ({
   handleCancelReminder,
   setActiveShareNoteId,
   setNudgeTargetNote,
+  checkAndRequestNotificationPermission,
   lang,
   t
 }) => {
@@ -413,6 +414,10 @@ const NotesGrid = ({
                         onClick={async (e) => {
                           e.stopPropagation();
                           setActiveMenuNoteId(null);
+                          if (checkAndRequestNotificationPermission) {
+                            const granted = await checkAndRequestNotificationPermission();
+                            if (!granted) return;
+                          }
                           if (note.isLocked) {
                             const title = lang === 'tr' ? 'Kilitli Not Paylaşımı' : 'Share Locked Note';
                             const subtitle = lang === 'tr' ? 'Notu arkadaşınızla paylaşmak için kimliğinizi doğrulayın' : 'Authenticate to share note';

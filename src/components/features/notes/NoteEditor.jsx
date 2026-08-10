@@ -216,7 +216,8 @@ const NoteEditor = ({
   cancelRecording,
   stopRecording,
   ensureElementVisible,
-  setConfirmDialog
+  setConfirmDialog,
+  showPermissionDialog
 }) => {
   const now = new Date().getTime();
   const editorBodyRef = useRef(null);
@@ -461,6 +462,8 @@ const NoteEditor = ({
           vaultUnlocked={vaultUnlocked}
           setVaultUnlocked={setVaultUnlocked}
           requestBiometricAuth={requestBiometricAuth}
+          checkAndRequestPermission={checkAndRequestPermission}
+          showPermissionDialog={showPermissionDialog}
         />
       </div>
 

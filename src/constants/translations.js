@@ -227,6 +227,7 @@ const TRANSLATIONS = {
     trashBannerText: 'Bu not Çöp Kutusunda bulunuyor.',
     lastUpdated: 'Son güncelleme',
     characters: 'karakter',
+    openSettings: '⚙️ Ayarları Aç',
   },
   en: {
     confirmDeleteTitle: 'Confirm Deletion',
@@ -454,6 +455,7 @@ const TRANSLATIONS = {
     trashBannerText: 'This note is in the Trash.',
     lastUpdated: 'Last updated',
     characters: 'characters',
+    openSettings: '⚙️ Open Settings',
   },
   de: {
     confirmDeleteTitle: 'Löschen bestätigen',

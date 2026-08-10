@@ -53,6 +53,7 @@ export default function AppModalsContainer({
   handleSelectAvatar,
   DEFAULT_AVATARS,
   checkAndRequestPermission,
+  checkAndRequestNotificationPermission,
   pendingWidgetAlarmCtx,
   handleCancelWidgetAlarm,
   quickReminderTitle,
@@ -134,6 +135,7 @@ export default function AppModalsContainer({
       handleSelectAvatar={handleSelectAvatar}
       DEFAULT_AVATARS={DEFAULT_AVATARS}
       checkAndRequestPermission={checkAndRequestPermission}
+      checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
       pendingWidgetAlarmCtx={pendingWidgetAlarmCtx}
       handleCancelWidgetAlarm={handleCancelWidgetAlarm}
       quickReminderTitle={quickReminderTitle}

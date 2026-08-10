@@ -36,6 +36,12 @@
 	<string>NoteUp notlarınıza anında fotoğraf çekip eklemek için kamera erişimi gereklidir.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Notlarınıza eklediğiniz görselleri galerinize kaydetmek için erişim gereklidir.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Aracım Nerede özelliğinde aracınızın konumunu haritaya kaydetmek için konum erişimi gereklidir.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Aracım Nerede özelliğinde aracınızın konumunu haritaya kaydetmek için konum erişimi gereklidir.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Notlarınıza ses kaydı ekleyebilmek için mikrofon erişimi gereklidir.</string>
 
 	<!-- EXPORT COMPLIANCE -->
 	<key>ITSAppUsesNonExemptEncryption</key>

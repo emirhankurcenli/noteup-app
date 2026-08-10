@@ -406,8 +406,13 @@ const NoteEditorHeader = ({
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '9px 12px', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 600 }}
                   onClick={async () => {
                     if (checkAndRequestPermission) {
-                      const granted = await checkAndRequestPermission('storage');
-                      if (!granted) {
+                      const grantedStorage = await checkAndRequestPermission('storage');
+                      if (!grantedStorage) {
+                        setShowEditorMenu(false);
+                        return;
+                      }
+                      const grantedAudio = await checkAndRequestPermission('audio');
+                      if (!grantedAudio) {
                         setShowEditorMenu(false);
                         return;
                       }

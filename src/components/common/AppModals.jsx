@@ -59,7 +59,7 @@ const AppModals = ({
   showPaywall, setShowPaywall, userPlan, setUserPlan,
   planNotification, setPlanNotification, confirmDialog, setConfirmDialog, getLostFeatures, getChangedFeatures, PLAN_LEVELS,
   showAdModal, setShowAdModal,
-  showAvatarPicker, setShowAvatarPicker, user, setToast, cropperImage, setCropperImage, handleSelectAvatar, DEFAULT_AVATARS, checkAndRequestPermission,
+  showAvatarPicker, setShowAvatarPicker, user, setToast, cropperImage, setCropperImage, handleSelectAvatar, DEFAULT_AVATARS, checkAndRequestPermission, checkAndRequestNotificationPermission,
   pendingWidgetAlarmCtx, handleCancelWidgetAlarm, quickReminderTitle, setQuickReminderTitle, quickReminderTime, setQuickReminderTime, quickReminderModes, setQuickReminderModes, handleCreateWidgetAlarm,
   showRewardedAdModal, setShowRewardedAdModal,
   pendingShareReward, setPendingShareReward,
@@ -132,6 +132,7 @@ const AppModals = ({
         editingNote={editingNote}
         handleShareNoteImage={handleShareNoteImage}
         setActiveShareNoteId={setActiveShareNoteId}
+        checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
         theme={theme}
         t={t}
         userPlan={userPlan}

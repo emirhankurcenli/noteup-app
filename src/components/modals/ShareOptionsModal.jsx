@@ -18,6 +18,7 @@ const ShareOptionsModal = ({
   setToast,
   setConfirmDialog,
   setActiveShareNoteId,
+  checkAndRequestNotificationPermission,
   lang,
 }) => {
   if (!showShareModal) return null;
@@ -176,6 +177,10 @@ const ShareOptionsModal = ({
           {/* Option 2: Share with Friend */}
           <button
             onClick={async () => {
+              if (checkAndRequestNotificationPermission) {
+                const granted = await checkAndRequestNotificationPermission();
+                if (!granted) return;
+              }
               if (editingNote?.isLocked) {
                 const title = lang === 'tr' ? 'Kilitli Not Paylaşımı' : 'Share Locked Note';
                 const subtitle = lang === 'tr' ? 'Notu arkadaşınızla paylaşmak için kimliğinizi doğrulayın' : 'Authenticate to share note with friend';

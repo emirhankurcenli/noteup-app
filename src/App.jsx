@@ -164,8 +164,11 @@ function App() {
     checkAndRequestNotificationPermission,
     handleRequestMicPermission,
     handleRequestStoragePermission,
-    checkAndRequestPermission
+    checkAndRequestPermission,
+    showPermissionDialog
   } = useAppPermissions({ setToast, lang, setConfirmDialog: (dialog) => setConfirmDialogRef.current?.(dialog) });
+
+  checkAndRequestNotificationPermissionRef.current = checkAndRequestNotificationPermission;
 
 
 
@@ -528,6 +531,7 @@ function App() {
         triggerHaptic={triggerHaptic}
         checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
         checkAndRequestPermission={checkAndRequestPermission}
+        showPermissionDialog={showPermissionDialog}
         requestBiometricAuth={requestBiometricAuth}
         persistNotes={persistNotes}
         setNotes={setNotes}
@@ -659,6 +663,7 @@ function App() {
         handleSelectAvatar={handleSelectAvatar}
         DEFAULT_AVATARS={DEFAULT_AVATARS}
         checkAndRequestPermission={checkAndRequestPermission}
+        checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
         pendingWidgetAlarmCtx={pendingWidgetAlarmCtx}
         handleCancelWidgetAlarm={handleCancelWidgetAlarm}
         quickReminderTitle={quickReminderTitle}

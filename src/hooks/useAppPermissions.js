@@ -55,7 +55,17 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
         confirmBg: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
         confirmShadow: '0 4px 16px rgba(59, 130, 246, 0.35)',
         onConfirm: async () => {
-          try { await AppSettings.openSettings(); } catch (_) {}
+          try {
+            if (Capacitor.isNativePlatform()) {
+              if (Capacitor.getPlatform() === 'android') {
+                await AppSettings.openSettings();
+              } else if (Capacitor.getPlatform() === 'ios') {
+                window.location.href = 'app-settings:';
+              } else {
+                try { await AppSettings.openSettings(); } catch (_) {}
+              }
+            }
+          } catch (_) {}
         }
       });
     } else if (setToast) {
@@ -91,6 +101,29 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
         states.audio = 'granted';
       }
     } catch (err) {}
+
+    if (setConfirmDialog) {
+      setConfirmDialog(prev => {
+        if (!prev || !prev.title) return prev;
+        if (hasNotify && (prev.title.includes('Bildirim İzni Gerekli') || prev.title.includes('Notification Permission Required'))) {
+          return null;
+        }
+        if (states.location === 'granted' && (prev.title.includes('Konum İzni Gerekli') || prev.title.includes('Location Permission Required'))) {
+          return null;
+        }
+        if (states.microphone === 'granted' && (prev.title.includes('Mikrofon İzni Gerekli') || prev.title.includes('Microphone Permission Required'))) {
+          return null;
+        }
+        if (states.storage === 'granted' && (prev.title.includes('Galeri') || prev.title.includes('Gallery'))) {
+          return null;
+        }
+        if (states.audio === 'granted' && (prev.title.includes('Müzik') || prev.title.includes('Audio'))) {
+          return null;
+        }
+        return prev;
+      });
+    }
+
     setPermissionStates(states);
   };
 
@@ -107,20 +140,34 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
 
   const checkAndRequestNotificationPermission = async () => {
     checkAndRequestNotificationPermissionRef.current = checkAndRequestNotificationPermission;
+
+    let hasPermission = await checkNotificationPermission();
+    if (hasPermission) {
+      if (setConfirmDialog) {
+        setConfirmDialog(prev => {
+          if (prev && prev.title && (prev.title.includes('Bildirim İzni Gerekli') || prev.title.includes('Notification Permission Required'))) {
+            return null;
+          }
+          return prev;
+        });
+      }
+      updatePermissionStates();
+      return true;
+    }
+
     try {
-      let permStatus = await getNotificationPermissionStatus();
-      if (permStatus.display === 'granted') {
-        updatePermissionStates();
-        return true;
-      }
+      const permStatus = await requestNotificationPermissionRaw();
+      hasPermission = permStatus?.display === 'granted' || (await checkNotificationPermission());
 
-      if (permStatus.display === 'denied') {
-        showPermissionDialog('notification');
-        return false;
-      }
-
-      permStatus = await requestNotificationPermissionRaw();
-      if (permStatus.display === 'granted') {
+      if (hasPermission) {
+        if (setConfirmDialog) {
+          setConfirmDialog(prev => {
+            if (prev && prev.title && (prev.title.includes('Bildirim İzni Gerekli') || prev.title.includes('Notification Permission Required'))) {
+              return null;
+            }
+            return prev;
+          });
+        }
         if (setToast) {
           setToast({ title: "🔔 Bildirim İzni", msg: "Bildirimler başarıyla açıldı." });
         }
@@ -130,21 +177,35 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
     } catch (e) {
       if ('Notification' in window) {
         if (Notification.permission === 'granted') {
-          updatePermissionStates();
-          return true;
-        }
-        if (Notification.permission === 'denied') {
-          showPermissionDialog('notification');
-          return false;
-        }
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          if (setToast) {
-            setToast({ title: "🔔 Bildirim İzni", msg: "Bildirimler başarıyla açıldı." });
+          if (setConfirmDialog) {
+            setConfirmDialog(prev => {
+              if (prev && prev.title && (prev.title.includes('Bildirim İzni Gerekli') || prev.title.includes('Notification Permission Required'))) {
+                return null;
+              }
+              return prev;
+            });
           }
           updatePermissionStates();
           return true;
         }
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            if (setConfirmDialog) {
+              setConfirmDialog(prev => {
+                if (prev && prev.title && (prev.title.includes('Bildirim İzni Gerekli') || prev.title.includes('Notification Permission Required'))) {
+                  return null;
+                }
+                return prev;
+              });
+            }
+            if (setToast) {
+              setToast({ title: "🔔 Bildirim İzni", msg: "Bildirimler başarıyla açıldı." });
+            }
+            updatePermissionStates();
+            return true;
+          }
+        } catch (_) {}
       }
     }
 
@@ -227,16 +288,51 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
           return ok;
         }
         if (type === 'location') {
-          const res = await AppSettings.requestLocationPermission();
-          const ok = res.location === 'granted';
-          if (!ok) showPermissionDialog('location');
-          return ok;
+          if (Capacitor.getPlatform() === 'android') {
+            const res = await AppSettings.requestLocationPermission();
+            const ok = res.location === 'granted';
+            if (!ok) showPermissionDialog('location');
+            return ok;
+          } else {
+            return new Promise((resolve) => {
+              if (!navigator.geolocation) {
+                showPermissionDialog('location');
+                resolve(false);
+                return;
+              }
+              navigator.geolocation.getCurrentPosition(
+                () => resolve(true),
+                (err) => {
+                  if (err.code === 1) showPermissionDialog('location');
+                  resolve(err.code !== 1);
+                },
+                { timeout: 10000 }
+              );
+            });
+          }
         }
       } else {
         if (type === 'microphone') {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           stream.getTracks().forEach(t => t.stop());
           return true;
+        }
+        if (type === 'location') {
+          return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+              showPermissionDialog('location');
+              resolve(false);
+              return;
+            }
+            navigator.geolocation.getCurrentPosition(
+              () => resolve(true),
+              (err) => {
+                if (err.code === 1) showPermissionDialog('location');
+                resolve(err.code !== 1);
+              },
+              { timeout: 10000 }
+            );
+          });
         }
         return true;
       }
@@ -255,6 +351,7 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
     handleRequestStoragePermission,
     handleRequestAudioPermission,
     checkAndRequestPermission,
+    showPermissionDialog,
     checkAndRequestNotificationPermissionRef
   };
 }

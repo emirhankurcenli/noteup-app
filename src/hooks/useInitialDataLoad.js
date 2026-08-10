@@ -114,7 +114,6 @@ export default function useInitialDataLoad({
     );
 
     if (updatePermissionStates) updatePermissionStates();
-    if (requestAllPermissionsAtStartup) requestAllPermissionsAtStartup();
 
     return () => {
       foregroundListener.then(l => l.remove()).catch(() => {});

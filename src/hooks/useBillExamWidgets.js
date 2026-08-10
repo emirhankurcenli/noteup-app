@@ -54,7 +54,7 @@ const useBillExamWidgets = ({
       }
     }
 
-    const granted = await checkAndRequestNotificationPermission();
+    const granted = typeof checkAndRequestNotificationPermission === 'function' ? await checkAndRequestNotificationPermission() : true;
     if (!granted) {
       setToast({ title: "🔔 İzin Gerekli", msg: "Bildirim izni verilmediği için alarm kurulmadı." });
     }
@@ -224,7 +224,7 @@ const useBillExamWidgets = ({
     const nextTimeMs = new Date(nextTime).getTime();
     const preTimeMs = nextTimeMs - 5 * 24 * 60 * 60 * 1000;
 
-    const granted = await checkAndRequestNotificationPermission();
+    const granted = typeof checkAndRequestNotificationPermission === 'function' ? await checkAndRequestNotificationPermission() : true;
 
     if (preTimeMs > Date.now()) {
       const preDate = new Date(preTimeMs);
@@ -292,7 +292,7 @@ const useBillExamWidgets = ({
       }
     }
 
-    const granted = await checkAndRequestNotificationPermission();
+    const granted = typeof checkAndRequestNotificationPermission === 'function' ? await checkAndRequestNotificationPermission() : true;
     if (!granted) {
       setToast({ title: '🔔 İzin Gerekli', msg: 'Bildirim izni verilmediği için alarm kurulmadı.' });
     }

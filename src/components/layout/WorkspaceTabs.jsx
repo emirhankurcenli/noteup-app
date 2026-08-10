@@ -103,6 +103,7 @@ const WorkspaceTabs = ({
           handleCancelReminder={handleCancelReminder}
           setActiveShareNoteId={setActiveShareNoteId}
           setNudgeTargetNote={setNudgeTargetNote}
+          checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
           lang={lang}
           t={t}
         />
@@ -158,6 +159,7 @@ const WorkspaceTabs = ({
             handleCancelReminder={handleCancelReminder}
             setActiveShareNoteId={setActiveShareNoteId}
             setNudgeTargetNote={setNudgeTargetNote}
+            checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
             lang={lang}
             t={t}
           />

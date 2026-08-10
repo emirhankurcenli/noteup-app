@@ -8,6 +8,8 @@ const ParkingWidget = ({
   handleDeleteBlock,
   triggerHaptic,
   setToast,
+  checkAndRequestPermission,
+  showPermissionDialog,
   t
 }) => {
   const pfs = blockFormStates[block.id] || {};
@@ -15,12 +17,21 @@ const ParkingWidget = ({
   const lng = block.lng;
   const note = block.note || '';
 
-  const handleGetLocation = () => {
+  const handleGetLocation = async () => {
     updateBlockForm(block.id, { loadingLocation: true });
     triggerHaptic('light');
 
+    if (checkAndRequestPermission) {
+      const ok = await checkAndRequestPermission('location');
+      if (!ok) {
+        updateBlockForm(block.id, { loadingLocation: false });
+        return;
+      }
+    }
+
     if (!navigator.geolocation) {
       setToast({ title: t('gpsUnsupportedTitle'), msg: t('gpsUnsupportedMsg') });
+      if (showPermissionDialog) showPermissionDialog('location');
       updateBlockForm(block.id, { loadingLocation: false });
       return;
     }
@@ -34,11 +45,14 @@ const ParkingWidget = ({
         triggerHaptic('success');
       },
       (error) => {
-        let msg = t('gpsErrorMsg');
-        if (error.code === 1) msg = t('gpsPermissionDenied');
-        setToast({ title: t('gpsErrorTitle'), msg });
         updateBlockForm(block.id, { loadingLocation: false });
         triggerHaptic('warning');
+        if (error.code === 1) { // PERMISSION_DENIED
+          if (showPermissionDialog) showPermissionDialog('location');
+        } else {
+          let msg = t('gpsErrorMsg');
+          setToast({ title: t('gpsErrorTitle'), msg });
+        }
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
