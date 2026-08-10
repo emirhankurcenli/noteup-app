@@ -47,10 +47,6 @@ const ProfileTab = ({
 
   return (
     <div className="animate-slide-up" style={{ paddingBottom: '24px' }}>
-      <div className="section-title" style={{ marginBottom: '16px' }}>
-        <h2>{t('profileTitle')}</h2>
-      </div>
-
       {/* Modern iOS Segmented Control */}
       <div style={{
         display: 'flex',
