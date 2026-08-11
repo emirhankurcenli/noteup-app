@@ -53,7 +53,7 @@ html, body, #root {
 
 /* Header */
 .app-header {
-  padding: max(20px, calc(env(safe-area-inset-top, 0px) + 12px)) 20px 14px 20px;
+  padding: max(48px, calc(env(safe-area-inset-top, 0px) + 14px)) 20px 14px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -127,7 +127,6 @@ html, body, #root {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 72px;
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -135,8 +134,9 @@ html, body, #root {
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   border-top: 1px solid var(--nav-border);
-  padding-bottom: constant(safe-area-inset-bottom);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: 10px;
+  padding-bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  box-sizing: border-box;
   z-index: 100;
 }
 
@@ -149,18 +149,26 @@ html, body, #root {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 0.7rem;
   font-family: var(--font-family);
   font-weight: 500;
   cursor: pointer;
-  width: 60px;
-  height: 100%;
+  flex: 1;
+  height: auto;
+  padding: 4px 0;
   transition: var(--transition-bounce);
+}
+
+.nav-item span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .nav-item svg {
   width: 22px;
   height: 22px;
+  flex-shrink: 0;
   transition: var(--transition-bounce);
   stroke: var(--text-secondary);
   fill: none;
@@ -179,7 +187,7 @@ html, body, #root {
 /* Floating Action Button (FAB) */
 .fab-btn {
   position: absolute;
-  bottom: 88px;
+  bottom: calc(72px + max(12px, env(safe-area-inset-bottom, 0px)));
   right: 20px;
   width: 56px;
   height: 56px;
@@ -404,7 +412,7 @@ html, body, #root {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: max(12px, calc(env(safe-area-inset-top, 0px) + 8px)) 16px 12px 16px;
+  padding: max(44px, calc(env(safe-area-inset-top, 0px) + 10px)) 16px 12px 16px;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-dark);
   flex-shrink: 0;

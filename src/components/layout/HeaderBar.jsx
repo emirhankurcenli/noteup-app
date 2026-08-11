@@ -31,7 +31,7 @@ const HeaderBar = ({ friends, userPlan = 'lite', setShowPaywall, setShowFeedback
   const badge = getBadgeConfig();
 
   return (
-    <div className="app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
+    <div className="app-header">
       <div className="app-title-section" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800 }}>NoteUp</h1>
       </div>

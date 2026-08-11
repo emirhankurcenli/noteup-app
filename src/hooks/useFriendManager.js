@@ -178,18 +178,24 @@ const useFriendManager = ({
         .or(`from_code.eq.${myCode},to_code.eq.${myCode}`)
         .eq('status', 'accepted');
 
+      const storedFriends = JSON.parse(localStorage.getItem('s23_friends_' + myCode) || '[]');
+
       if (acceptedData && acceptedData.length > 0) {
         const friendCodes = acceptedData.map(r => r.from_code === myCode ? r.to_code : r.from_code);
-        
+        const validFriendCodesSet = new Set(friendCodes);
+
         // Fetch fresh profiles (names & photo_urls) for all friends
         const { data: friendProfiles } = await supabase
           .from('profiles')
           .select('friend_code, name, photo_url')
           .in('friend_code', friendCodes);
 
-        const storedFriends = JSON.parse(localStorage.getItem('s23_friends_' + myCode) || '[]');
         let friendsUpdated = false;
-        const currentFriends = [...storedFriends];
+        // Keep only friends that are still accepted in Supabase (removes deleted friends)
+        const currentFriends = storedFriends.filter(f => validFriendCodesSet.has(f.code));
+        if (currentFriends.length !== storedFriends.length) {
+          friendsUpdated = true;
+        }
 
         acceptedData.forEach(req => {
           const isMeSender = req.from_code === myCode;
@@ -221,6 +227,10 @@ const useFriendManager = ({
           localStorage.setItem('s23_friends_' + myCode, JSON.stringify(currentFriends));
           setFriends(currentFriends);
         }
+      } else if (storedFriends.length > 0) {
+        // If Supabase has no accepted friends for me, clear local friends list
+        localStorage.setItem('s23_friends_' + myCode, JSON.stringify([]));
+        setFriends([]);
       }
     } catch (e) {}
 
@@ -508,15 +518,26 @@ const useFriendManager = ({
     }
   };
 
-  const handleDisconnect = (friendCode) => {
+  const handleDisconnect = async (friendCode) => {
     if (window.confirm("Bu arkadaşı silmek istiyor musunuz?")) {
       const updated = friends.filter(f => f.code !== friendCode);
       setFriends(updated);
       localStorage.setItem('s23_friends_' + myCode, JSON.stringify(updated));
+
+      try {
+        await supabase.rpc('remove_friend', {
+          p_user_code: myCode,
+          p_friend_code: friendCode
+        });
+      } catch (err) {
+        console.error("remove_friend RPC error:", err);
+      }
+
       setToast({
         title: "❌ Arkadaş Silindi",
         msg: "Bağlantı sonlandırıldı."
       });
+      pollFriendRequests();
     }
   };
 

@@ -28,28 +28,28 @@ const BottomNavBar = ({
           onClick={() => handleTabClick('notes')}
         >
           <Icons.Note />
-          {t('notes')}
+          <span>{t('notes')}</span>
         </button>
         <button
           className={`nav-item ${activeTab === 'search' ? 'active' : ''}`}
           onClick={() => handleTabClick('search')}
         >
           <Icons.Search />
-          {t('search')}
+          <span>{t('search')}</span>
         </button>
         <button
           className={`nav-item ${activeTab === 'shared' ? 'active' : ''}`}
           onClick={() => handleTabClick('shared')}
         >
           <Icons.Users />
-          {t('sharedNotes')}
+          <span>{t('sharedNotes')}</span>
         </button>
         <button
           className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
           onClick={() => handleTabClick('profile')}
         >
           <Icons.Profile />
-          {t('profile')}
+          <span>{t('profile')}</span>
         </button>
       </div>
     </>
