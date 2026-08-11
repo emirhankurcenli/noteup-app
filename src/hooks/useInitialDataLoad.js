@@ -49,8 +49,34 @@ export default function useInitialDataLoad({
       } catch (e) {}
 
       const activeUid = JSON.parse(localStorage.getItem('s23_user') || '{}')?.uid || 'guest';
-      let storedNotes = getScopedStorageItem('s23_notes', activeUid);
-      let storedReminders = getScopedStorageItem('s23_reminders', activeUid);
+      
+      // Automatic Notes Rescue: Scan ALL localStorage keys (legacy s23_notes, s23_notes_guest, s23_notes_<uid>)
+      // to recover any lost or orphan notes and merge them into the active user session!
+      const rescueAllNotes = () => {
+        const rescued = [];
+        const seenIds = new Set();
+
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key === 's23_notes' || key.startsWith('s23_notes_'))) {
+            try {
+              const raw = localStorage.getItem(key);
+              if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                  parsed.forEach(note => {
+                    if (note && note.id && !seenIds.has(note.id)) {
+                      seenIds.add(note.id);
+                      rescued.push(note);
+                    }
+                  });
+                }
+              }
+            } catch (e) {}
+          }
+        }
+        return rescued;
+      };
 
       const migrateNote = (note) => {
         let blocks = note.blocks;
@@ -82,13 +108,15 @@ export default function useInitialDataLoad({
       };
 
       try {
-        const rawNotes = JSON.parse(storedNotes || '[]').map(migrateNote);
-        setNotes(rawNotes);
-        localStorage.setItem('s23_notes', JSON.stringify(rawNotes));
+        const allRescuedNotes = rescueAllNotes().map(migrateNote);
+        setNotes(allRescuedNotes);
+        
+        // Save to active scoped key
+        const userScopedKey = `s23_notes_${activeUid}`;
+        localStorage.setItem(userScopedKey, JSON.stringify(allRescuedNotes));
+        localStorage.setItem('s23_notes', JSON.stringify(allRescuedNotes));
       } catch (e) {
-        console.error('Corrupted notes data, resetting:', e);
-        localStorage.removeItem('s23_notes');
-        setNotes([]);
+        console.error('Notes recovery error:', e);
       }
 
       if (storedReminders) {

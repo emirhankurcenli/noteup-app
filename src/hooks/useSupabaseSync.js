@@ -87,9 +87,19 @@ const useSupabaseSync = ({
             updatedAt: n.updated_at ? new Date(n.updated_at).getTime() : Date.now()
           };
         });
-        setNotes(formattedNotes);
+        // MERGE: Keep all local notes and merge in cloud notes to prevent data loss
+        const mergedNotesMap = new Map(localNotes.map(n => [n.id, n]));
+        formattedNotes.forEach(dbN => {
+          const existing = mergedNotesMap.get(dbN.id);
+          if (!existing || (dbN.updatedAt && dbN.updatedAt >= (existing.updatedAt || 0))) {
+            mergedNotesMap.set(dbN.id, { ...existing, ...dbN });
+          }
+        });
+        const finalMergedNotes = Array.from(mergedNotesMap.values());
+
+        setNotes(finalMergedNotes);
         const key = getUserScopedKey('s23_notes', userId);
-        localStorage.setItem(key, JSON.stringify(formattedNotes));
+        localStorage.setItem(key, JSON.stringify(finalMergedNotes));
       }
       if (!rErr && dbReminders) {
         const formattedReminders = dbReminders.map(r => ({
