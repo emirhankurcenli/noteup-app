@@ -12,7 +12,7 @@ import ExamWidget from '../editor/widgets/ExamWidget';
 import NoteEditorHeader from '../editor/NoteEditorHeader';
 import NoteFormatToolbar from '../editor/NoteFormatToolbar';
 import BlockListRenderer from '../editor/BlockListRenderer';
-import { mergeConsecutiveTextBlocks } from '../../../utils/editorKeyboardUtils';
+import { mergeConsecutiveTextBlocks, ensureElementVisible as ensureElementVisibleUtil } from '../../../utils/editorKeyboardUtils';
 
 // local SVGs and helpers
 const BackIcon = () => (
@@ -215,7 +215,7 @@ const NoteEditor = ({
   startRecording,
   cancelRecording,
   stopRecording,
-  ensureElementVisible,
+  ensureElementVisible = ensureElementVisibleUtil,
   setConfirmDialog,
   showPermissionDialog
 }) => {

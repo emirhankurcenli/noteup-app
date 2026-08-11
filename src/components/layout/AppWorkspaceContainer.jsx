@@ -3,6 +3,7 @@ import HeaderBar from './HeaderBar';
 import WorkspaceTabs from './WorkspaceTabs';
 import BottomNavBar from './BottomNavBar';
 import NoteEditor from '../features/notes/NoteEditor';
+import { ensureElementVisible as ensureElementVisibleUtil } from '../../utils/editorKeyboardUtils';
 
 export default function AppWorkspaceContainer({
   editingNote,
@@ -87,7 +88,7 @@ export default function AppWorkspaceContainer({
   startRecording,
   cancelRecording,
   stopRecording,
-  ensureElementVisible,
+  ensureElementVisible = ensureElementVisibleUtil,
   setConfirmDialog,
   activeTab,
   setActiveTab,

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ensureElementVisible as ensureElementVisibleUtil } from '../../../utils/editorKeyboardUtils';
 import DebtWidget from './widgets/DebtWidget';
 import TodoWidget from './widgets/TodoWidget';
 import SplitWidget from './widgets/SplitWidget';
@@ -303,7 +304,8 @@ const BlockListRenderer = ({
                   onFocus={(e) => { 
                     if (focusedBlockRef?.current) focusedBlockRef.current.id = block.id;
                     setActiveFormatBlockId(block.id);
-                    ensureElementVisible(e.target);
+                    const fn = ensureElementVisible || ensureElementVisibleUtil;
+                    if (typeof fn === 'function') fn(e.target);
                   }}
                   onInput={(e) => {
                     const el = e.target;
