@@ -54,6 +54,8 @@
 	</array>
 
 	<!-- APPLE PRIVACY PURPOSE STRINGS -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>NoteUp kilitli notlarınızı Face ID veya Touch ID ile güvenle açabilmek için biyometrik erişim izni gereklidir.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>NoteUp deneyiminizi iyileştirmek için izin gereklidir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

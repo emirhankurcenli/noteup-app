@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const cleanText = (str) => {
   if (!str) return '';
@@ -238,21 +238,36 @@ const SelectFriendsShareModal = ({
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #6366F1, #3B82F6)',
-                      color: '#FFF',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 800,
-                      fontSize: '0.9rem',
-                      flexShrink: 0,
-                    }}>
-                      {(f.name || 'A').charAt(0).toUpperCase()}
-                    </div>
+                    {f.photo_url ? (
+                      <img 
+                        src={f.photo_url} 
+                        alt={f.name} 
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: isSelected ? '2px solid #3B82F6' : '1px solid rgba(255, 255, 255, 0.2)',
+                          flexShrink: 0
+                        }} 
+                      />
+                    ) : (
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #6366F1, #3B82F6)',
+                        color: '#FFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '0.9rem',
+                        flexShrink: 0,
+                      }}>
+                        {(f.name || 'A').charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ fontWeight: 700, fontSize: '0.88rem', color: isLight ? '#0F172A' : '#F8FAFC' }}>
                         {f.name}

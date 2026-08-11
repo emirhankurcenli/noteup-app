@@ -69,12 +69,6 @@ const HeaderBar = ({ friends, userPlan = 'lite', setShowPaywall, setShowFeedback
           </svg>
           <span>{t('feedbackModalTitle')}</span>
         </button>
-
-        {friends && friends.length > 0 && (
-          <div className="match-badge active">
-            {friends.length} {t('friendsCount')}
-          </div>
-        )}
       </div>
     </div>
   );

@@ -102,36 +102,51 @@ const useFriendManager = ({
   const isGiftedUltra = !!ultraGiftFrom;
 
   // ── POLL FRIEND REQUESTS & ACCEPTED FRIENDS FROM SUPABASE EVERY 5 SECONDS ─
-  const pollFriendRequests = useCallback(() => {
+  const pollFriendRequests = useCallback(async () => {
     if (!myCode) return;
 
     // 1. Refresh from localStorage for pending requests
     const localReqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
 
     // 2. Fetch incoming PENDING requests from Supabase
-    supabase
-      .from('friend_requests')
-      .select('*')
-      .eq('to_code', myCode)
-      .eq('status', 'pending')
-      .then(({ data, error }) => {
-        if (error || !data) return;
+    try {
+      const { data: pendingData } = await supabase
+        .from('friend_requests')
+        .select('*')
+        .eq('to_code', myCode)
+        .eq('status', 'pending');
+
+      if (pendingData && pendingData.length > 0) {
+        // Collect sender codes to fetch their avatar photo_urls
+        const senderCodes = pendingData.map(r => r.from_code);
+        const { data: senderProfiles } = await supabase
+          .from('profiles')
+          .select('friend_code, photo_url, name')
+          .in('friend_code', senderCodes);
 
         const currentLocal = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
         let changed = false;
         const merged = [...currentLocal];
 
-        data.forEach(remoteReq => {
-          const alreadyLocal = merged.some(l => l.id === remoteReq.id || (l.fromCode === remoteReq.from_code && l.toCode === remoteReq.to_code && !l.processed));
-          if (!alreadyLocal) {
-            merged.push({
-              id: remoteReq.id,
-              fromCode: remoteReq.from_code,
-              fromName: remoteReq.from_name || remoteReq.from_code,
-              toCode: remoteReq.to_code,
-              processed: false,
-              status: 'pending'
-            });
+        pendingData.forEach(remoteReq => {
+          const senderProf = senderProfiles?.find(p => p.friend_code === remoteReq.from_code);
+          const alreadyLocalIdx = merged.findIndex(l => l.id === remoteReq.id || (l.fromCode === remoteReq.from_code && l.toCode === remoteReq.to_code && !l.processed));
+          
+          const reqObj = {
+            id: remoteReq.id,
+            fromCode: remoteReq.from_code,
+            fromName: senderProf?.name || remoteReq.from_name || remoteReq.from_code,
+            fromPhotoUrl: senderProf?.photo_url || null,
+            toCode: remoteReq.to_code,
+            processed: false,
+            status: 'pending'
+          };
+
+          if (alreadyLocalIdx === -1) {
+            merged.push(reqObj);
+            changed = true;
+          } else if (!merged[alreadyLocalIdx].fromPhotoUrl && senderProf?.photo_url) {
+            merged[alreadyLocalIdx].fromPhotoUrl = senderProf.photo_url;
             changed = true;
           }
         });
@@ -150,39 +165,55 @@ const useFriendManager = ({
           }
           prevRequestCountRef.current = newPending.length;
         }
-      })
-      .catch(() => {
-        setFriendRequests(localReqs);
-      });
+      }
+    } catch (e) {
+      setFriendRequests(localReqs);
+    }
 
-    // 3. Fetch ACCEPTED requests (where I am sender or recipient) to sync Friends List
-    supabase
-      .from('friend_requests')
-      .select('*')
-      .or(`from_code.eq.${myCode},to_code.eq.${myCode}`)
-      .eq('status', 'accepted')
-      .then(({ data, error }) => {
-        if (error || !data || data.length === 0) return;
+    // 3. Fetch ACCEPTED requests (where I am sender or recipient) to sync Friends List with Avatars
+    try {
+      const { data: acceptedData } = await supabase
+        .from('friend_requests')
+        .select('*')
+        .or(`from_code.eq.${myCode},to_code.eq.${myCode}`)
+        .eq('status', 'accepted');
+
+      if (acceptedData && acceptedData.length > 0) {
+        const friendCodes = acceptedData.map(r => r.from_code === myCode ? r.to_code : r.from_code);
+        
+        // Fetch fresh profiles (names & photo_urls) for all friends
+        const { data: friendProfiles } = await supabase
+          .from('profiles')
+          .select('friend_code, name, photo_url')
+          .in('friend_code', friendCodes);
 
         const storedFriends = JSON.parse(localStorage.getItem('s23_friends_' + myCode) || '[]');
         let friendsUpdated = false;
         const currentFriends = [...storedFriends];
 
-        data.forEach(req => {
-          // Identify friend code and friend name from the accepted record
+        acceptedData.forEach(req => {
           const isMeSender = req.from_code === myCode;
           const friendCode = isMeSender ? req.to_code : req.from_code;
-          const friendName = isMeSender ? (req.to_name || friendCode) : (req.from_name || friendCode);
+          const friendProf = friendProfiles?.find(p => p.friend_code === friendCode);
+          const friendName = friendProf?.name || (isMeSender ? (req.to_name || friendCode) : (req.from_name || friendCode));
+          const friendPhotoUrl = friendProf?.photo_url || null;
 
-          const exists = currentFriends.some(f => f.code === friendCode);
-          if (!exists) {
-            currentFriends.push({ code: friendCode, name: friendName });
+          const existingIdx = currentFriends.findIndex(f => f.code === friendCode);
+          if (existingIdx === -1) {
+            currentFriends.push({ code: friendCode, name: friendName, photo_url: friendPhotoUrl });
             friendsUpdated = true;
             playChime();
             setToast({
               title: "🤝 İsteğiniz Kabul Edildi!",
               msg: `${friendName} arkadaşlık isteğinizi kabul etti.`
             });
+          } else {
+            // Update name / photo_url if changed
+            if (currentFriends[existingIdx].photo_url !== friendPhotoUrl || currentFriends[existingIdx].name !== friendName) {
+              currentFriends[existingIdx].name = friendName;
+              currentFriends[existingIdx].photo_url = friendPhotoUrl;
+              friendsUpdated = true;
+            }
           }
         });
 
@@ -190,8 +221,8 @@ const useFriendManager = ({
           localStorage.setItem('s23_friends_' + myCode, JSON.stringify(currentFriends));
           setFriends(currentFriends);
         }
-      })
-      .catch(() => {});
+      }
+    } catch (e) {}
 
     // Notify if local pending count grew (same-device scenario)
     const localPending = localReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
@@ -416,52 +447,65 @@ const useFriendManager = ({
   };
 
   const handleAcceptFriendRequest = async (req) => {
-    const newFriend = {
-      code: req.fromCode,
-      name: req.fromName
-    };
-    const updatedFriends = [...friends, newFriend];
-    setFriends(updatedFriends);
-    localStorage.setItem('s23_friends_' + myCode, JSON.stringify(updatedFriends));
+    try {
+      const { data: res, error: err } = await supabase.rpc('accept_friend_request', {
+        p_request_id: req.id,
+        p_user_code: myCode
+      });
 
-    const reqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
-    const updatedReqs = reqs.map(r => r.id === req.id ? { ...r, processed: true, status: 'accepted', toName: profileName } : r);
-    localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
-    setFriendRequests(updatedReqs);
+      if (err) console.error("RPC accept_friend_request error:", err);
 
-    // Also update in Supabase
-    await supabase.from('friend_requests').update({ status: 'accepted' }).eq('id', req.id)
-      .catch(e => console.warn("Supabase accept update warning:", e));
+      const newFriend = {
+        code: req.fromCode,
+        name: req.fromName,
+        photo_url: req.fromPhotoUrl || null
+      };
+      const updatedFriends = [...friends.filter(f => f.code !== req.fromCode), newFriend];
+      setFriends(updatedFriends);
+      localStorage.setItem('s23_friends_' + myCode, JSON.stringify(updatedFriends));
 
-    // Update pending count ref
-    const newPending = updatedReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
-    prevRequestCountRef.current = newPending.length;
+      const reqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
+      const updatedReqs = reqs.map(r => r.id === req.id ? { ...r, processed: true, status: 'accepted' } : r);
+      localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
+      setFriendRequests(updatedReqs);
 
-    setToast({
-      title: "🤝 Arkadaş Eklendi",
-      msg: `${req.fromName} ile artık arkadaşsınız!`
-    });
-    playChime();
+      const newPending = updatedReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
+      prevRequestCountRef.current = newPending.length;
+
+      setToast({
+        title: "🤝 Arkadaş Eklendi",
+        msg: `${req.fromName} ile artık arkadaşsınız!`
+      });
+      playChime();
+      pollFriendRequests();
+    } catch (e) {
+      console.error("handleAcceptFriendRequest error:", e);
+    }
   };
 
   const handleRejectFriendRequest = async (req) => {
-    const reqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
-    const updatedReqs = reqs.map(r => r.id === req.id ? { ...r, processed: true, status: 'declined' } : r);
-    localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
-    setFriendRequests(updatedReqs);
+    try {
+      await supabase.rpc('reject_friend_request', {
+        p_request_id: req.id,
+        p_user_code: myCode
+      });
 
-    // Also update in Supabase
-    await supabase.from('friend_requests').update({ status: 'declined' }).eq('id', req.id)
-      .catch(e => console.warn("Supabase reject update warning:", e));
+      const reqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
+      const updatedReqs = reqs.map(r => r.id === req.id ? { ...r, processed: true, status: 'declined' } : r);
+      localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
+      setFriendRequests(updatedReqs);
 
-    // Update pending count ref
-    const newPending = updatedReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
-    prevRequestCountRef.current = newPending.length;
+      const newPending = updatedReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
+      prevRequestCountRef.current = newPending.length;
 
-    setToast({
-      title: "❌ İstek Reddedildi",
-      msg: "Arkadaşlık daveti reddedildi."
-    });
+      setToast({
+        title: "❌ İstek Reddedildi",
+        msg: "Arkadaşlık daveti reddedildi."
+      });
+      pollFriendRequests();
+    } catch (e) {
+      console.error("handleRejectFriendRequest error:", e);
+    }
   };
 
   const handleDisconnect = (friendCode) => {

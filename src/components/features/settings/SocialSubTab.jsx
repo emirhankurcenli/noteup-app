@@ -310,9 +310,39 @@ const SocialSubTab = ({
               border: '1px solid rgba(245, 158, 11, 0.3)',
               borderRadius: '14px'
             }}>
-              <div>
-                <p style={{ fontSize: '0.85rem', fontWeight: 700, color: isLight ? '#0F172A' : 'var(--text-primary)', margin: 0 }}>{req.fromName}</p>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '2px 0 0 0', fontFamily: 'monospace' }}>Kod: {req.fromCode}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {req.fromPhotoUrl ? (
+                  <img 
+                    src={req.fromPhotoUrl} 
+                    alt={req.fromName} 
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '1.5px solid rgba(245, 158, 11, 0.5)'
+                    }} 
+                  />
+                ) : (
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                    color: '#FFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    fontSize: '0.85rem'
+                  }}>
+                    {(req.fromName || 'A').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p style={{ fontSize: '0.85rem', fontWeight: 700, color: isLight ? '#0F172A' : 'var(--text-primary)', margin: 0 }}>{req.fromName}</p>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '2px 0 0 0', fontFamily: 'monospace' }}>Kod: {req.fromCode}</p>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button 
@@ -389,23 +419,37 @@ const SocialSubTab = ({
                   : isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.06)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: isGrantedUltra
-                      ? 'linear-gradient(135deg, #F59E0B, #D97706)'
-                      : 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-                    color: '#FFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: '0.8rem',
-                    boxShadow: isGrantedUltra ? '0 2px 8px rgba(245, 158, 11, 0.3)' : 'none'
-                  }}>
-                    {isGrantedUltra ? '👑' : (friend.name ? friend.name.charAt(0).toUpperCase() : 'A')}
-                  </div>
+                  {friend.photo_url ? (
+                    <img 
+                      src={friend.photo_url} 
+                      alt={friend.name} 
+                      style={{
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: isGrantedUltra ? '2px solid #F59E0B' : '1.5px solid rgba(99, 102, 241, 0.4)'
+                      }} 
+                    />
+                  ) : (
+                    <div style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '50%',
+                      background: isGrantedUltra
+                        ? 'linear-gradient(135deg, #F59E0B, #D97706)'
+                        : 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                      color: '#FFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '0.8rem',
+                      boxShadow: isGrantedUltra ? '0 2px 8px rgba(245, 158, 11, 0.3)' : 'none'
+                    }}>
+                      {isGrantedUltra ? '👑' : (friend.name ? friend.name.charAt(0).toUpperCase() : 'A')}
+                    </div>
+                  )}
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <p style={{ fontSize: '0.85rem', fontWeight: 700, color: isLight ? '#0F172A' : 'var(--text-primary)', margin: 0 }}>
