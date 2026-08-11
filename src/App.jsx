@@ -17,6 +17,7 @@ import AppModalsContainer from './components/common/AppModalsContainer';
 import { DEFAULT_AVATARS } from './constants/avatars';
 import { requestBiometricAuth } from './services/biometricService';
 import { shareNoteImage } from './utils/shareUtils';
+import { formatFriendCode } from './utils/codeUtils';
 import { formatBytes } from './utils/mediaUtils';
 import { PLAN_LEVELS, getChangedFeatures, getLostFeatures } from './utils/planUtils';
 import { ensureElementVisible } from './utils/editorKeyboardUtils';
