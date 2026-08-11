@@ -31,10 +31,11 @@ export function useAudioRecorder({
     }
   }, []);
 
-  const startRecording = async () => {
+  const startRecording = useCallback(async () => {
     const micGranted = await checkAndRequestPermission("microphone");
     if (!micGranted) return;
 
+    triggerHaptic("heavy");
     cleanupRecordingTimer();
 
     setLiveTranscription("");
@@ -43,12 +44,14 @@ export function useAudioRecorder({
     setIsRecordingPaused(false);
     setShowRecordingScratchpad(true);
 
-    if (!NativeBridge.isNative()) {
+    const isAndroid = Capacitor.getPlatform() === "android";
+
+    if (!isAndroid) {
       audioChunksRef.current = [];
     }
 
     try {
-      if (NativeBridge.isNative()) {
+      if (isAndroid) {
         await NativeBridge.startNativeAudioRecording(
           lang === "tr" ? "tr-TR" : "en-US",
         );
@@ -108,7 +111,7 @@ export function useAudioRecorder({
   const pauseRecording = () => {
     if (!isRecording || isRecordingPaused) return;
 
-    if (NativeBridge.isNative()) {
+    if (Capacitor.getPlatform() === 'android') {
       try {
         NativeBridge.pauseNativeAudioRecording();
       } catch (err) {}
@@ -134,7 +137,7 @@ export function useAudioRecorder({
   const resumeRecording = () => {
     if (!isRecording || !isRecordingPaused) return;
 
-    if (NativeBridge.isNative()) {
+    if (Capacitor.getPlatform() === 'android') {
       try {
         NativeBridge.resumeNativeAudioRecording();
       } catch (err) {}
@@ -187,7 +190,7 @@ export function useAudioRecorder({
     let blob = null;
     let extension = "m4a";
 
-    if (NativeBridge.isNative()) {
+    if (Capacitor.getPlatform() === 'android') {
       try {
         const res = await NativeBridge.stopNativeAudioRecording();
         if (res && res.base64) {
