@@ -3,6 +3,11 @@
   "appName": "NoteUp",
   "webDir": "dist",
   "plugins": {
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#0F1117"
+    },
     "LocalNotifications": {
       "smallIcon": "ic_stat_icon",
       "iconColor": "#4A7FA5"

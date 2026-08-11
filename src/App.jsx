@@ -18,9 +18,15 @@ import { DEFAULT_AVATARS } from './constants/avatars';
 import { requestBiometricAuth } from './services/biometricService';
 import { shareNoteImage } from './utils/shareUtils';
 import { formatFriendCode } from './utils/codeUtils';
-import { formatBytes } from './utils/mediaUtils';
-import { PLAN_LEVELS, getChangedFeatures, getLostFeatures } from './utils/planUtils';
-import { ensureElementVisible } from './utils/editorKeyboardUtils';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+
+// Ensure Status Bar is never transparent overlaying webview, but sits in its own dark top strip
+if (Capacitor.isNativePlatform()) {
+  StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+  StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+  StatusBar.setBackgroundColor({ color: '#0F1117' }).catch(() => {});
+}
 
 
 
