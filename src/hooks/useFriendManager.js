@@ -390,44 +390,144 @@ const useFriendManager = ({
 
     setIsSendingRequest(true);
     try {
-      // Try with formatted targetCode first
-      let { data: rpcRes, error: rpcErr } = await supabase.rpc('send_friend_request', {
-        p_from_code: myCode,
-        p_to_code: targetCode,
-        p_from_name: profileName || 'Arkadaş (' + myCode.substring(9) + ')'
-      });
+      // 1. First attempt: Try with Supabase RPC function
+      let rpcSuccess = false;
+      let targetUserName = targetCode;
 
-      // If user not found, try unhyphenated version (e.g. HUB12345678)
-      if (rpcRes && rpcRes.success === false && rpcRes.error === 'Bu profil koduna sahip kullanıcı bulunamadı.') {
-        const rawCode = targetCode.replace(/-/g, '');
-        const retryRes = await supabase.rpc('send_friend_request', {
+      try {
+        let { data: rpcRes, error: rpcErr } = await supabase.rpc('send_friend_request', {
           p_from_code: myCode,
-          p_to_code: rawCode,
+          p_to_code: targetCode,
           p_from_name: profileName || 'Arkadaş (' + myCode.substring(9) + ')'
         });
-        if (retryRes.data) {
-          rpcRes = retryRes.data;
-          rpcErr = retryRes.error;
+
+        // Retry unhyphenated if formatted fails
+        if (rpcRes && rpcRes.success === false && rpcRes.error === 'Bu profil koduna sahip kullanıcı bulunamadı.') {
+          const rawCode = targetCode.replace(/-/g, '');
+          const retryRes = await supabase.rpc('send_friend_request', {
+            p_from_code: myCode,
+            p_to_code: rawCode,
+            p_from_name: profileName || 'Arkadaş (' + myCode.substring(9) + ')'
+          });
+          if (retryRes.data) rpcRes = retryRes.data;
         }
+
+        if (!rpcErr && rpcRes && rpcRes.success !== false) {
+          rpcSuccess = true;
+          targetUserName = rpcRes.to_name || targetCode;
+        } else if (rpcRes && rpcRes.error && rpcRes.error !== 'Bu profil koduna sahip kullanıcı bulunamadı.') {
+          if (onInputError) onInputError(rpcRes.error);
+          setIsSendingRequest(false);
+          return;
+        }
+      } catch (rpcEx) {
+        console.warn("RPC send_friend_request not available, falling back to direct table query:", rpcEx);
       }
 
-      if (rpcErr) {
-        console.error("RPC send_friend_request error:", rpcErr);
-        if (onInputError) onInputError("İstek gönderilemedi. Lütfen bağlantınızı kontrol edin.");
-        return;
-      }
+      // 2. Direct Table Fallback if RPC didn't handle it
+      if (!rpcSuccess) {
+        const rawTarget = targetCode.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        const rawWithoutHub = rawTarget.replace(/^HUB/i, '');
+        const formattedTarget = rawWithoutHub.length >= 8 
+          ? `HUB-${rawWithoutHub.substring(0, 4)}-${rawWithoutHub.substring(4, 8)}` 
+          : `HUB-${rawWithoutHub}`;
 
-      if (rpcRes && rpcRes.success === false) {
-        // Business logic error returned directly from Database (ALREADY_PENDING, ALREADY_FRIENDS, NOT_FOUND, etc.)
-        if (onInputError) onInputError(rpcRes.error || rpcRes.message || "İstek gönderilemedi.");
-        return;
+        // Search profiles table using clean exact equals (avoids PostgREST parser errors)
+        let { data: matchedProfiles, error: profErr } = await supabase
+          .from('profiles')
+          .select('friend_code, my_code, name, id')
+          .or(`friend_code.eq.${targetCode},my_code.eq.${targetCode},friend_code.eq.${formattedTarget},my_code.eq.${formattedTarget},friend_code.eq.${rawTarget},my_code.eq.${rawTarget}`)
+          .limit(1);
+
+        if (profErr) {
+          console.error("Direct profile search error:", profErr);
+        }
+
+        let foundProfile = matchedProfiles && matchedProfiles.length > 0 ? matchedProfiles[0] : null;
+
+        // Secondary fallback search if exact match returned nothing
+        if (!foundProfile && rawWithoutHub.length > 2) {
+          const { data: retryProfiles } = await supabase
+            .from('profiles')
+            .select('friend_code, my_code, name, id')
+            .ilike('friend_code', `%${rawWithoutHub}%`)
+            .limit(1);
+          
+          if (retryProfiles && retryProfiles.length > 0) {
+            foundProfile = retryProfiles[0];
+          } else {
+            const { data: retryMyCode } = await supabase
+              .from('profiles')
+              .select('friend_code, my_code, name, id')
+              .ilike('my_code', `%${rawWithoutHub}%`)
+              .limit(1);
+            if (retryMyCode && retryMyCode.length > 0) {
+              foundProfile = retryMyCode[0];
+            }
+          }
+        }
+
+        if (!foundProfile) {
+          if (onInputError) onInputError("Bu profil koduna sahip kullanıcı bulunamadı. Arkadaşınızın uygulamayı açtığından emin olun.");
+          setIsSendingRequest(false);
+          return;
+        }
+
+        const matchedCode = foundProfile.friend_code || foundProfile.my_code || targetCode;
+
+        if (matchedCode === myCode) {
+          if (onInputError) onInputError("Kendi kodunuza istek gönderemezsiniz.");
+          setIsSendingRequest(false);
+          return;
+        }
+
+        // Check if request or friendship already exists in friend_requests
+        const { data: existingReqs } = await supabase
+          .from('friend_requests')
+          .select('id, status')
+          .or(`and(from_code.eq.${myCode},to_code.eq.${matchedCode}),and(from_code.eq.${matchedCode},to_code.eq.${myCode})`);
+
+        if (existingReqs && existingReqs.length > 0) {
+          const accepted = existingReqs.find(r => r.status === 'accepted');
+          const pending = existingReqs.find(r => r.status === 'pending');
+          if (accepted) {
+            if (onInputError) onInputError("Bu kullanıcı zaten arkadaş listenizde.");
+            setIsSendingRequest(false);
+            return;
+          }
+          if (pending) {
+            if (onInputError) onInputError("Bu kullanıcı ile zaten bekleyen bir davet var.");
+            setIsSendingRequest(false);
+            return;
+          }
+        }
+
+        // Insert new request directly into friend_requests table
+        const { error: insertErr } = await supabase
+          .from('friend_requests')
+          .insert({
+            from_code: myCode,
+            to_code: matchedCode,
+            from_name: profileName || 'Arkadaş',
+            to_name: foundProfile.name || matchedCode,
+            status: 'pending'
+          });
+
+        if (insertErr) {
+          console.error("Direct friend_requests insert error:", insertErr);
+          if (onInputError) onInputError("İstek gönderilirken bir veritabanı hatası oluştu.");
+          setIsSendingRequest(false);
+          return;
+        }
+
+        targetUserName = foundProfile.name || matchedCode;
       }
 
       // Success! Clear input and refresh requests
       setPartnerCodeInput('HUB-');
       setToast({
         title: "✉️ İstek Gönderildi",
-        msg: `${rpcRes?.to_name || targetCode} adlı kullanıcıya arkadaşlık daveti gönderildi.`
+        msg: `${targetUserName} adlı kullanıcıya arkadaşlık daveti gönderildi.`
       });
       playChime();
       pollFriendRequests();
