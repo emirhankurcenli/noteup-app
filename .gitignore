@@ -40,8 +40,16 @@ android/keystore.properties
 *.pem
 github_secrets_values.txt
 
+# Certificate Signing Requests
+*.certSigningRequest
+
 # Android build çıktıları
 android/.gradle
 android/app/build
 android/build
 android/.idea
+
+# Build artifacts
+*.aab
+*.apk
+*.ipa

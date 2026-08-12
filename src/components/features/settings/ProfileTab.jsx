@@ -25,10 +25,12 @@ const ProfileTab = ({
   partnerCodeInput,
   setPartnerCodeInput,
   formatFriendCode,
+  isSendingRequest,
   handleSendFriendRequest,
   friendRequests,
   handleAcceptFriendRequest,
   handleRejectFriendRequest,
+  handleCancelFriendRequest,
   friends,
   handleDisconnect,
   permissionStates,
@@ -176,10 +178,12 @@ const ProfileTab = ({
             partnerCodeInput={partnerCodeInput}
             setPartnerCodeInput={setPartnerCodeInput}
             formatFriendCode={formatFriendCode}
+            isSendingRequest={isSendingRequest}
             handleSendFriendRequest={handleSendFriendRequest}
             friendRequests={friendRequests}
             handleAcceptFriendRequest={handleAcceptFriendRequest}
             handleRejectFriendRequest={handleRejectFriendRequest}
+            handleCancelFriendRequest={handleCancelFriendRequest}
             friends={friends}
             handleDisconnect={handleDisconnect}
             userPlan={userPlan}

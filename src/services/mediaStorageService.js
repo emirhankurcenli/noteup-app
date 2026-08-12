@@ -47,6 +47,8 @@ export const MediaStorageService = {
     if (
       base64Data.startsWith("idb://") ||
       base64Data.startsWith("file://") ||
+      base64Data.startsWith("capacitor://") ||
+      base64Data.includes("_capacitor_file_") ||
       base64Data.startsWith("http")
     ) {
       return base64Data;
@@ -65,7 +67,7 @@ export const MediaStorageService = {
           path: fileName,
           directory: Directory.Data,
         });
-        return uriResult.uri;
+        return uriResult.uri || `file://${fileName}`;
       }
 
       // 2. Web Browser (IndexedDB)
@@ -95,14 +97,21 @@ export const MediaStorageService = {
   getMedia: async (mediaUri) => {
     if (!mediaUri || typeof mediaUri !== "string") return mediaUri;
 
-    // Normal URL veya Base64 ise olduğu gibi döndür
-    if (!mediaUri.startsWith("idb://") && !mediaUri.startsWith("file://")) {
+    // Direct HTTP URL or raw base64 data
+    const isIdb = mediaUri.startsWith("idb://");
+    const isNativeFile =
+      mediaUri.startsWith("file://") ||
+      mediaUri.startsWith("capacitor://") ||
+      mediaUri.includes("_capacitor_file_") ||
+      mediaUri.includes("media_");
+
+    if (!isIdb && !isNativeFile) {
       return mediaUri;
     }
 
     try {
       // 1. IndexedDB
-      if (mediaUri.startsWith("idb://")) {
+      if (isIdb) {
         const mediaId = mediaUri.replace("idb://", "");
         const db = await openDB();
         return new Promise((resolve, reject) => {
@@ -116,8 +125,9 @@ export const MediaStorageService = {
       }
 
       // 2. Capacitor Filesystem
-      if (Capacitor.isNativePlatform() && mediaUri.startsWith("file://")) {
-        const fileName = mediaUri.substring(mediaUri.lastIndexOf("/") + 1);
+      if (Capacitor.isNativePlatform() && isNativeFile) {
+        let fileName = mediaUri.substring(mediaUri.lastIndexOf("/") + 1);
+        if (fileName.includes("?")) fileName = fileName.split("?")[0];
         const fileData = await Filesystem.readFile({
           path: fileName,
           directory: Directory.Data,
@@ -146,9 +156,13 @@ export const MediaStorageService = {
         transaction.objectStore(STORE_NAME).delete(mediaId);
       } else if (
         Capacitor.isNativePlatform() &&
-        mediaUri.startsWith("file://")
+        (mediaUri.startsWith("file://") ||
+          mediaUri.startsWith("capacitor://") ||
+          mediaUri.includes("_capacitor_file_") ||
+          mediaUri.includes("media_"))
       ) {
-        const fileName = mediaUri.substring(mediaUri.lastIndexOf("/") + 1);
+        let fileName = mediaUri.substring(mediaUri.lastIndexOf("/") + 1);
+        if (fileName.includes("?")) fileName = fileName.split("?")[0];
         await Filesystem.deleteFile({
           path: fileName,
           directory: Directory.Data,

@@ -39,7 +39,11 @@ function base64ToBuffer(base64) {
   return bytes;
 }
 
+const LEGACY_FALLBACK_KEY = "NoteUp_Vault_Device_Key_2026";
+const DEVICE_KEY_STORAGE = "__noteup_device_vault_key";
+
 const getFallbackUserKey = () => {
+  // Önce localStorage'dan kullanıcı bilgisi ile anahtar oluştur
   try {
     const raw = localStorage.getItem('s23_user');
     if (raw) {
@@ -47,7 +51,19 @@ const getFallbackUserKey = () => {
       if (u && (u.uid || u.id)) return `NoteUp_Vault_${u.uid || u.id}`;
     }
   } catch (e) {}
-  return "NoteUp_Vault_Device_Key_2026";
+
+  // Kullanıcı bilgisi yoksa cihaz bazlı benzersiz anahtar üret ve sakla
+  try {
+    let deviceKey = localStorage.getItem(DEVICE_KEY_STORAGE);
+    if (!deviceKey) {
+      deviceKey = `NoteUp_Device_${crypto.randomUUID()}_${Date.now()}`;
+      localStorage.setItem(DEVICE_KEY_STORAGE, deviceKey);
+    }
+    return deviceKey;
+  } catch (e) {
+    // localStorage erişilemiyorsa session bazlı anahtar (her oturumda farklı)
+    return `NoteUp_Session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  }
 };
 
 export const CryptoService = {
@@ -146,6 +162,24 @@ export const CryptoService = {
       const decoder = new TextDecoder();
       return decoder.decode(decryptedBuffer);
     } catch (err) {
+      // Geriye dönük uyumluluk: eski statik anahtar ile dene
+      if (secretKey !== LEGACY_FALLBACK_KEY) {
+        try {
+          const parts = encryptedString.split(":");
+          const iv = base64ToBuffer(parts[2]);
+          const cipherBuffer = base64ToBuffer(parts[3]);
+          const legacyKey = await CryptoService.deriveKey(LEGACY_FALLBACK_KEY);
+          const decryptedBuffer = await window.crypto.subtle.decrypt(
+            { name: ALGORITHM, iv: iv },
+            legacyKey,
+            cipherBuffer,
+          );
+          const decoder = new TextDecoder();
+          return decoder.decode(decryptedBuffer);
+        } catch (legacyErr) {
+          // Eski anahtar da çalışmadı
+        }
+      }
       console.error(
         "[CryptoService] Decryption failed (wrong key or corrupted data):",
         err,

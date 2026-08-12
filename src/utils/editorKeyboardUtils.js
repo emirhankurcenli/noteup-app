@@ -3,6 +3,11 @@ export const ensureElementVisible = (element, container) => {
   const parentContainer = container || (element.closest ? element.closest('.editor-body') : null);
   if (!parentContainer) return;
 
+  // Always reset window scroll if Chromium shifted window
+  if (window.scrollY !== 0) {
+    window.scrollTo(0, 0);
+  }
+
   const elemRect = element.getBoundingClientRect();
   const containerRect = parentContainer.getBoundingClientRect();
 
@@ -174,44 +179,76 @@ export const handleTextareaKeyDown = (e, block, idx, editingNote, handleUpdateNo
 
     e.preventDefault();
 
-    const getHTMLSplit = (target) => {
-      if (!target || target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
-        const val = target ? target.value || '' : '';
-        const pos = target ? target.selectionStart || 0 : 0;
-        return {
-          textBefore: val.substring(0, pos),
-          textAfter: val.substring(pos)
-        };
-      }
-      const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0) {
-        return { textBefore: target.innerHTML || '', textAfter: '' };
-      }
-      try {
-        const range = sel.getRangeAt(0);
+    const { start: selectionStart, end: selectionEnd } = getCaretOffsets(e.target);
+    const plainText = (e.target.innerText || e.target.textContent || e.target.value || '').replace(/\u8203/g, '');
+    const isTextEmpty = plainText.trim() === '';
 
-        const rangeBefore = document.createRange();
-        rangeBefore.selectNodeContents(target);
-        rangeBefore.setEnd(range.startContainer, range.startOffset);
-        const divBefore = document.createElement('div');
-        divBefore.appendChild(rangeBefore.cloneContents());
+    // 1. If it's an empty bullet block, pressing Enter removes the bullet and turns it into normal text line
+    if (block.bullet && isTextEmpty) {
+      const updatedBlocks = (editingNote.blocks || []).map((b, i) => {
+        if (i === idx) return { ...b, bullet: false, content: '' };
+        return b;
+      });
+      handleUpdateNote('blocks', updatedBlocks, true);
+      const focusSame = () => {
+        const curEl = document.querySelector(`[data-block-id="${block.id}"]`);
+        if (curEl) {
+          try { curEl.focus({ preventScroll: true }); } catch (err) { curEl.focus(); }
+          setCaretAtStart(curEl);
+        }
+      };
+      queueMicrotask(focusSame);
+      setTimeout(focusSame, 0);
+      return;
+    }
 
-        const rangeAfter = document.createRange();
-        rangeAfter.selectNodeContents(target);
-        rangeAfter.setStart(range.endContainer, range.endOffset);
-        const divAfter = document.createElement('div');
-        divAfter.appendChild(rangeAfter.cloneContents());
+    // Determine textBefore and textAfter accurately based on caret offset
+    let textBefore = '';
+    let textAfter = '';
 
-        return {
-          textBefore: divBefore.innerHTML,
-          textAfter: divAfter.innerHTML
-        };
-      } catch (err) {
-        return { textBefore: target.innerHTML || '', textAfter: '' };
-      }
-    };
+    if (selectionStart === 0) {
+      // Cursor is at index 0 (start of text)
+      textBefore = '';
+      textAfter = e.target.innerHTML || block.content || '';
+    } else if (selectionStart >= plainText.length) {
+      // Cursor is at the end of text
+      textBefore = e.target.innerHTML || block.content || '';
+      textAfter = '';
+    } else {
+      // Cursor is in the middle of text: split using getHTMLSplit helper
+      const getHTMLSplit = (target) => {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) {
+          return { textBefore: target.innerHTML || '', textAfter: '' };
+        }
+        try {
+          const range = sel.getRangeAt(0);
 
-    const { textBefore, textAfter } = getHTMLSplit(e.target);
+          const rangeBefore = document.createRange();
+          rangeBefore.selectNodeContents(target);
+          rangeBefore.setEnd(range.startContainer, range.startOffset);
+          const divBefore = document.createElement('div');
+          divBefore.appendChild(rangeBefore.cloneContents());
+
+          const rangeAfter = document.createRange();
+          rangeAfter.selectNodeContents(target);
+          rangeAfter.setStart(range.endContainer, range.endOffset);
+          const divAfter = document.createElement('div');
+          divAfter.appendChild(rangeAfter.cloneContents());
+
+          return {
+            textBefore: divBefore.innerHTML,
+            textAfter: divAfter.innerHTML
+          };
+        } catch (err) {
+          return { textBefore: target.innerHTML || '', textAfter: '' };
+        }
+      };
+
+      const split = getHTMLSplit(e.target);
+      textBefore = split.textBefore;
+      textAfter = split.textAfter;
+    }
 
     const currentFont = block.fontFamily;
     const currentWeight = block.fontWeight || (block.isBold ? 'bold' : 'normal');
@@ -220,23 +257,55 @@ export const handleTextareaKeyDown = (e, block, idx, editingNote, handleUpdateNo
 
     const blocks = editingNote.blocks || [];
     const newBlockId = 'b-' + Date.now();
-    const newBlock = {
-      id: newBlockId,
-      type: 'text',
-      content: textAfter,
-      fontFamily: currentFont,
-      fontWeight: isBold ? 'bold' : 'normal',
-      isBold: isBold,
-      color: currentColor,
-      bullet: !!block.bullet
-    };
 
-    const updatedBlocks = blocks.map((b, i) => {
-      if (i === idx) return { ...b, content: textBefore };
-      return b;
-    });
+    let updatedBlocks = [];
 
-    updatedBlocks.splice(idx + 1, 0, newBlock);
+    if (selectionStart === 0 && block.bullet) {
+      // USER'S EXACT CASE: Cursor at start of a bullet line ("• |bullet koydum")
+      // Explicitly clear DOM innerHTML of target element so DOM state matches React state!
+      if (e.target) {
+        e.target.innerHTML = '';
+      }
+
+      const newBlock = {
+        id: newBlockId,
+        type: 'text',
+        content: textAfter,
+        fontFamily: currentFont,
+        fontWeight: isBold ? 'bold' : 'normal',
+        isBold: isBold,
+        color: currentColor,
+        bullet: true
+      };
+
+      updatedBlocks = blocks.map((b, i) => {
+        if (i === idx) return { ...b, content: '', bullet: false };
+        return b;
+      });
+      updatedBlocks.splice(idx + 1, 0, newBlock);
+    } else {
+      // Standard Enter split behavior: update target DOM innerHTML to textBefore
+      if (e.target) {
+        e.target.innerHTML = textBefore;
+      }
+
+      const newBlock = {
+        id: newBlockId,
+        type: 'text',
+        content: textAfter,
+        fontFamily: currentFont,
+        fontWeight: isBold ? 'bold' : 'normal',
+        isBold: isBold,
+        color: currentColor,
+        bullet: !!block.bullet
+      };
+
+      updatedBlocks = blocks.map((b, i) => {
+        if (i === idx) return { ...b, content: textBefore };
+        return b;
+      });
+      updatedBlocks.splice(idx + 1, 0, newBlock);
+    }
 
     const container = e.target.closest('.editor-body');
     handleUpdateNote('blocks', updatedBlocks, true);

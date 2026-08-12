@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback } from "react";
+import { Capacitor } from "@capacitor/core";
 import { NativeBridge } from "../services/nativeBridge";
+import { triggerHaptic } from "../services/haptics";
 
 export function useAudioRecorder({
   lang = "tr",
@@ -208,9 +210,15 @@ export function useAudioRecorder({
         try {
           mediaRecorderRef.current.stop();
         } catch (e) {}
+        // Mikrofon stream'ini serbest bırak (ışık sönmesi için)
+        try {
+          const stream = mediaRecorderRef.current.stream;
+          if (stream) stream.getTracks().forEach((track) => track.stop());
+        } catch (e) {}
       }
-      blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-      extension = "webm";
+      const mimeType = mediaRecorderRef.current?.mimeType || "audio/webm";
+      blob = new Blob(audioChunksRef.current, { type: mimeType });
+      extension = mimeType.includes("mp4") ? "m4a" : mimeType.includes("ogg") ? "ogg" : "webm";
     }
 
     if (!blob || blob.size === 0) return;
@@ -253,7 +261,6 @@ export function useAudioRecorder({
           size: readableSize,
           transcription: null,
         }, extraBlocks);
-      }
       }
 
       setToast({

@@ -1,20 +1,16 @@
-import { AdMob } from '@capacitor-community/admob';
-import { Capacitor } from '@capacitor/core';
+import { detectPlatform } from '../platform/detect';
+import * as androidAds from '../platform/android/ads.android';
+import * as iosAds from '../platform/ios/ads.ios';
+import * as webAds from '../platform/web/ads.web';
 
 export const showInterstitialAd = async (onFallback) => {
-  if (Capacitor.isNativePlatform()) {
-    try {
-      await AdMob.initialize({ requestTrackingAuthorization: true });
-      await AdMob.prepareInterstitial({
-        adId: 'ca-app-pub-3940256099942544/1033173712', // Test AdMob Interstitial Unit ID
-        isTesting: true,
-      });
-      await AdMob.showInterstitial();
-    } catch (err) {
-      console.error("AdMob interstitial error:", err);
-      if (onFallback) onFallback();
-    }
+  const plt = detectPlatform();
+  if (plt === 'android') {
+    return await androidAds.showInterstitialAd(onFallback);
+  } else if (plt === 'ios') {
+    return await iosAds.showInterstitialAd(onFallback);
   } else {
-    if (onFallback) onFallback();
+    return await webAds.showInterstitialAd(onFallback);
   }
 };
+

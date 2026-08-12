@@ -297,6 +297,8 @@ const BlockListRenderer = ({
                       if (el.dataset.initializedId !== block.id) {
                         el.innerHTML = block.content || '';
                         el.dataset.initializedId = block.id;
+                      } else if (el.innerHTML !== (block.content || '') && document.activeElement !== el) {
+                        el.innerHTML = block.content || '';
                       }
                     }
                   }}

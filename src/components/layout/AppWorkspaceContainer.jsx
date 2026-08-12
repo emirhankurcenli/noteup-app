@@ -117,10 +117,12 @@ export default function AppWorkspaceContainer({
   partnerCodeInput,
   setPartnerCodeInput,
   formatFriendCode,
+  isSendingRequest,
   handleSendFriendRequest,
   friendRequests,
   handleAcceptFriendRequest,
   handleRejectFriendRequest,
+  handleCancelFriendRequest,
   handleDisconnect,
   handleLogout,
   DEFAULT_AVATARS,
@@ -283,10 +285,12 @@ export default function AppWorkspaceContainer({
         partnerCodeInput={partnerCodeInput}
         setPartnerCodeInput={setPartnerCodeInput}
         formatFriendCode={formatFriendCode}
+        isSendingRequest={isSendingRequest}
         handleSendFriendRequest={handleSendFriendRequest}
         friendRequests={friendRequests}
         handleAcceptFriendRequest={handleAcceptFriendRequest}
         handleRejectFriendRequest={handleRejectFriendRequest}
+        handleCancelFriendRequest={handleCancelFriendRequest}
         friends={friends}
         handleDisconnect={handleDisconnect}
         handleLogout={handleLogout}

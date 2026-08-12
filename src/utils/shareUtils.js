@@ -339,17 +339,20 @@ export const shareNoteImage = async (note, setToast) => {
     console.log("Sharing cancelled or failed:", err);
   } finally {
     if (Capacitor.isNativePlatform() && nativeFileUris.length > 0) {
-      for (let i = 0; i < pages.length; i++) {
-        try {
-          const tempFilename = `NoteUp_${note.id || 'temp'}_page_${i + 1}.jpg`;
-          await Filesystem.deleteFile({
-            path: tempFilename,
-            directory: Directory.Cache
-          });
-        } catch (delErr) {
-          console.log("Temp file cleanup ignored:", delErr);
+      // 10 saniye bekleyip sil (hedef uygulama WhatsApp/Mail'in dosyayı okuyabilmesi için)
+      setTimeout(async () => {
+        for (let i = 0; i < pages.length; i++) {
+          try {
+            const tempFilename = `NoteUp_${note.id || 'temp'}_page_${i + 1}.jpg`;
+            await Filesystem.deleteFile({
+              path: tempFilename,
+              directory: Directory.Cache
+            });
+          } catch (delErr) {
+            console.log("Temp file cleanup ignored:", delErr);
+          }
         }
-      }
+      }, 10000);
     }
   }
 };

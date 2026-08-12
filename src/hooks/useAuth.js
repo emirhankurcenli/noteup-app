@@ -262,6 +262,7 @@ export default function useAuth() {
           email: u.email || '',
           name: userData.name,
           photo_url: userData.photoURL,
+          friend_code: userCode,
           my_code: userCode,
           platform: detectPlatform(),
           country: getCountry(),
@@ -420,12 +421,15 @@ export default function useAuth() {
           ? 'com.notes.hub://login'
           : window.location.origin;
 
+        const isNative = Capacitor.isNativePlatform();
+
         // OAuth URL'sini Supabase'den al
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: providerName,
           options: {
             redirectTo: redirectUrl,
-            skipBrowserRedirect: true  // Kendi Browser'ımızı açacağız
+            skipBrowserRedirect: isNative,
+            scopes: providerName === 'apple' ? 'name email' : undefined
           }
         });
         if (error) throw error;

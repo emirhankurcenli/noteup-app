@@ -15,6 +15,7 @@ const SocialSubTab = ({
   friendRequests = [],
   handleAcceptFriendRequest,
   handleRejectFriendRequest,
+  handleCancelFriendRequest,
   friends = [],
   handleDisconnect,
   userPlan,
@@ -44,6 +45,7 @@ const SocialSubTab = ({
   };
 
   const pendingRequests = friendRequests.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
+  const outgoingRequests = friendRequests.filter(r => r.fromCode === myCode && !r.processed && r.status === 'pending');
 
   return (
     <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -105,22 +107,20 @@ const SocialSubTab = ({
             height: '34px',
             borderRadius: '10px',
             background: isLight ? 'linear-gradient(135deg, #3B82F6, #2563EB)' : 'linear-gradient(135deg, #1E40AF, #1E3A8A)',
-            border: isLight ? 'none' : '1px solid rgba(96, 165, 250, 0.4)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#FFFFFF',
-            boxShadow: isLight ? '0 2px 8px rgba(59, 130, 246, 0.3)' : '0 2px 8px rgba(30, 64, 175, 0.3)'
+            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
             </svg>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isLight ? '#1E3A8A' : 'var(--text-primary)' }}>{t('myProfileCode')}</span>
-            <span style={{ fontSize: '0.7rem', color: isLight ? '#475569' : 'var(--text-muted)' }}>{t('profileCodeHelp')}</span>
-          </div>
+          <span style={{ fontSize: '0.92rem', fontWeight: 800, color: isLight ? '#1E3A8A' : 'var(--text-primary)' }}>
+            {t('myProfileCode')}
+          </span>
         </div>
 
         {/* Code & Copy button */}
@@ -139,7 +139,8 @@ const SocialSubTab = ({
           </span>
           <button 
             onClick={() => {
-              navigator.clipboard.writeText(myCode);
+              const codeToCopy = myCode ? myCode.replace(/^(HUB-?)+/i, '') : '';
+              navigator.clipboard.writeText(codeToCopy);
               setToast({ title: `📋 ${t('copiedBtn')}`, msg: lang === 'tr' ? 'Profil kodunuz panoya kopyalandı.' : 'Profile code copied to clipboard.' });
             }}
             style={{
@@ -380,20 +381,64 @@ const SocialSubTab = ({
             </div>
           ))
         ) : (
-          <p style={{
+          <div style={{
             fontSize: '0.78rem',
             color: 'var(--text-muted)',
             textAlign: 'center',
-            padding: '12px',
+            padding: '10px 14px',
             background: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)',
             borderRadius: '12px',
-            border: isLight ? '1px dashed #CBD5E1' : '1px dashed var(--border-color)',
+            border: isLight ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.05)',
             margin: 0
           }}>
-            {t('noPendingRequests')}
-          </p>
+            {lang === 'tr' ? 'Bekleyen istek yok' : 'No pending requests'}
+          </div>
         )}
       </div>
+
+      {/* OUTGOING (SENT) REQUESTS SECTION */}
+      {outgoingRequests.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', paddingLeft: '4px' }}>
+            {lang === 'tr' ? 'Gönderilen İstekler' : 'Sent Invites'} ({outgoingRequests.length})
+          </span>
+          {outgoingRequests.map(req => (
+            <div key={req.id} style={{
+              padding: '12px 16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: isLight ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              borderRadius: '14px'
+            }}>
+              <div>
+                <p style={{ fontSize: '0.85rem', fontWeight: 700, color: isLight ? '#0F172A' : 'var(--text-primary)', margin: 0 }}>
+                  {req.toName || req.toCode}
+                </p>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '2px 0 0 0', fontFamily: 'monospace' }}>
+                  {lang === 'tr' ? 'Onay bekleniyor...' : 'Awaiting confirmation...'}
+                </p>
+              </div>
+              <button
+                onClick={() => handleCancelFriendRequest && handleCancelFriendRequest(req.id, req.toCode)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  color: '#EF4444',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                {lang === 'tr' ? '🚫 İptal Et' : '🚫 Cancel'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* MY FRIENDS LIST */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -511,7 +556,14 @@ const SocialSubTab = ({
                   )}
 
                   <button 
-                    onClick={() => handleDisconnect(friend.code)}
+                    onClick={() => {
+                      const confirmMsg = lang === 'tr'
+                        ? `"${friend.name || friend.code}" kişisini arkadaş listenizden çıkarmak istediğinize emin misiniz?`
+                        : `Are you sure you want to remove "${friend.name || friend.code}" from your friends list?`;
+                      if (window.confirm(confirmMsg)) {
+                        handleDisconnect(friend.code);
+                      }
+                    }}
                     style={{
                       padding: '5px 10px',
                       borderRadius: '8px',
@@ -523,7 +575,7 @@ const SocialSubTab = ({
                       cursor: 'pointer'
                     }}
                   >
-                    {t('confirmDelete')}
+                    {lang === 'tr' ? 'Sil' : 'Remove'}
                   </button>
                 </div>
               </div>
@@ -531,15 +583,15 @@ const SocialSubTab = ({
           })
         ) : (
           <div style={{
-            padding: '16px',
+            padding: '12px 14px',
             textAlign: 'center',
             background: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)',
-            borderRadius: '14px',
-            border: isLight ? '1px dashed #CBD5E1' : '1px dashed var(--border-color)'
+            borderRadius: '12px',
+            border: isLight ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.05)'
           }}>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
-              {t('friendHelpMsg')}
-            </p>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              {lang === 'tr' ? 'Henüz arkadaş eklenmedi' : 'No friends added yet'}
+            </span>
           </div>
         )}
       </div>

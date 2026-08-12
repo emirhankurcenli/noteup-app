@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import useFriendManager from './useFriendManager';
 import { PLAN_LIMITS } from '../constants/paywallPlans';
 import { sanitizeSingleLine, sanitizeNoteContent } from '../utils/securityUtils';
+import { supabase } from '../supabaseClient';
 
 /**
  * useSharing - Manages friends, friend requests, real-time sync, and note/folder collaboration.
@@ -30,16 +31,126 @@ export default function useSharing({
     setToast,
   });
 
-  // --- CROSS-TAB SYNC & NOTIFICATION LISTENER ---
+  // --- CROSS-TAB SYNC & REALTIME NOTIFICATION LISTENER ---
   useEffect(() => {
     if (!myCode) return;
+
+    // Supabase DB: Initial check & polling for note_shares sent to me
+    const fetchIncomingNoteShares = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('note_shares')
+          .select('*')
+          .eq('to_code', myCode)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          const firstReq = data[0];
+          setIncomingRequest({
+            id: firstReq.id,
+            fromCode: firstReq.from_code,
+            fromName: firstReq.from_name || 'Arkadaş',
+            toCode: firstReq.to_code,
+            noteId: firstReq.note_id,
+            noteTitle: firstReq.note_title,
+            noteBlocks: firstReq.note_blocks,
+            timestamp: new Date(firstReq.created_at).getTime(),
+            processed: false,
+          });
+        }
+      } catch (err) {
+        console.warn("Error fetching note shares from Supabase:", err);
+      }
+    };
+
+    fetchIncomingNoteShares();
+
+    // Supabase Realtime channel for instant note share alerts
+    const shareChannel = supabase
+      .channel(`note_shares_${myCode}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'note_shares',
+          filter: `to_code=eq.${myCode}`,
+        },
+        (payload) => {
+          if (payload.new && payload.new.status === 'pending') {
+            setIncomingRequest({
+              id: payload.new.id,
+              fromCode: payload.new.from_code,
+              fromName: payload.new.from_name || 'Arkadaş',
+              toCode: payload.new.to_code,
+              noteId: payload.new.note_id,
+              noteTitle: payload.new.note_title,
+              noteBlocks: payload.new.note_blocks,
+              timestamp: new Date(payload.new.created_at).getTime(),
+              processed: false,
+            });
+            friendMgr.playChime();
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'note_shares',
+          filter: `from_code=eq.${myCode}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            if (payload.new.status === 'accepted') {
+              setToast({
+                title: "🎉 Davet Kabul Edildi!",
+                msg: `Arkadaşınız "${payload.new.note_title || 'Not'}" paylaşım davetinizi kabul etti.`
+              });
+              friendMgr.playChime();
+            } else if (payload.new.status === 'rejected') {
+              setToast({
+                title: "❌ Davet Reddedildi",
+                msg: `Arkadaşınız "${payload.new.note_title || 'Not'}" paylaşım davetinizi reddetti.`
+              });
+            }
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'note_shares',
+          filter: `to_code=eq.${myCode}`,
+        },
+        (payload) => {
+          if (payload.old) {
+            const oldShare = payload.old;
+            if (notes && Array.isArray(notes) && typeof saveNotes === 'function') {
+              const updatedNotes = notes.filter(n => {
+                if (n.sharedFrom === oldShare.from_code && (n.id === oldShare.note_id || !oldShare.note_id)) {
+                  return false;
+                }
+                return true;
+              });
+              if (updatedNotes.length !== notes.length) {
+                saveNotes(updatedNotes);
+              }
+            }
+          }
+        }
+      )
+      .subscribe();
 
     const handleStorageChange = (e) => {
       if (e.key === 's23_friend_requests') {
         const reqs = JSON.parse(e.newValue || '[]');
         friendMgr.setFriendRequests(reqs);
 
-        // Process accepted friend requests sent by me
         const acceptedSentRequest = reqs.find(r => r.fromCode === myCode && r.status === 'accepted');
         if (acceptedSentRequest) {
           const newFriendCode = acceptedSentRequest.toCode;
@@ -74,26 +185,56 @@ export default function useSharing({
           friendMgr.playChime();
         }
       }
-      if (e.key === 's23_share_requests') {
-        const requests = JSON.parse(e.newValue || '[]');
-        const myRequest = requests.find(r => r.toCode === myCode && !r.processed);
-        if (myRequest) {
-          setIncomingRequest(myRequest);
-        }
-      }
     };
 
     window.addEventListener('storage', handleStorageChange);
 
-    // Initial check for incoming requests
-    const requests = JSON.parse(localStorage.getItem('s23_share_requests') || '[]');
-    const myRequest = requests.find(r => r.toCode === myCode && !r.processed);
-    if (myRequest) {
-      setIncomingRequest(myRequest);
-    }
-
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      supabase.removeChannel(shareChannel);
+    };
   }, [myCode]);
+
+  // --- AUTOMATIC SHARED NOTE CLEANUP WHEN FRIEND LIST CHANGES ---
+  useEffect(() => {
+    if (!friendMgr.friends || !notes || !Array.isArray(notes) || typeof saveNotes !== 'function') return;
+
+    const activeFriendCodes = new Set((friendMgr.friends || []).map(f => f.code));
+    let needsUpdate = false;
+
+    const cleanedNotes = notes
+      // 1. Remove notes shared with me by a user who is no longer a friend
+      .filter(n => {
+        if (n.sharedFrom && !activeFriendCodes.has(n.sharedFrom)) {
+          needsUpdate = true;
+          return false;
+        }
+        return true;
+      })
+      // 2. Remove non-friends from sharedWith array on my notes and update isShared
+      .map(n => {
+        if (!n.sharedFrom) {
+          const currentSharedWith = Array.isArray(n.sharedWith) ? n.sharedWith : [];
+          const validSharedWith = currentSharedWith.filter(code => activeFriendCodes.has(code));
+          const shouldBeShared = validSharedWith.length > 0;
+
+          if (n.isShared !== shouldBeShared || validSharedWith.length !== currentSharedWith.length) {
+            needsUpdate = true;
+            return {
+              ...n,
+              sharedWith: validSharedWith,
+              isShared: shouldBeShared,
+              updatedAt: Date.now(),
+            };
+          }
+        }
+        return n;
+      });
+
+    if (needsUpdate) {
+      saveNotes(cleanedNotes);
+    }
+  }, [friendMgr.friends, notes]);
 
   // --- REWARDED AD CALLBACK ---
   // Reklam tamamlandıktan sonra çağrılır
@@ -228,40 +369,55 @@ export default function useSharing({
     );
     saveNotes(updatedNotes);
 
-    // Send invitations to newly checked friends
-    friendMgr.selectedFriendCodes.forEach(code => {
-      const currentReqs = JSON.parse(localStorage.getItem('s23_share_requests') || '[]');
-      if (!currentReqs.some(r => r.toCode === code && r.noteId === noteToShare.id)) {
-        const req = {
-          id: 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-          fromCode: myCode,
-          fromName: profileName || 'Arkadaş (' + myCode.substring(9) + ')',
-          toCode: code,
-          noteId: noteToShare.id,
-          noteTitle: noteToShare.title,
-          noteContent: noteToShare.content,
-          noteDebts: noteToShare.debts || [],
-          processed: false
-        };
-        localStorage.setItem('s23_share_requests', JSON.stringify([...currentReqs, req]));
+    // 1. Delete share invitations/connections for friends that were removed
+    const previousSharedWith = noteToShare.sharedWith || [];
+    const removedCodes = previousSharedWith.filter(code => !friendMgr.selectedFriendCodes.includes(code));
+    removedCodes.forEach(async (code) => {
+      try {
+        await supabase.from('note_shares').delete()
+          .eq('from_code', myCode)
+          .eq('note_id', noteToShare.id)
+          .eq('to_code', code);
+      } catch (err) {
+        console.warn("Supabase note share delete error:", err);
+      }
+    });
+
+    // 2. Send invitations to newly checked friends via Supabase
+    const newlyAddedCodes = friendMgr.selectedFriendCodes.filter(code => !previousSharedWith.includes(code));
+    newlyAddedCodes.forEach(async (code) => {
+      try {
+        await supabase.from('note_shares').insert([{
+          from_code: myCode,
+          from_name: profileName || ('Arkadaş (' + myCode.substring(9) + ')'),
+          to_code: code,
+          note_id: noteToShare.id,
+          note_title: noteToShare.title || 'Paylaşılan Not',
+          note_blocks: noteToShare.blocks || [],
+          status: 'pending'
+        }]);
+      } catch (err) {
+        console.warn("Supabase note share insert error:", err);
       }
     });
 
     friendMgr.setSelectedFriendCodes([]);
     setToast({
-      title: isShared ? "🌐 Ortak Paylaşım Güncellendi" : "🔒 Not Özel Yapıldı",
-      msg: isShared ? "Paylaşım daveti seçilen arkadaşlara gönderildi." : "Not paylaşımı kapatıldı."
+      title: isShared ? "📩 Paylaşım Güncellendi" : "🔒 Not Özel Yapıldı",
+      msg: isShared ? "Not paylaşım ayarları kaydedildi." : "Not paylaşımı kapatıldı."
     });
   };
 
-  const handleAcceptShare = () => {
+  const handleAcceptShare = async () => {
     if (!incomingRequest) return;
     
     // Check if we already have this note
     if (notes.some(n => n.id === incomingRequest.noteId)) {
-      const reqs = JSON.parse(localStorage.getItem('s23_share_requests') || '[]');
-      const updatedReqs = reqs.map(r => r.id === incomingRequest.id ? { ...r, processed: true } : r);
-      localStorage.setItem('s23_share_requests', JSON.stringify(updatedReqs));
+      if (incomingRequest.id) {
+        try {
+          await supabase.from('note_shares').update({ status: 'accepted' }).eq('id', incomingRequest.id);
+        } catch (err) {}
+      }
       setIncomingRequest(null);
       setToast({ title: "ℹ️ Bilgi", msg: "Bu not zaten listenizde ekli." });
       return;
@@ -309,10 +465,12 @@ export default function useSharing({
 
     saveNotes([newSharedNote, ...notes]);
 
-    // Mark request as processed
-    const reqs = JSON.parse(localStorage.getItem('s23_share_requests') || '[]');
-    const updatedReqs = reqs.map(r => r.id === incomingRequest.id ? { ...r, processed: true } : r);
-    localStorage.setItem('s23_share_requests', JSON.stringify(updatedReqs));
+    // Mark request as processed in Supabase DB
+    if (incomingRequest.id) {
+      try {
+        await supabase.from('note_shares').update({ status: 'accepted' }).eq('id', incomingRequest.id);
+      } catch (err) {}
+    }
     
     setIncomingRequest(null);
     setToast({
@@ -322,19 +480,66 @@ export default function useSharing({
     friendMgr.playChime();
   };
 
-  const handleRejectShare = () => {
+  const handleRejectShare = async () => {
     if (!incomingRequest) return;
     
-    // Mark request as processed
-    const reqs = JSON.parse(localStorage.getItem('s23_share_requests') || '[]');
-    const updatedReqs = reqs.map(r => r.id === incomingRequest.id ? { ...r, processed: true } : r);
-    localStorage.setItem('s23_share_requests', JSON.stringify(updatedReqs));
+    // Mark request as rejected in Supabase DB
+    if (incomingRequest.id) {
+      try {
+        await supabase.from('note_shares').update({ status: 'rejected' }).eq('id', incomingRequest.id);
+      } catch (err) {}
+    }
     
     setIncomingRequest(null);
     setToast({
       title: "❌ Davet Reddedildi",
       msg: "Paylaşım isteği reddedildi."
     });
+  };
+
+  const handleDisconnect = async (friendCode) => {
+    if (!friendCode) return;
+
+    // 1. Friend manager disconnect (UI + friend_requests + remove_friend RPC)
+    await friendMgr.handleDisconnect(friendCode);
+
+    // 2. Delete note_shares records in Supabase (in both directions)
+    try {
+      if (myCode) {
+        await supabase.from('note_shares').delete().eq('from_code', myCode).eq('to_code', friendCode);
+        await supabase.from('note_shares').delete().eq('from_code', friendCode).eq('to_code', myCode);
+      }
+    } catch (err) {
+      console.warn("Supabase note_shares cleanup error on disconnect:", err);
+    }
+
+    // 3. Clean up local notes
+    if (notes && Array.isArray(notes) && typeof saveNotes === 'function') {
+      const activeFriendCodes = new Set(
+        (friendMgr.friends || []).filter(f => f.code !== friendCode).map(f => f.code)
+      );
+
+      const updatedNotes = notes
+        // Remove notes that were shared WITH me BY this friend
+        .filter(n => n.sharedFrom !== friendCode)
+        // For notes owned by me, remove friendCode from n.sharedWith. If empty, set isShared = false
+        .map(n => {
+          if (!n.sharedFrom) {
+            const currentSharedWith = Array.isArray(n.sharedWith) ? n.sharedWith : [];
+            const validSharedWith = currentSharedWith.filter(code => code !== friendCode && activeFriendCodes.has(code));
+            const shouldBeShared = validSharedWith.length > 0;
+            return {
+              ...n,
+              sharedWith: validSharedWith,
+              isShared: shouldBeShared,
+              updatedAt: Date.now(),
+            };
+          }
+          return n;
+        });
+
+      saveNotes(updatedNotes);
+    }
   };
 
   return {
@@ -348,10 +553,12 @@ export default function useSharing({
     setSelectedFriendCodes: friendMgr.setSelectedFriendCodes,
     incomingRequest,
     setIncomingRequest,
+    isSendingRequest: friendMgr.isSendingRequest,
     handleSendFriendRequest: friendMgr.handleSendFriendRequest,
     handleAcceptFriendRequest: friendMgr.handleAcceptFriendRequest,
     handleRejectFriendRequest: friendMgr.handleRejectFriendRequest,
-    handleDisconnect: friendMgr.handleDisconnect,
+    handleCancelFriendRequest: friendMgr.handleCancelFriendRequest,
+    handleDisconnect,
     handleSendNudge: friendMgr.handleSendNudge,
     handleSendShareInvitation,
     handleAcceptShare,

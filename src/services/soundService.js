@@ -1,7 +1,28 @@
 // Helper to synthesize a beautiful in-app chime notification sound
+let globalAudioCtx = null;
+
+const getAudioContext = () => {
+  try {
+    if (!globalAudioCtx) {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtxClass) {
+        globalAudioCtx = new AudioCtxClass();
+      }
+    }
+    if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+      globalAudioCtx.resume().catch(() => {});
+    }
+    return globalAudioCtx;
+  } catch (e) {
+    return null;
+  }
+};
+
 export const playChime = () => {
   try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioCtx = getAudioContext();
+    if (!audioCtx) return;
+
     const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 chime
     const duration = 0.15;
     notes.forEach((freq, idx) => {
@@ -20,3 +41,4 @@ export const playChime = () => {
     console.warn("AudioContext block: ", error);
   }
 };
+

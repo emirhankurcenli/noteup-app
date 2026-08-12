@@ -1,4 +1,7 @@
-import { Capacitor } from "@capacitor/core";
+import { detectPlatform } from "../platform/detect";
+import * as androidStorage from "../platform/android/storage.android";
+import * as iosStorage from "../platform/ios/storage.ios";
+import * as webStorage from "../platform/web/storage.web";
 import { STORAGE_KEYS } from "../constants/storageKeys";
 
 /**
@@ -13,54 +16,42 @@ export const StorageService = {
   /**
    * Veri okuma (getItem)
    */
-  getItem: (key) => {
-    try {
-      return localStorage.getItem(key);
-    } catch (e) {
-      console.warn(`[StorageService] Failed to read key '${key}':`, e);
-      return null;
-    }
+  getItem: async (key) => {
+    const plt = detectPlatform();
+    if (plt === 'android') return await androidStorage.getItem(key);
+    if (plt === 'ios') return await iosStorage.getItem(key);
+    return await webStorage.getItem(key);
   },
 
   /**
    * Veri kaydetme (setItem)
    * QuotaExceededError veya yazma hatalarında uygulamayı çökertmez.
    */
-  setItem: (key, value) => {
-    try {
-      localStorage.setItem(key, value);
-    } catch (e) {
-      console.error(
-        `[StorageService] Failed to set key '${key}' (Quota or permission error):`,
-        e,
-      );
-      // Depolama dolduğunda uygulama akışını kesme
-    }
+  setItem: async (key, value) => {
+    const plt = detectPlatform();
+    if (plt === 'android') return await androidStorage.setItem(key, value);
+    if (plt === 'ios') return await iosStorage.setItem(key, value);
+    return await webStorage.setItem(key, value);
   },
 
   /**
    * Veri silme (removeItem)
    */
-  removeItem: (key) => {
-    try {
-      localStorage.removeItem(key);
-    } catch (e) {
-      console.warn(`[StorageService] Failed to remove key '${key}':`, e);
-    }
+  removeItem: async (key) => {
+    const plt = detectPlatform();
+    if (plt === 'android') return await androidStorage.removeItem(key);
+    if (plt === 'ios') return await iosStorage.removeItem(key);
+    return await webStorage.removeItem(key);
   },
 
   /**
    * JSON Obje okuma (getJson)
    */
-  getJson: (key, fallbackValue = null) => {
+  getJson: async (key, fallbackValue = null) => {
     try {
-      const raw = StorageService.getItem(key);
+      const raw = await StorageService.getItem(key);
       return raw ? JSON.parse(raw) : fallbackValue;
     } catch (e) {
-      console.error(
-        `[StorageService] Failed to parse JSON for key '${key}':`,
-        e,
-      );
       return fallbackValue;
     }
   },

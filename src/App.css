@@ -39,6 +39,11 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 /* App Layout */
@@ -418,6 +423,22 @@ html, body, #root {
   flex-shrink: 0;
   z-index: 1010;
   box-sizing: border-box;
+}
+
+/* 📱 Platform-Specific Top Safe Area Spacing (IF Architecture) */
+.platform-ios .app-header,
+.platform-ios .editor-header {
+  padding-top: max(12px, calc(env(safe-area-inset-top, 0px) + 12px));
+}
+
+.platform-android .app-header,
+.platform-android .editor-header {
+  padding-top: 48px; /* Android Status Bar yükseklik payı (~38px + 10px padding) */
+}
+
+.platform-web .app-header,
+.platform-web .editor-header {
+  padding-top: 12px;
 }
 
 .editor-header-actions {

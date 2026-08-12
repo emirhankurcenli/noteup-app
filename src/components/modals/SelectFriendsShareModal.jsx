@@ -220,7 +220,6 @@ const SelectFriendsShareModal = ({
               return (
                 <div
                   key={f.code}
-                  onClick={() => handleFriendToggle(f.code)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -228,12 +227,11 @@ const SelectFriendsShareModal = ({
                     padding: '12px 14px',
                     borderRadius: '16px',
                     background: isSelected
-                      ? (isLight ? '#EFF6FF' : 'rgba(59, 130, 246, 0.16)')
+                      ? (isLight ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.12)')
                       : (isLight ? '#F8FAFC' : 'rgba(255, 255, 255, 0.05)'),
                     border: isSelected
-                      ? '1.5px solid #3B82F6'
+                      ? (isLight ? '1.5px solid rgba(59, 130, 246, 0.4)' : '1.5px solid rgba(59, 130, 246, 0.3)')
                       : (isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)'),
-                    cursor: 'pointer',
                     transition: 'all 0.15s ease',
                   }}
                 >
@@ -269,30 +267,56 @@ const SelectFriendsShareModal = ({
                       </div>
                     )}
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: 700, fontSize: '0.88rem', color: isLight ? '#0F172A' : '#F8FAFC' }}>
-                        {f.name}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.88rem', color: isLight ? '#0F172A' : '#F8FAFC' }}>
+                          {f.name}
+                        </span>
+                        {isSelected && (
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            padding: '2px 6px',
+                            borderRadius: '6px',
+                            background: 'rgba(16, 185, 129, 0.15)',
+                            color: '#10B981',
+                            border: '1px solid rgba(16, 185, 129, 0.3)'
+                          }}>
+                            {lang === 'tr' ? 'Paylaşıldı' : 'Shared'}
+                          </span>
+                        )}
+                      </div>
                       <span style={{ fontSize: '0.72rem', color: isLight ? '#64748B' : '#94A3B8' }}>
                         Kod: {f.code}
                       </span>
                     </div>
                   </div>
 
-                  <div style={{
-                    width: '22px',
-                    height: '22px',
-                    borderRadius: '50%',
-                    border: isSelected ? 'none' : (isLight ? '2px solid #CBD5E1' : '2px solid rgba(255, 255, 255, 0.3)'),
-                    background: isSelected ? '#3B82F6' : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#FFF',
-                    fontSize: '0.75rem',
-                    fontWeight: 800,
-                  }}>
-                    {isSelected && '✓'}
-                  </div>
+                  <button
+                    onClick={() => handleFriendToggle(f.code)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '10px',
+                      border: isSelected ? '1px solid rgba(239, 68, 68, 0.3)' : 'none',
+                      background: isSelected
+                        ? 'rgba(239, 68, 68, 0.1)'
+                        : 'linear-gradient(135deg, #3B82F6, #2563EB)',
+                      color: isSelected ? '#EF4444' : '#FFFFFF',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      boxShadow: isSelected ? 'none' : '0 2px 8px rgba(59, 130, 246, 0.3)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {isSelected ? (
+                      <>{lang === 'tr' ? '🚫 Çıkar' : '🚫 Remove'}</>
+                    ) : (
+                      <>{lang === 'tr' ? '➕ Ekle' : '➕ Add'}</>
+                    )}
+                  </button>
                 </div>
               );
             })

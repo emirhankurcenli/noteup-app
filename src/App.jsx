@@ -23,13 +23,8 @@ import { PLAN_LEVELS, getChangedFeatures, getLostFeatures } from './utils/planUt
 import { ensureElementVisible } from './utils/editorKeyboardUtils';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
-
-// Ensure Status Bar is never transparent overlaying webview, but sits in its own dark top strip
-if (Capacitor.isNativePlatform()) {
-  StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
-  StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-  StatusBar.setBackgroundColor({ color: '#0F1117' }).catch(() => {});
-}
+import { Keyboard } from '@capacitor/keyboard';
+import detectPlatform from './platform/detect';
 
 
 
@@ -86,9 +81,11 @@ function App() {
     setSelectedFriendCodes,
     incomingRequest,
     setIncomingRequest,
+    isSendingRequest,
     handleSendFriendRequest,
     handleAcceptFriendRequest,
     handleRejectFriendRequest,
+    handleCancelFriendRequest,
     handleDisconnect,
     handleSendNudge,
     handleSendShareInvitation,
@@ -254,6 +251,58 @@ function App() {
   // 💎 RevenueCat Initialization
   useEffect(() => {
     initRevenueCat(setUserPlan);
+  }, []);
+
+  // 📱 Platform Body Class Initialization ('platform-android' | 'platform-ios' | 'platform-web')
+  useEffect(() => {
+    const plt = detectPlatform();
+    document.body.classList.remove('platform-android', 'platform-ios', 'platform-web');
+    document.body.classList.add(`platform-${plt}`);
+  }, []);
+
+  // 🎨 Status Bar Style & Background Sync with App Theme
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    try {
+      StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+      if (theme === 'light') {
+        StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: '#F8FAFC' }).catch(() => {});
+      } else {
+        StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: '#0F1117' }).catch(() => {});
+      }
+    } catch (e) {}
+  }, [theme]);
+
+  // 🎹 Keyboard Hide/Show Window Scroll Lock (Prevents WebView window from shifting up on Android input focus)
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const resetWindowScroll = () => {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    };
+
+    let hideSub = null;
+    let didHideSub = null;
+    let showSub = null;
+    let didShowSub = null;
+
+    try {
+      Keyboard.addListener('keyboardWillHide', resetWindowScroll).then(sub => { hideSub = sub; });
+      Keyboard.addListener('keyboardDidHide', resetWindowScroll).then(sub => { didHideSub = sub; });
+      Keyboard.addListener('keyboardWillShow', resetWindowScroll).then(sub => { showSub = sub; });
+      Keyboard.addListener('keyboardDidShow', resetWindowScroll).then(sub => { didShowSub = sub; });
+    } catch (e) {}
+
+    return () => {
+      if (hideSub && typeof hideSub.remove === 'function') hideSub.remove();
+      if (didHideSub && typeof didHideSub.remove === 'function') didHideSub.remove();
+      if (showSub && typeof showSub.remove === 'function') showSub.remove();
+      if (didShowSub && typeof didShowSub.remove === 'function') didShowSub.remove();
+    };
   }, []);
 
 
@@ -607,10 +656,12 @@ function App() {
         partnerCodeInput={partnerCodeInput}
         setPartnerCodeInput={setPartnerCodeInput}
         formatFriendCode={formatFriendCode}
+        isSendingRequest={isSendingRequest}
         handleSendFriendRequest={handleSendFriendRequest}
         friendRequests={friendRequests}
         handleAcceptFriendRequest={handleAcceptFriendRequest}
         handleRejectFriendRequest={handleRejectFriendRequest}
+        handleCancelFriendRequest={handleCancelFriendRequest}
         handleDisconnect={handleDisconnect}
         handleLogout={handleLogout}
         DEFAULT_AVATARS={DEFAULT_AVATARS}

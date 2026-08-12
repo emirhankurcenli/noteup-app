@@ -14,7 +14,14 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        inlineDynamicImports: true
+        manualChunks(id) {
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+            return 'vendor';
+          }
+          if (id.includes('node_modules/@supabase')) {
+            return 'supabase';
+          }
+        }
       }
     }
   }

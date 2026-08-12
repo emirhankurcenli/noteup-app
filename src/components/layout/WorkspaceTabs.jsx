@@ -51,10 +51,12 @@ const WorkspaceTabs = ({
   partnerCodeInput,
   setPartnerCodeInput,
   formatFriendCode,
+  isSendingRequest,
   handleSendFriendRequest,
   friendRequests,
   handleAcceptFriendRequest,
   handleRejectFriendRequest,
+  handleCancelFriendRequest,
   friends,
   handleDisconnect,
   handleLogout,
@@ -190,10 +192,12 @@ const WorkspaceTabs = ({
           partnerCodeInput={partnerCodeInput}
           setPartnerCodeInput={setPartnerCodeInput}
           formatFriendCode={formatFriendCode}
+          isSendingRequest={isSendingRequest}
           handleSendFriendRequest={handleSendFriendRequest}
           friendRequests={friendRequests}
           handleAcceptFriendRequest={handleAcceptFriendRequest}
           handleRejectFriendRequest={handleRejectFriendRequest}
+          handleCancelFriendRequest={handleCancelFriendRequest}
           friends={friends}
           handleDisconnect={handleDisconnect}
           permissionStates={permissionStates}

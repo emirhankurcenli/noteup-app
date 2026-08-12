@@ -1,28 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { sanitizeFriendCode } from '../utils/securityUtils';
 import { supabase } from '../supabaseClient';
-
-// Helper to synthesize a beautiful in-app chime notification sound
-const playChime = () => {
-  try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const notesList = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 chime
-    notesList.forEach((freq, idx) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
-      gain.gain.setValueAtTime(0.15, audioCtx.currentTime + idx * 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.08 + 0.3);
-      osc.start(audioCtx.currentTime + idx * 0.08);
-      osc.stop(audioCtx.currentTime + idx * 0.08 + 0.3);
-    });
-  } catch (e) {
-    console.log("Audio chime error:", e);
-  }
-};
+import { triggerHaptic } from '../services/haptics';
+import { playChime } from '../services/soundService';
 
 // ── PERIOD & EXPIRATION HELPERS ──────────────────────────────────────────────
 const getCurrentMonthKey = () => {
@@ -105,66 +85,60 @@ const useFriendManager = ({
   const pollFriendRequests = useCallback(async () => {
     if (!myCode) return;
 
-    // 1. Refresh from localStorage for pending requests
     const localReqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
 
-    // 2. Fetch incoming PENDING requests from Supabase
+    // Fetch ALL pending requests (incoming + outgoing) from Supabase
     try {
       const { data: pendingData } = await supabase
         .from('friend_requests')
         .select('*')
-        .eq('to_code', myCode)
+        .or(`to_code.eq.${myCode},from_code.eq.${myCode}`)
         .eq('status', 'pending');
 
-      if (pendingData && pendingData.length > 0) {
-        // Collect sender codes to fetch their avatar photo_urls
-        const senderCodes = pendingData.map(r => r.from_code);
-        const { data: senderProfiles } = await supabase
+      if (pendingData) {
+        // Collect all related codes to fetch fresh profile names/avatars
+        const relatedCodes = pendingData.map(r => r.from_code === myCode ? r.to_code : r.from_code);
+        const { data: relatedProfiles } = await supabase
           .from('profiles')
           .select('friend_code, photo_url, name')
-          .in('friend_code', senderCodes);
+          .in('friend_code', relatedCodes.length > 0 ? relatedCodes : ['dummy']);
 
-        const currentLocal = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
-        let changed = false;
-        const merged = [...currentLocal];
+        const merged = [];
 
         pendingData.forEach(remoteReq => {
-          const senderProf = senderProfiles?.find(p => p.friend_code === remoteReq.from_code);
-          const alreadyLocalIdx = merged.findIndex(l => l.id === remoteReq.id || (l.fromCode === remoteReq.from_code && l.toCode === remoteReq.to_code && !l.processed));
-          
+          const isIncoming = remoteReq.to_code === myCode;
+          const otherCode = isIncoming ? remoteReq.from_code : remoteReq.to_code;
+          const otherProf = relatedProfiles?.find(p => p.friend_code === otherCode);
+
           const reqObj = {
             id: remoteReq.id,
             fromCode: remoteReq.from_code,
-            fromName: senderProf?.name || remoteReq.from_name || remoteReq.from_code,
-            fromPhotoUrl: senderProf?.photo_url || null,
+            fromName: isIncoming
+              ? (otherProf?.name || remoteReq.from_name || remoteReq.from_code)
+              : (remoteReq.from_name || myCode),
             toCode: remoteReq.to_code,
+            toName: !isIncoming
+              ? (otherProf?.name || remoteReq.to_name || remoteReq.to_code)
+              : (remoteReq.to_name || myCode),
+            fromPhotoUrl: isIncoming ? (otherProf?.photo_url || null) : null,
             processed: false,
             status: 'pending'
           };
-
-          if (alreadyLocalIdx === -1) {
-            merged.push(reqObj);
-            changed = true;
-          } else if (!merged[alreadyLocalIdx].fromPhotoUrl && senderProf?.photo_url) {
-            merged[alreadyLocalIdx].fromPhotoUrl = senderProf.photo_url;
-            changed = true;
-          }
+          merged.push(reqObj);
         });
 
-        if (changed) {
-          localStorage.setItem('s23_friend_requests', JSON.stringify(merged));
-          setFriendRequests(merged);
+        localStorage.setItem('s23_friend_requests', JSON.stringify(merged));
+        setFriendRequests(merged);
 
-          const newPending = merged.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
-          if (newPending.length > prevRequestCountRef.current) {
-            playChime();
-            setToast({
-              title: "👥 Yeni Arkadaşlık İsteği!",
-              msg: `${newPending[newPending.length - 1]?.fromName || 'Birisi'} size arkadaşlık isteği gönderdi.`
-            });
-          }
-          prevRequestCountRef.current = newPending.length;
+        const newPending = merged.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
+        if (newPending.length > prevRequestCountRef.current) {
+          playChime();
+          setToast({
+            title: "👥 Yeni Arkadaşlık İsteği!",
+            msg: `${newPending[newPending.length - 1]?.fromName || 'Birisi'} size arkadaşlık isteği gönderdi.`
+          });
         }
+        prevRequestCountRef.current = newPending.length;
       }
     } catch (e) {
       setFriendRequests(localReqs);
@@ -208,11 +182,6 @@ const useFriendManager = ({
           if (existingIdx === -1) {
             currentFriends.push({ code: friendCode, name: friendName, photo_url: friendPhotoUrl });
             friendsUpdated = true;
-            playChime();
-            setToast({
-              title: "🤝 İsteğiniz Kabul Edildi!",
-              msg: `${friendName} arkadaşlık isteğinizi kabul etti.`
-            });
           } else {
             // Update name / photo_url if changed
             if (currentFriends[existingIdx].photo_url !== friendPhotoUrl || currentFriends[existingIdx].name !== friendName) {
@@ -421,12 +390,26 @@ const useFriendManager = ({
 
     setIsSendingRequest(true);
     try {
-      // Call Postgres Atomic Stored Procedure (send_friend_request)
-      const { data: rpcRes, error: rpcErr } = await supabase.rpc('send_friend_request', {
+      // Try with formatted targetCode first
+      let { data: rpcRes, error: rpcErr } = await supabase.rpc('send_friend_request', {
         p_from_code: myCode,
         p_to_code: targetCode,
         p_from_name: profileName || 'Arkadaş (' + myCode.substring(9) + ')'
       });
+
+      // If user not found, try unhyphenated version (e.g. HUB12345678)
+      if (rpcRes && rpcRes.success === false && rpcRes.error === 'Bu profil koduna sahip kullanıcı bulunamadı.') {
+        const rawCode = targetCode.replace(/-/g, '');
+        const retryRes = await supabase.rpc('send_friend_request', {
+          p_from_code: myCode,
+          p_to_code: rawCode,
+          p_from_name: profileName || 'Arkadaş (' + myCode.substring(9) + ')'
+        });
+        if (retryRes.data) {
+          rpcRes = retryRes.data;
+          rpcErr = retryRes.error;
+        }
+      }
 
       if (rpcErr) {
         console.error("RPC send_friend_request error:", rpcErr);
@@ -436,7 +419,7 @@ const useFriendManager = ({
 
       if (rpcRes && rpcRes.success === false) {
         // Business logic error returned directly from Database (ALREADY_PENDING, ALREADY_FRIENDS, NOT_FOUND, etc.)
-        if (onInputError) onInputError(rpcRes.message || "İstek gönderilemedi.");
+        if (onInputError) onInputError(rpcRes.error || rpcRes.message || "İstek gönderilemedi.");
         return;
       }
 
@@ -519,26 +502,29 @@ const useFriendManager = ({
   };
 
   const handleDisconnect = async (friendCode) => {
-    if (window.confirm("Bu arkadaşı silmek istiyor musunuz?")) {
-      const updated = friends.filter(f => f.code !== friendCode);
-      setFriends(updated);
-      localStorage.setItem('s23_friends_' + myCode, JSON.stringify(updated));
+    const updated = friends.filter(f => f.code !== friendCode);
+    setFriends(updated);
+    localStorage.setItem('s23_friends_' + myCode, JSON.stringify(updated));
 
-      try {
-        await supabase.rpc('remove_friend', {
-          p_user_code: myCode,
-          p_friend_code: friendCode
-        });
-      } catch (err) {
-        console.error("remove_friend RPC error:", err);
-      }
+    try {
+      // Direct DB deletions (both directions)
+      await supabase.from('friend_requests').delete().eq('from_code', myCode).eq('to_code', friendCode);
+      await supabase.from('friend_requests').delete().eq('from_code', friendCode).eq('to_code', myCode);
 
-      setToast({
-        title: "❌ Arkadaş Silindi",
-        msg: "Bağlantı sonlandırıldı."
+      // RPC call
+      await supabase.rpc('remove_friend', {
+        p_user_code: myCode,
+        p_friend_code: friendCode
       });
-      pollFriendRequests();
+    } catch (err) {
+      console.error("remove_friend error:", err);
     }
+
+    setToast({
+      title: "❌ Arkadaş Silindi",
+      msg: "Bağlantı ve paylaşımlı notlar sonlandırıldı."
+    });
+    pollFriendRequests();
   };
 
   const handleSendNudge = (note, customMessage = '') => {
@@ -603,6 +589,28 @@ const useFriendManager = ({
     return true;
   };
 
+  const handleCancelFriendRequest = async (reqId, toCode) => {
+    try {
+      // 1. Delete from Supabase friend_requests table
+      if (reqId && typeof reqId === 'string' && reqId.length > 20) {
+        await supabase.from('friend_requests').delete().eq('id', reqId);
+      } else {
+        await supabase.from('friend_requests').delete().eq('from_code', myCode).eq('to_code', toCode);
+      }
+
+      // 2. Clear from local storage and state
+      const localReqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
+      const updatedReqs = localReqs.filter(r => !(r.id === reqId || (r.fromCode === myCode && r.toCode === toCode)));
+      localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
+      setFriendRequests(updatedReqs);
+
+      setToast({ title: "🚫 İstek İptal Edildi", msg: "Gönderilen arkadaşlık isteği geri çekildi." });
+      pollFriendRequests();
+    } catch (e) {
+      console.error("Cancel friend request error:", e);
+    }
+  };
+
   return {
     partnerCodeInput,
     setPartnerCodeInput,
@@ -623,6 +631,7 @@ const useFriendManager = ({
     handleSendFriendRequest,
     handleAcceptFriendRequest,
     handleRejectFriendRequest,
+    handleCancelFriendRequest,
     handleDisconnect,
     handleSendNudge,
   };

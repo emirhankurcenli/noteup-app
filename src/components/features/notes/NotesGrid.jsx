@@ -258,7 +258,7 @@ const NotesGrid = ({
                           <LockIcon /> {cleanText(t('locked'))}
                         </span>
                       )}
-                      {note.isShared && <span className="badge badge-shared">{cleanText(t('shared'))}</span>}
+                      {note.isShared && (note.sharedFrom || (note.sharedWith && note.sharedWith.length > 0)) && <span className="badge badge-shared">{cleanText(t('shared'))}</span>}
                       {(() => {
                         const activeRem = reminders.find(r => r.noteId === note.id && r.active && new Date(r.time).getTime() > now);
                         if (!activeRem) return null;
