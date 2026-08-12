@@ -44,7 +44,18 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     last_seen TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. Otomatik Kullanıcı Profili Oluşturma Trigger'ı (Google OAuth Sync)
+-- 5. FRIEND_REQUESTS (Arkadaşlık İstekleri) Tablosunu Oluştur
+CREATE TABLE IF NOT EXISTS public.friend_requests (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    from_code TEXT NOT NULL,
+    from_name TEXT,
+    to_code TEXT NOT NULL,
+    to_name TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 6. Otomatik Kullanıcı Profili Oluşturma Trigger'ı (Google OAuth Sync)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -70,7 +81,7 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- 6. Önceden Giriş Yapmış Olan Mevcut Tüm Kullanıcıları Profillere Aktar
+-- 7. Önceden Giriş Yapmış Olan Mevcut Tüm Kullanıcıları Profillere Aktar
 INSERT INTO public.profiles (id, email, name, photo_url, created_at)
 SELECT
   id,
@@ -81,11 +92,12 @@ SELECT
 FROM auth.users
 ON CONFLICT (id) DO NOTHING;
 
--- 7. RLS Güvenlik Politikalarını Aktif Et ve Kuralları Tanımla
+-- 8. RLS Güvenlik Politikalarını Aktif Et ve Kuralları Tanımla
 ALTER TABLE public.folders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reminders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.friend_requests ENABLE ROW LEVEL SECURITY;
 
 -- Eski Politikaları Temizle (Çakışmayı önlemek için)
 DROP POLICY IF EXISTS "Users can manage own folders" ON public.folders;
@@ -93,6 +105,10 @@ DROP POLICY IF EXISTS "Users can manage own notes" ON public.notes;
 DROP POLICY IF EXISTS "Users can manage own reminders" ON public.reminders;
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Everyone can view friend requests" ON public.friend_requests;
+DROP POLICY IF EXISTS "Everyone can insert friend requests" ON public.friend_requests;
+DROP POLICY IF EXISTS "Everyone can update friend requests" ON public.friend_requests;
+DROP POLICY IF EXISTS "Everyone can delete friend requests" ON public.friend_requests;
 
 -- 1) FOLDERS: Kullanıcı sadece kendi klasörlerini görebilir ve yönetebilir
 CREATE POLICY "Users can manage own folders" ON public.folders
@@ -113,3 +129,10 @@ CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles
 
 CREATE POLICY "Users can update own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+
+-- 5) FRIEND_REQUESTS: Arkadaşlık istekleri yönetimi
+CREATE POLICY "Everyone can view friend requests" ON public.friend_requests FOR SELECT USING (true);
+CREATE POLICY "Everyone can insert friend requests" ON public.friend_requests FOR INSERT WITH CHECK (true);
+CREATE POLICY "Everyone can update friend requests" ON public.friend_requests FOR UPDATE USING (true);
+CREATE POLICY "Everyone can delete friend requests" ON public.friend_requests FOR DELETE USING (true);
+
