@@ -503,9 +503,12 @@ const useFriendManager = ({
         }
 
         // Insert new request directly into friend_requests table
+        // Include explicit id in case the DB column has no DEFAULT set
+        const newReqId = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
         const { error: insertErr } = await supabase
           .from('friend_requests')
           .insert({
+            id: newReqId,
             from_code: myCode,
             to_code: matchedCode,
             from_name: profileName || 'Arkadaş',
