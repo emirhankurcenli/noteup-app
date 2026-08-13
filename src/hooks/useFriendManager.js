@@ -344,19 +344,28 @@ const useFriendManager = ({
     if (!myCode) return;
 
     // Realtime channel for instant (sub-second) updates on friend_requests
+    // Filter to only my incoming/outgoing requests to avoid unnecessary polls
     const channel = supabase
       .channel(`social_realtime_${myCode}`)
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen for INSERT, UPDATE
+          event: '*',
           schema: 'public',
-          table: 'friend_requests'
+          table: 'friend_requests',
+          filter: `to_code=eq.${myCode}`
         },
-        () => {
-          // Immediately trigger state refresh when DB changes
-          pollFriendRequests();
-        }
+        () => { pollFriendRequests(); }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'friend_requests',
+          filter: `from_code=eq.${myCode}`
+        },
+        () => { pollFriendRequests(); }
       )
       .subscribe();
 
@@ -593,13 +602,35 @@ const useFriendManager = ({
 
   const handleRejectFriendRequest = async (req) => {
     try {
-      await supabase.rpc('reject_friend_request', {
-        p_request_id: req.id,
-        p_user_code: myCode
-      });
+      // 1. Try RPC first
+      let rpcOk = false;
+      try {
+        const { error: rpcErr } = await supabase.rpc('reject_friend_request', {
+          p_request_id: req.id,
+          p_user_code: myCode
+        });
+        if (!rpcErr) rpcOk = true;
+      } catch (rpcEx) {
+        console.warn('reject_friend_request RPC not found, using direct delete:', rpcEx);
+      }
 
+      // 2. Direct DB fallback: delete the request row
+      if (!rpcOk) {
+        const { error: delErr } = await supabase
+          .from('friend_requests')
+          .delete()
+          .eq('id', req.id);
+
+        if (delErr) {
+          console.error('Direct reject delete error:', delErr);
+          setToast({ title: '❌ Hata', msg: 'İstek reddedilemedi, lütfen tekrar deneyin.' });
+          return;
+        }
+      }
+
+      // 3. Update local state
       const reqs = JSON.parse(localStorage.getItem('s23_friend_requests') || '[]');
-      const updatedReqs = reqs.map(r => r.id === req.id ? { ...r, processed: true, status: 'declined' } : r);
+      const updatedReqs = reqs.filter(r => r.id !== req.id);
       localStorage.setItem('s23_friend_requests', JSON.stringify(updatedReqs));
       setFriendRequests(updatedReqs);
 
@@ -607,12 +638,13 @@ const useFriendManager = ({
       prevRequestCountRef.current = newPending.length;
 
       setToast({
-        title: "❌ İstek Reddedildi",
-        msg: "Arkadaşlık daveti reddedildi."
+        title: '❌ İstek Reddedildi',
+        msg: 'Arkadaşlık daveti reddedildi.'
       });
       pollFriendRequests();
     } catch (e) {
-      console.error("handleRejectFriendRequest error:", e);
+      console.error('handleRejectFriendRequest error:', e);
+      setToast({ title: '❌ Hata', msg: 'Bir hata oluştu, lütfen tekrar deneyin.' });
     }
   };
 
@@ -622,22 +654,16 @@ const useFriendManager = ({
     localStorage.setItem('s23_friends_' + myCode, JSON.stringify(updated));
 
     try {
-      // Direct DB deletions (both directions)
+      // Direct DB deletions (both directions) — no RPC needed
       await supabase.from('friend_requests').delete().eq('from_code', myCode).eq('to_code', friendCode);
       await supabase.from('friend_requests').delete().eq('from_code', friendCode).eq('to_code', myCode);
-
-      // RPC call
-      await supabase.rpc('remove_friend', {
-        p_user_code: myCode,
-        p_friend_code: friendCode
-      });
     } catch (err) {
-      console.error("remove_friend error:", err);
+      console.error('handleDisconnect DB delete error:', err);
     }
 
     setToast({
-      title: "❌ Arkadaş Silindi",
-      msg: "Bağlantı ve paylaşımlı notlar sonlandırıldı."
+      title: '❌ Arkadaş Silindi',
+      msg: 'Bağlantı ve paylaşımlı notlar sonlandırıldı.'
     });
     pollFriendRequests();
   };
@@ -707,7 +733,7 @@ const useFriendManager = ({
   const handleCancelFriendRequest = async (reqId, toCode) => {
     try {
       // 1. Delete from Supabase friend_requests table
-      if (reqId && typeof reqId === 'string' && reqId.length > 20) {
+      if (reqId && typeof reqId === 'string' && reqId.length > 5) {
         await supabase.from('friend_requests').delete().eq('id', reqId);
       } else {
         await supabase.from('friend_requests').delete().eq('from_code', myCode).eq('to_code', toCode);
