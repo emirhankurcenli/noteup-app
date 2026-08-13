@@ -203,17 +203,8 @@ const useFriendManager = ({
       }
     } catch (e) {}
 
-    // Notify if local pending count grew (same-device scenario)
-    const localPending = localReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
-    if (localPending.length > prevRequestCountRef.current) {
-      playChime();
-      setToast({
-        title: "👥 Yeni Arkadaşlık İsteği!",
-        msg: `${localPending[localPending.length - 1]?.fromName || 'Birisi'} size arkadaşlık isteği gönderdi.`
-      });
-      prevRequestCountRef.current = localPending.length;
-    }
-    setFriendRequests(localReqs);
+    // NOTE: Do NOT fall back to localReqs here — Supabase is the source of truth.
+    // If Supabase fetch succeeded above, state is already set correctly.
   }, [myCode, setToast]);
 
   // --- INITIAL LOAD & PERIOD VALIDATION ---
@@ -544,13 +535,33 @@ const useFriendManager = ({
 
   const handleAcceptFriendRequest = async (req) => {
     try {
-      const { data: res, error: err } = await supabase.rpc('accept_friend_request', {
-        p_request_id: req.id,
-        p_user_code: myCode
-      });
+      // 1. Try RPC first
+      let rpcOk = false;
+      try {
+        const { error: rpcErr } = await supabase.rpc('accept_friend_request', {
+          p_request_id: req.id,
+          p_user_code: myCode
+        });
+        if (!rpcErr) rpcOk = true;
+      } catch (rpcEx) {
+        console.warn('accept_friend_request RPC not found, using direct update:', rpcEx);
+      }
 
-      if (err) console.error("RPC accept_friend_request error:", err);
+      // 2. Direct DB update fallback if RPC failed or doesn't exist
+      if (!rpcOk) {
+        const { error: updateErr } = await supabase
+          .from('friend_requests')
+          .update({ status: 'accepted' })
+          .eq('id', req.id);
 
+        if (updateErr) {
+          console.error('Direct accept update error:', updateErr);
+          setToast({ title: '❌ Hata', msg: 'İstek kabul edilemedi, lütfen tekrar deneyin.' });
+          return;
+        }
+      }
+
+      // 3. Update local state optimistically
       const newFriend = {
         code: req.fromCode,
         name: req.fromName,
@@ -569,13 +580,14 @@ const useFriendManager = ({
       prevRequestCountRef.current = newPending.length;
 
       setToast({
-        title: "🤝 Arkadaş Eklendi",
+        title: '🤝 Arkadaş Eklendi',
         msg: `${req.fromName} ile artık arkadaşsınız!`
       });
       playChime();
       pollFriendRequests();
     } catch (e) {
-      console.error("handleAcceptFriendRequest error:", e);
+      console.error('handleAcceptFriendRequest error:', e);
+      setToast({ title: '❌ Hata', msg: 'Bir hata oluştu, lütfen tekrar deneyin.' });
     }
   };
 
