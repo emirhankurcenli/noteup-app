@@ -57,12 +57,17 @@ jobs:
       - name: Build Xcode Archive (.xcarchive)
         run: |
           cd ios/App
+          # Otomatik artan Build Numarası (Apple duplicate version hatasını engeller)
+          BUILD_NUM=$((25 + ${{ github.run_number }}))
+          echo "Building iOS App with Build Number: $BUILD_NUM"
+          
           xcodebuild archive \
             -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -destination "generic/platform=iOS" \
+            CURRENT_PROJECT_VERSION=$BUILD_NUM \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
