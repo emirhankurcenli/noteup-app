@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import useFriendManager from './useFriendManager';
+import { useSharedNotesSync } from './useSharedNotesSync';
 import { PLAN_LIMITS } from '../constants/paywallPlans';
 import { sanitizeSingleLine, sanitizeNoteContent } from '../utils/securityUtils';
 import { supabase } from '../supabaseClient';
@@ -31,169 +32,16 @@ export default function useSharing({
     setToast,
   });
 
-  // --- CROSS-TAB SYNC & REALTIME NOTIFICATION LISTENER ---
-  useEffect(() => {
-    if (!myCode) return;
-
-    // Supabase DB: Initial check & polling for note_shares sent to me
-    const fetchIncomingNoteShares = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('note_shares')
-          .select('*')
-          .eq('to_code', myCode)
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false });
-
-        if (!error && data && data.length > 0) {
-          const firstReq = data[0];
-          setIncomingRequest({
-            id: firstReq.id,
-            fromCode: firstReq.from_code,
-            fromName: firstReq.from_name || 'Arkadaş',
-            toCode: firstReq.to_code,
-            noteId: firstReq.note_id,
-            noteTitle: firstReq.note_title,
-            noteBlocks: firstReq.note_blocks,
-            timestamp: new Date(firstReq.created_at).getTime(),
-            processed: false,
-          });
-        }
-      } catch (err) {
-        console.warn("Error fetching note shares from Supabase:", err);
-      }
-    };
-
-    fetchIncomingNoteShares();
-
-    // Supabase Realtime channel for instant note share alerts
-    const shareChannel = supabase
-      .channel(`note_shares_${myCode}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'note_shares',
-          filter: `to_code=eq.${myCode}`,
-        },
-        (payload) => {
-          if (payload.new && payload.new.status === 'pending') {
-            setIncomingRequest({
-              id: payload.new.id,
-              fromCode: payload.new.from_code,
-              fromName: payload.new.from_name || 'Arkadaş',
-              toCode: payload.new.to_code,
-              noteId: payload.new.note_id,
-              noteTitle: payload.new.note_title,
-              noteBlocks: payload.new.note_blocks,
-              timestamp: new Date(payload.new.created_at).getTime(),
-              processed: false,
-            });
-            friendMgr.playChime();
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'note_shares',
-          filter: `from_code=eq.${myCode}`,
-        },
-        (payload) => {
-          if (payload.new) {
-            if (payload.new.status === 'accepted') {
-              setToast({
-                title: "🎉 Davet Kabul Edildi!",
-                msg: `Arkadaşınız "${payload.new.note_title || 'Not'}" paylaşım davetinizi kabul etti.`
-              });
-              friendMgr.playChime();
-            } else if (payload.new.status === 'rejected') {
-              setToast({
-                title: "❌ Davet Reddedildi",
-                msg: `Arkadaşınız "${payload.new.note_title || 'Not'}" paylaşım davetinizi reddetti.`
-              });
-            }
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'note_shares',
-          filter: `to_code=eq.${myCode}`,
-        },
-        (payload) => {
-          if (payload.old) {
-            const oldShare = payload.old;
-            if (notes && Array.isArray(notes) && typeof saveNotes === 'function') {
-              const updatedNotes = notes.filter(n => {
-                if (n.sharedFrom === oldShare.from_code && (n.id === oldShare.note_id || !oldShare.note_id)) {
-                  return false;
-                }
-                return true;
-              });
-              if (updatedNotes.length !== notes.length) {
-                saveNotes(updatedNotes);
-              }
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    const handleStorageChange = (e) => {
-      if (e.key === 's23_friend_requests') {
-        const reqs = JSON.parse(e.newValue || '[]');
-        friendMgr.setFriendRequests(reqs);
-
-        const acceptedSentRequest = reqs.find(r => r.fromCode === myCode && r.status === 'accepted');
-        if (acceptedSentRequest) {
-          const newFriendCode = acceptedSentRequest.toCode;
-          const currentFriends = JSON.parse(localStorage.getItem('s23_friends_' + myCode) || '[]');
-          if (!currentFriends.some(f => f.code === newFriendCode)) {
-            const newFriend = {
-              code: newFriendCode,
-              name: acceptedSentRequest.toName || 'Arkadaş (' + newFriendCode.substring(9) + ')'
-            };
-            const updatedFriends = [...currentFriends, newFriend];
-            friendMgr.setFriends(updatedFriends);
-            localStorage.setItem('s23_friends_' + myCode, JSON.stringify(updatedFriends));
-            setToast({
-              title: "🎉 Davet Kabul Edildi",
-              msg: `${newFriend.name} arkadaşlık davetinizi kabul etti!`
-            });
-            friendMgr.playChime();
-          }
-        }
-      }
-      if (e.key === `s23_friends_${myCode}`) {
-        friendMgr.setFriends(JSON.parse(e.newValue || '[]'));
-      }
-      if (e.key === `s23_nudge_${myCode}`) {
-        const nudge = JSON.parse(e.newValue || '{}');
-        if (nudge.fromName) {
-          const customNoteMsg = nudge.customMessage ? `"${nudge.customMessage}"` : 'Sana bu notla ilgili bir bildirim gönderdi!';
-          setToast({
-            title: `🔔 Paylaşımlı Not Bildirimi`,
-            msg: `${nudge.fromName} ("${nudge.noteTitle}"): ${customNoteMsg}`
-          });
-          friendMgr.playChime();
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      supabase.removeChannel(shareChannel);
-    };
-  }, [myCode]);
+  // Delegate Realtime shared notes WebSocket sync to single-responsibility hook
+  useSharedNotesSync({
+    myCode,
+    notes,
+    saveNotes,
+    setToast,
+    setIncomingRequest,
+    setFriendRequests: friendMgr.setFriendRequests,
+    setFriends: friendMgr.setFriends,
+  });
 
   // --- AUTOMATIC SHARED NOTE CLEANUP WHEN FRIEND LIST CHANGES ---
   useEffect(() => {

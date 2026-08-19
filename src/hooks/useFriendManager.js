@@ -3,18 +3,10 @@ import { sanitizeFriendCode } from '../utils/securityUtils';
 import { supabase } from '../supabaseClient';
 import { triggerHaptic } from '../services/haptics';
 import { playChime } from '../services/soundService';
-
-// ── PERIOD & EXPIRATION HELPERS ──────────────────────────────────────────────
-const getCurrentMonthKey = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-};
-
-const getCurrentPeriodEndMs = () => {
-  const d = new Date();
-  const nextMonth = new Date(d.getFullYear(), d.getMonth() + 1, 1, 0, 0, 0, 0);
-  return nextMonth.getTime();
-};
+import { useUltraGiftManager } from './useUltraGiftManager';
+import { useFriendRealtimeChannel } from './useFriendRealtimeChannel';
+import { useFriendRequestActions } from './useFriendRequestActions';
+import { useFriendListActions } from './useFriendListActions';
 
 const useFriendManager = ({
   myCode,
@@ -28,58 +20,20 @@ const useFriendManager = ({
   const [friendRequests, setFriendRequests] = useState([]);
   const [selectedFriendCodes, setSelectedFriendCodes] = useState([]);
   const [isSendingRequest, setIsSendingRequest] = useState(false);
-  const [inputErrorCallback, setInputErrorCallback] = useState(null);
+
+  // Delegate Ultra Gift management to single-responsibility hook
+  const {
+    grantedUltraFriendCode,
+    ultraGrantRecord,
+    ultraGiftFrom,
+    isPrimaryUltra,
+    isGiftedUltra,
+    handleGrantUltraGift,
+  } = useUltraGiftManager({ myCode, userPlan, setToast, triggerHaptic });
 
   // Polling interval ref for real-time friend request updates
   const pollingRef = useRef(null);
   const prevRequestCountRef = useRef(0);
-
-  // --- ULTRA GIFT RECORD STATE (FOR PRIMARY BUYER) ---
-  const [ultraGrantRecord, setUltraGrantRecord] = useState(() => {
-    const raw = localStorage.getItem(`s23_ultra_grant_record_${myCode}`);
-    if (!raw) return null;
-    try {
-      const parsed = JSON.parse(raw);
-      // If the grant record is from an old billing period, it resets automatically for new month!
-      if (parsed.periodKey !== getCurrentMonthKey()) {
-        localStorage.removeItem(`s23_ultra_grant_record_${myCode}`);
-        return null;
-      }
-      return parsed;
-    } catch (e) {
-      return null;
-    }
-  });
-
-  // --- ULTRA GIFT RECEIVED STATE (FOR GIFTED FRIEND) ---
-  const [ultraGiftFrom, setUltraGiftFrom] = useState(() => {
-    const raw = localStorage.getItem(`s23_ultra_gift_received_${myCode}`);
-    if (!raw) return null;
-    try {
-      const parsed = JSON.parse(raw);
-      // Period / Expiration Check: If period has ended or expired, gift is expired!
-      if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
-        localStorage.removeItem(`s23_ultra_gift_received_${myCode}`);
-        return null;
-      }
-      if (parsed.periodKey && parsed.periodKey !== getCurrentMonthKey()) {
-        localStorage.removeItem(`s23_ultra_gift_received_${myCode}`);
-        return null;
-      }
-      return parsed;
-    } catch (e) {
-      return null;
-    }
-  });
-
-  // Derived: Current friend code who received Ultra gift in current period
-  const grantedUltraFriendCode = ultraGrantRecord?.periodKey === getCurrentMonthKey() ? ultraGrantRecord.targetCode : null;
-
-  // Check if current user is primary Ultra buyer (purchased via store/billing)
-  const isPrimaryUltra = userPlan === 'ultra' && !ultraGiftFrom;
-
-  // Check if current user received Ultra as a gift from a friend
-  const isGiftedUltra = !!ultraGiftFrom;
 
   // ── POLL FRIEND REQUESTS & ACCEPTED FRIENDS FROM SUPABASE EVERY 5 SECONDS ─
   const pollFriendRequests = useCallback(async () => {
@@ -247,21 +201,6 @@ const useFriendManager = ({
       } catch (e) {}
     }
 
-    // Check primary buyer grant record for current month reset
-    const grantRaw = localStorage.getItem(`s23_ultra_grant_record_${myCode}`);
-    if (grantRaw) {
-      try {
-        const parsed = JSON.parse(grantRaw);
-        if (parsed.periodKey === getCurrentMonthKey()) {
-          setUltraGrantRecord(parsed);
-        } else {
-          // New period has started: reset gift capability for primary owner!
-          localStorage.removeItem(`s23_ultra_grant_record_${myCode}`);
-          setUltraGrantRecord(null);
-        }
-      } catch (e) {}
-    }
-
     // Start polling every 5 seconds for incoming friend requests
     pollingRef.current = setInterval(pollFriendRequests, 5000);
 
@@ -270,109 +209,8 @@ const useFriendManager = ({
     };
   }, [myCode, userPlan, setUserPlan, pollFriendRequests]);
 
-  // --- GRANT ULTRA GIFT TO A FRIEND (Primary Ultra Buyers Only) ---
-  const handleGrantUltraGift = (friendCode, friendName) => {
-    // SECURITY CHECK 1: Gifted Ultra members CANNOT grant Ultra to others!
-    if (isGiftedUltra) {
-      setToast({
-        title: "🛡️ Güvenlik Kısıtlaması",
-        msg: "Hediyeli Ultra üyelerinin başkasına Ultra hediye etme yetkisi bulunmamaktadır. Bu hak sadece Ultra planını doğrudan satın alan asıl üyelere aittir."
-      });
-      return;
-    }
-
-    // SECURITY CHECK 2: Must be a primary Ultra subscriber
-    if (userPlan !== 'ultra') {
-      setToast({
-        title: "👑 NoteUp Ultra Gerekli",
-        msg: "Arkadaşlarından birine Ultra plan hediye edebilmek için NoteUp Ultra aboneliğinizin aktif olması gerekmektedir."
-      });
-      return;
-    }
-
-    const currentPeriodKey = getCurrentMonthKey();
-    const periodEndMs = getCurrentPeriodEndMs();
-    const formattedPeriodEnd = new Date(periodEndMs).toLocaleDateString();
-
-    // RULE 1: Gift cannot be revoked or changed once granted during the active period!
-    if (ultraGrantRecord && ultraGrantRecord.periodKey === currentPeriodKey) {
-      if (ultraGrantRecord.targetCode === friendCode) {
-        setToast({
-          title: "🔒 Hediye Bu Ay İçin Aktif",
-          msg: `Bu ayki Ultra hediyeniz ${friendName} ile paylaşıldı. Verilen hediye ${formattedPeriodEnd} tarihine kadar geçerlidir ve bu dönem süresince geri alınamaz.`
-        });
-      } else {
-        setToast({
-          title: "⚠️ Bu Ayki Hediye Hakkınız Kullanıldı",
-          msg: `Bu fatura dönemindeki Ultra hediyenizi ${ultraGrantRecord.targetName} adlı arkadaşınız için kullandınız. Yeni fatura döneminde (${formattedPeriodEnd}) farklı bir arkadaşınızı seçebilirsiniz.`
-        });
-      }
-      return;
-    }
-
-    // RULE 2: Grant Ultra gift for current period (Sync period end date with primary buyer's subscription)
-    const grantRecordObj = {
-      targetCode: friendCode,
-      targetName: friendName,
-      periodKey: currentPeriodKey,
-      expiresAt: periodEndMs,
-      grantedAt: Date.now()
-    };
-
-    const giftReceivedObj = {
-      fromCode: myCode,
-      fromName: profileName || 'Arkadaşın',
-      periodKey: currentPeriodKey,
-      expiresAt: periodEndMs,
-      grantedAt: Date.now()
-    };
-
-    localStorage.setItem(`s23_ultra_grant_record_${myCode}`, JSON.stringify(grantRecordObj));
-    localStorage.setItem(`s23_ultra_gift_received_${friendCode}`, JSON.stringify(giftReceivedObj));
-
-    setUltraGrantRecord(grantRecordObj);
-
-    setToast({
-      title: "👑 Ultra Plan Hediye Edildi!",
-      msg: `${friendName} artık abonelik döneminiz bitene kadar (${formattedPeriodEnd}) NoteUp Ultra ayrıcalıklarından ücretsiz yararlanacak!`
-    });
-    playChime();
-  };
-
-  // ── SUPABASE REALTIME SUBSCRIPTION FOR INSTANT NOTIFICATIONS ─────────────
-  useEffect(() => {
-    if (!myCode) return;
-
-    // Realtime channel for instant (sub-second) updates on friend_requests
-    // Filter to only my incoming/outgoing requests to avoid unnecessary polls
-    const channel = supabase
-      .channel(`social_realtime_${myCode}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'friend_requests',
-          filter: `to_code=eq.${myCode}`
-        },
-        () => { pollFriendRequests(); }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'friend_requests',
-          filter: `from_code=eq.${myCode}`
-        },
-        () => { pollFriendRequests(); }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [myCode, pollFriendRequests]);
+  // Delegate Supabase Realtime WebSocket subscription to single-responsibility hook
+  useFriendRealtimeChannel({ myCode, pollFriendRequests });
 
   // ── SEND FRIEND REQUEST (via Supabase RPC Function) ────────────────────────
   const handleSendFriendRequest = async (onInputError) => {

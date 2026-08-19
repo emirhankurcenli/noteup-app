@@ -14,8 +14,8 @@ android {
         applicationId "com.noteup.notes"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 25
-        versionName "2.9.0"
+        versionCode 26
+        versionName "2.9.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -69,6 +69,9 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+    // 🚀 AppLovin MAX & Unity Ads High-Revenue Mediation Adapters
+    implementation 'com.google.ads.mediation:applovin:13.0.1.0'
+    implementation 'com.google.ads.mediation:unity:4.12.5.0'
 }
 
 apply from: 'capacitor.build.gradle'

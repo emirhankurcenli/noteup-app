@@ -1,6 +1,7 @@
 import { registerPlugin } from '@capacitor/core';
 import { supabase } from '../supabaseClient';
 import useMediaGarbageCollector from './useMediaGarbageCollector';
+import { uploadToR2 as uploadToR2Fn, deleteFromR2 as deleteFromR2Fn } from './useR2Uploader';
 import {
   convertHeicToJpegIfNecessary,
   formatBytes,
@@ -33,88 +34,11 @@ const useR2Storage = ({
 }) => {
 
   const uploadToR2 = async (fileBlob, originalName) => {
-    const cleanOriginal = sanitizeFilename(originalName);
-    const extension = cleanOriginal.includes('.') ? cleanOriginal.split('.').pop()?.toLowerCase() || 'bin' : 'bin';
-    const rawClean = cleanOriginal.includes('.') ? cleanOriginal.substring(0, cleanOriginal.lastIndexOf('.')) : cleanOriginal;
-    const cleanName = rawClean.replace(/[^a-zA-Z0-9]/g, '_');
-
-    let category = 'documents/';
-    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'svg'].includes(extension)) {
-      category = 'images/';
-    } else if (['mp3', 'm4a', 'wav', 'aac', 'ogg', 'webm', '3gp'].includes(extension)) {
-      category = 'audio/';
-    }
-
-    // Kullanıcı klasörü: Edge Function ile eşleşmeli (UUID tire → alt çizgi)
-    const userId = (user?.id || 'general').replace(/-/g, '_');
-    const uniqueFilename = `users/${userId}/${category}${cleanName}-${Date.now()}.${extension}`;
-
-    // Kullanıcının geçerli Supabase session JWT'sini al
-    const { data: sessionData } = await supabase.auth.getSession();
-    const jwt = sessionData?.session?.access_token;
-    if (!jwt) throw new Error('Oturum bulunamadı. Lütfen tekrar giriş yapın.');
-
-    // Edge Function URL’sini oluştur
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://qgrzvhejdwsmuzuwmpyj.supabase.co";
-    const edgeFnUrl = `${supabaseUrl}/functions/v1/r2-proxy?filename=${encodeURIComponent(uniqueFilename)}`;
-
-    // Binary veriyi doğrudan fetch ile gönder
-    const response = await fetch(edgeFnUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${jwt}`,
-        'Content-Type': fileBlob.type || 'application/octet-stream',
-      },
-      body: fileBlob,
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`R2 upload hatası: ${response.status} ${errText}`);
-    }
-
-    const data = await response.json();
-    if (!data?.url) throw new Error('R2 upload: URL döndürülmedi.');
-    return data.url;
+    return uploadToR2Fn(fileBlob, originalName, user);
   };
 
   const deleteFromR2 = async (fileUrl) => {
-    if (!fileUrl || typeof fileUrl !== 'string') return false;
-    try {
-      let filename = '';
-      if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
-        const urlObj = new URL(fileUrl);
-        filename = urlObj.pathname.startsWith('/') ? urlObj.pathname.substring(1) : urlObj.pathname;
-      } else {
-        filename = fileUrl.startsWith('/') ? fileUrl.substring(1) : fileUrl;
-      }
-
-      if (!filename) return false;
-
-      // Kullanıcının geçerli Supabase session JWT'sini al
-      const { data: sessionData } = await supabase.auth.getSession();
-      const jwt = sessionData?.session?.access_token;
-      if (!jwt) return false;
-
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://qgrzvhejdwsmuzuwmpyj.supabase.co";
-      const edgeFnUrl = `${supabaseUrl}/functions/v1/r2-proxy?filename=${encodeURIComponent(filename)}`;
-
-      // Edge Function üzerinden sil — R2 token client'a gelmez
-      const response = await fetch(edgeFnUrl, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${jwt}` },
-      });
-
-      if (!response.ok) {
-        console.error(`R2 silme hatası: ${filename} - ${response.status}`);
-        return false;
-      }
-
-      return true;
-    } catch (err) {
-      console.error('R2 silme isteği hatası:', err);
-      return false;
-    }
+    return deleteFromR2Fn(fileUrl);
   };
 
   const handleFileChange = async (e) => {

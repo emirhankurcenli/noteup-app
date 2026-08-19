@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { registerPlugin } from '@capacitor/core';
+import ThemeSelectionCard from './appSettings/ThemeSelectionCard';
+import LanguageSelectionCard from './appSettings/LanguageSelectionCard';
 
 const AppSettings = registerPlugin('AppSettings');
 
 const LANGUAGES_LIST = [
-  { code: 'tr', native: 'Türkçe', tr: 'Türkçe', en: 'Turkish', de: 'Türkisch', es: 'Turco', fr: 'Turc', it: 'Turco', ru: 'Турецкий', ar: 'التركية', ja: 'トルコ語', zh: '土耳其语' },
+  { code: 'tr', native: 'Türkçe', tr: 'Türkçe', en: 'Turkish', de: 'Turkisch', es: 'Turco', fr: 'Turc', it: 'Turco', ru: 'Турецкий', ar: 'التركية', ja: 'トルコ語', zh: '土耳其语' },
   { code: 'en', native: 'English', tr: 'İngilizce', en: 'English', de: 'Englisch', es: 'Inglés', fr: 'Anglais', it: 'Inglese', ru: 'Английский', ar: 'الإنكليزية', ja: '英語', zh: '英语' },
   { code: 'de', native: 'Deutsch', tr: 'Almanca', en: 'German', de: 'Deutsch', es: 'Alemán', fr: 'Allemand', it: 'Tedesco', ru: 'Немецкий', ar: 'الألمانية', ja: 'ドイツ語', zh: '德语' },
   { code: 'es', native: 'Español', tr: 'İspanyolca', en: 'Spanish', de: 'Spanisch', es: 'Español', fr: 'Espagnol', it: 'Spagnolo', ru: 'Испанский', ar: 'الإسبانية', ja: 'スペイン語', zh: '西班牙语' },
@@ -126,139 +128,21 @@ const SettingsSubTab = ({
         </span>
 
         {/* Theme Toggle */}
-        <div style={{
-          padding: '14px 16px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(24, 24, 37, 0.75)',
-          backdropFilter: 'blur(12px)',
-          borderRadius: '16px',
-          border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.04)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: isLight ? 'linear-gradient(135deg, #6366F1, #8B5CF6)' : 'rgba(99, 102, 241, 0.18)',
-              border: isLight ? 'none' : '1px solid rgba(99, 102, 241, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isLight ? '#FFF' : '#818CF8',
-              boxShadow: isLight ? '0 2px 8px rgba(99, 102, 241, 0.3)' : 'none'
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFFFFF' }}>{t('appTheme')}</span>
-            </div>
-          </div>
-          
-          <div 
-            onClick={() => { triggerHaptic('light'); setTheme(theme === 'light' ? 'dark' : 'light'); }}
-            style={{
-              width: '60px',
-              height: '32px',
-              borderRadius: '20px',
-              background: isLight ? '#E2E8F0' : '#2A2B3D',
-              border: '1px solid var(--border-color)',
-              padding: '3px',
-              cursor: 'pointer',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              transition: 'background-color 0.3s ease'
-            }}
-          >
-            <span style={{ fontSize: '0.75rem', marginLeft: '6px', opacity: isLight ? 1 : 0.3, zIndex: 2 }}>☀️</span>
-            <span style={{ fontSize: '0.75rem', marginRight: '6px', opacity: theme === 'dark' ? 1 : 0.3, zIndex: 2 }}>🌙</span>
-            
-            <div 
-              style={{
-                position: 'absolute',
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
-                left: theme === 'light' ? '4px' : '30px',
-                top: '3px',
-                transition: 'left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                zIndex: 1
-              }}
-            />
-          </div>
-        </div>
+        <ThemeSelectionCard 
+          theme={theme}
+          setTheme={setTheme}
+          triggerHaptic={triggerHaptic}
+          isLight={isLight}
+          lang={lang}
+          t={t}
+        />
 
         {/* Language Selector Card */}
-        <div style={{
-          padding: '14px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(24, 24, 37, 0.75)',
-          backdropFilter: 'blur(12px)',
-          borderRadius: '16px',
-          border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.04)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: isLight ? 'linear-gradient(135deg, #10B981, #059669)' : 'rgba(16, 185, 129, 0.18)',
-              border: isLight ? 'none' : '1px solid rgba(16, 185, 129, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isLight ? '#FFF' : '#34D399',
-              boxShadow: isLight ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none'
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFFFFF' }}>{t('appLanguage')}</span>
-            </div>
-          </div>
-
-          {/* Trigger Button */}
-          <button
-            onClick={() => { triggerHaptic('light'); setShowLangModal(true); }}
-            style={{
-              padding: '12px 14px',
-              borderRadius: '12px',
-              background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.05)',
-              border: isLight ? '1.5px solid #CBD5E1' : '1.5px solid rgba(255, 255, 255, 0.12)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer',
-              fontSize: '0.88rem',
-              fontWeight: 700,
-              color: isLight ? '#0F172A' : '#FFFFFF',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
-            }}
-          >
-            <span>
-              {getLangLabel(LANGUAGES_LIST.find(l => l.code === lang) || LANGUAGES_LIST[0], lang)}
-            </span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-        </div>
+        <LanguageSelectionCard 
+          lang={lang}
+          setShowLangModal={setShowLangModal}
+          isLight={isLight}
+        />
       </div>
 
       {/* SECTION: System Permissions */}

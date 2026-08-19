@@ -260,17 +260,15 @@ function App() {
     document.body.classList.add(`platform-${plt}`);
   }, []);
 
-  // 🎨 Status Bar Style & Background Sync with App Theme
+  // 🎨 Status Bar Style & Background Sync with App Theme (Edge-to-Edge with Safe Area Insets)
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     try {
-      StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+      StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
       if (theme === 'light') {
         StatusBar.setStyle({ style: Style.Light }).catch(() => {});
-        StatusBar.setBackgroundColor({ color: '#F8FAFC' }).catch(() => {});
       } else {
         StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-        StatusBar.setBackgroundColor({ color: '#0F1117' }).catch(() => {});
       }
     } catch (e) {}
   }, [theme]);

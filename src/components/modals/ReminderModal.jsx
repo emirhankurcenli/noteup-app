@@ -1,5 +1,6 @@
 import React from 'react';
 import DrumPicker from '../common/DrumPicker';
+import ReminderModeSelector from './reminder/ReminderModeSelector';
 
 const cleanText = (str) => {
   if (!str) return '';

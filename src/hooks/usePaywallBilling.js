@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Purchases } from "@revenuecat/purchases-capacitor";
 import { Capacitor } from "@capacitor/core";
 import { PLANS } from "../constants/paywallPlans";
+import { getRevenueCatApiKey } from "../services/billing";
 
 const usePaywallBilling = ({
   currentPlan,
@@ -40,9 +41,10 @@ const usePaywallBilling = ({
       if (!Capacitor.isNativePlatform()) return;
       try {
         setLoading(true);
-        await Purchases.configure({
-          apiKey: import.meta.env.VITE_REVENUECAT_KEY || "goog_klpvzugPjsJwnTuzpqHEafDShcM",
-        });
+        const apiKey = getRevenueCatApiKey();
+        if (apiKey) {
+          await Purchases.configure({ apiKey });
+        }
         const offerings = await Purchases.getOfferings();
 
         if (

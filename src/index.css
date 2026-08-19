@@ -13,55 +13,55 @@
   --danger-glow: rgba(255, 75, 58, 0.18);
   --warning: #FF8C2B;
 
-  /* ── Default Dark Theme Variables ── */
-  --bg-dark: #03070C;
-  --bg-surface: #090F1A;
-  --bg-surface-elevated: #0E1627;
-  --border-color: rgba(91, 173, 214, 0.12);
-  --border-color-active: rgba(91, 173, 214, 0.35);
+  /* ── 🎨 Premium Luxury Dark Theme Palette (Linear / Apple Dark System) ── */
+  --bg-dark: #0A0E17;
+  --bg-surface: #121824;
+  --bg-surface-elevated: #1A2232;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-active: rgba(99, 102, 241, 0.40);
 
-  --primary: #5BADD6;
-  --primary-glow: rgba(91, 173, 214, 0.20);
-  --secondary: #3A7FBF;
-  --secondary-glow: rgba(58, 127, 191, 0.15);
-  --accent: #FF6B2B;
-  --accent-glow: rgba(255, 107, 43, 0.20);
+  --primary: #3B82F6;
+  --primary-glow: rgba(59, 130, 246, 0.22);
+  --secondary: #6366F1;
+  --secondary-glow: rgba(99, 102, 241, 0.18);
+  --accent: #F59E0B;
+  --accent-glow: rgba(245, 158, 11, 0.22);
 
-  --text-primary: #F0F5FA;
-  --text-secondary: #8AA4B8;
-  --text-muted: #475D70;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
 
   /* Glassmorphism variables */
-  --glass-bg: rgba(9, 15, 26, 0.88);
-  --glass-bg-interactive: rgba(9, 15, 26, 0.78);
-  --glass-border: rgba(91, 173, 214, 0.12);
-  --glass-border-interactive: rgba(91, 173, 214, 0.10);
-  --glass-active-bg: rgba(91, 173, 214, 0.05);
+  --glass-bg: rgba(18, 24, 36, 0.82);
+  --glass-bg-interactive: rgba(26, 34, 50, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-interactive: rgba(255, 255, 255, 0.14);
+  --glass-active-bg: rgba(59, 130, 246, 0.08);
 
   /* Layout Custom Gradients */
-  --header-bg: linear-gradient(180deg, rgba(91, 173, 214, 0.10) 0%, rgba(3, 7, 12, 0.95) 100%);
-  --header-border: rgba(91, 173, 214, 0.15);
-  --nav-bg: #03070C; /* Fully solid dark nav to block text behind it */
-  --nav-border: rgba(91, 173, 214, 0.15);
+  --header-bg: linear-gradient(180deg, rgba(59, 130, 246, 0.12) 0%, rgba(10, 14, 23, 0.96) 100%);
+  --header-border: rgba(255, 255, 255, 0.08);
+  --nav-bg: #0A0E17; /* Fully solid dark nav to block text behind it */
+  --nav-border: rgba(255, 255, 255, 0.08);
 
   /* Inputs */
-  --input-bg: rgba(9, 15, 26, 0.85);
-  --input-border: rgba(91, 173, 214, 0.20);
-  --input-focus-bg: rgba(9, 15, 26, 0.95);
-  --input-focus-shadow: rgba(91, 173, 214, 0.20);
+  --input-bg: rgba(26, 34, 50, 0.70);
+  --input-border: rgba(255, 255, 255, 0.10);
+  --input-focus-bg: rgba(26, 34, 50, 0.95);
+  --input-focus-shadow: rgba(59, 130, 246, 0.25);
 
-  /* Gradients — Made significantly darker and less cloudy */
-  --body-bg-color: #020407;
-  --body-gradient: radial-gradient(ellipse 80% 50% at 0% 0%, rgba(91, 173, 214, 0.12) 0%, transparent 60%),
-                   radial-gradient(ellipse 70% 50% at 100% 100%, rgba(255, 107, 43, 0.08) 0%, transparent 50%),
-                   radial-gradient(ellipse 50% 30% at 100% 10%, rgba(58, 127, 191, 0.06) 0%, transparent 45%);
+  /* Gradients — Deep Luxury Ambient Backlight */
+  --body-bg-color: #06090F;
+  --body-gradient: radial-gradient(ellipse 80% 50% at 20% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 60%),
+                   radial-gradient(ellipse 70% 50% at 80% 100%, rgba(245, 158, 11, 0.10) 0%, transparent 50%),
+                   radial-gradient(ellipse 50% 30% at 90% 10%, rgba(99, 102, 241, 0.10) 0%, transparent 45%);
   
-  --root-background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(91, 173, 214, 0.10) 0%, transparent 60%),
-                     radial-gradient(ellipse 60% 30% at 50% 100%, rgba(255, 107, 43, 0.06) 0%, transparent 50%),
-                     linear-gradient(180deg, #060B14 0%, #03070C 50%, #04080F 100%);
-  --root-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 1px rgba(91, 173, 214, 0.20);
-  --btn-primary-bg: linear-gradient(135deg, #5BADD6 0%, #FF6B2B 100%);
-  --btn-primary-shadow: 0 4px 15px rgba(91, 173, 214, 0.20), 0 2px 6px rgba(255, 107, 43, 0.12);
+  --root-background: radial-gradient(ellipse 90% 45% at 50% -10%, rgba(59, 130, 246, 0.16) 0%, transparent 65%),
+                     radial-gradient(ellipse 70% 35% at 50% 110%, rgba(245, 158, 11, 0.08) 0%, transparent 55%),
+                     linear-gradient(180deg, #0E1420 0%, #0A0E17 50%, #070A11 100%);
+  --root-shadow: 0 16px 50px rgba(0, 0, 0, 0.85), 0 0 1px rgba(255, 255, 255, 0.10);
+  --btn-primary-bg: linear-gradient(135deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%);
+  --btn-primary-shadow: 0 4px 16px rgba(59, 130, 246, 0.30), 0 2px 6px rgba(37, 99, 235, 0.20);
 }
 
 /* ── Light Theme Variables (Logo Light-Side Colors) ── */

@@ -59,6 +59,7 @@ html, body, #root {
 /* Header */
 .app-header {
   padding: 12px 16px;
+  padding-top: 48px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -140,7 +141,7 @@ html, body, #root {
   -webkit-backdrop-filter: blur(28px);
   border-top: 1px solid var(--nav-border);
   padding-top: 10px;
-  padding-bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  padding-bottom: 28px;
   box-sizing: border-box;
   z-index: 100;
 }
@@ -418,6 +419,7 @@ html, body, #root {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
+  padding-top: 48px;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-dark);
   flex-shrink: 0;
@@ -425,20 +427,18 @@ html, body, #root {
   box-sizing: border-box;
 }
 
-/* 📱 Platform-Specific Top Safe Area Spacing (IF Architecture) */
-.platform-ios .app-header,
-.platform-ios .editor-header {
-  padding-top: max(12px, calc(env(safe-area-inset-top, 0px) + 12px));
-}
-
-.platform-android .app-header,
-.platform-android .editor-header {
-  padding-top: 48px; /* Android Status Bar yükseklik payı (~38px + 10px padding) */
-}
-
-.platform-web .app-header,
-.platform-web .editor-header {
-  padding-top: 12px;
+/* 📱 iOS Safe Area Enhancement - env() only works on iOS with viewport-fit=cover */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .app-header,
+  .editor-header {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 20px) !important;
+  }
+  .bottom-nav {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
+  }
+  .editor-meta-bar {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
+  }
 }
 
 .editor-header-actions {
@@ -570,6 +570,7 @@ html, body, #root {
   justify-content: space-between;
   align-items: center;
   padding: 12px;
+  padding-bottom: 28px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border-color);

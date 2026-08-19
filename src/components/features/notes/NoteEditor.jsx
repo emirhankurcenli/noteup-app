@@ -14,6 +14,8 @@ import NoteFormatToolbar from '../editor/NoteFormatToolbar';
 import BlockListRenderer from '../editor/BlockListRenderer';
 import { mergeConsecutiveTextBlocks, ensureElementVisible as ensureElementVisibleUtil } from '../../../utils/editorKeyboardUtils';
 
+import { EditorProvider } from '../../../context/EditorContext';
+
 // local SVGs and helpers
 const BackIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '1.25rem', height: '1.25rem' }}>
@@ -275,8 +277,52 @@ const NoteEditor = ({
     }));
   };
 
+  const editorContextValue = {
+    editingNote,
+    setEditingNote,
+    handleCloseEditor,
+    editorUndoStack,
+    editorRedoStack,
+    handleUndo,
+    handleRedo,
+    showFormatToolbar,
+    setShowFormatToolbar,
+    activeFormatBlockId,
+    setActiveFormatBlockId,
+    showEditorMenu,
+    setShowEditorMenu,
+    lang,
+    t,
+    requestBiometricAuth,
+    setNotes,
+    persistNotes,
+    setToast,
+    friends,
+    handleSendNudge,
+    checkAndRequestNotificationPermission,
+    setReminderNoteId,
+    setReminderTime,
+    setShowReminderModal,
+    handleInsertWidget,
+    permissionStates,
+    checkAndRequestPermission,
+    fileInputRef,
+    startRecording,
+    setShowShareModal,
+    handleMoveToTrash,
+    userPlan,
+    notes,
+    setShowPaywall,
+    theme,
+    isLight: theme === 'light',
+    reminders,
+    handleCancelReminder,
+    setConfirmDialog,
+  };
+
   return (
-    <div className="editor-container" onClick={() => { setShowEditorMenu(false); }}>
+    <EditorProvider value={editorContextValue}>
+      <div className="editor-container" onClick={() => { setShowEditorMenu(false); }}>
       <input
         type="file"
         ref={fileInputRef}
@@ -285,47 +331,7 @@ const NoteEditor = ({
         multiple
         onChange={handleFileChange}
       />
-      <NoteEditorHeader
-        editingNote={editingNote}
-        setEditingNote={setEditingNote}
-        handleCloseEditor={handleCloseEditor}
-        editorUndoStack={editorUndoStack}
-        editorRedoStack={editorRedoStack}
-        handleUndo={handleUndo}
-        handleRedo={handleRedo}
-        showFormatToolbar={showFormatToolbar}
-        setShowFormatToolbar={setShowFormatToolbar}
-        activeFormatBlockId={activeFormatBlockId}
-        setActiveFormatBlockId={setActiveFormatBlockId}
-        showEditorMenu={showEditorMenu}
-        setShowEditorMenu={setShowEditorMenu}
-        lang={lang}
-        t={t}
-        requestBiometricAuth={requestBiometricAuth}
-        setNotes={setNotes}
-        persistNotes={persistNotes}
-        setToast={setToast}
-        friends={friends}
-        handleSendNudge={handleSendNudge}
-        checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
-        setReminderNoteId={setReminderNoteId}
-        setReminderTime={setReminderTime}
-        setShowReminderModal={setShowReminderModal}
-        handleInsertWidget={handleInsertWidget}
-        permissionStates={permissionStates}
-        checkAndRequestPermission={checkAndRequestPermission}
-        fileInputRef={fileInputRef}
-        startRecording={startRecording}
-        setShowShareModal={setShowShareModal}
-        handleMoveToTrash={handleMoveToTrash}
-        userPlan={userPlan}
-        notes={notes}
-        setShowPaywall={setShowPaywall}
-        theme={theme}
-        reminders={reminders}
-        handleCancelReminder={handleCancelReminder}
-        setConfirmDialog={setConfirmDialog}
-      />
+      <NoteEditorHeader />
 
       {editingNote.deletedAt && (
         <div className="trash-banner animate-fade-in">
@@ -475,6 +481,7 @@ const NoteEditor = ({
         </div>
       </div>
     </div>
+    </EditorProvider>
   );
 };
 

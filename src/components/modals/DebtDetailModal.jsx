@@ -1,23 +1,6 @@
 import React, { useState } from 'react';
 import { formatTurkishMoneyDisplay } from '../../utils/money';
-
-const getItemDateString = (item) => {
-  let timeMs = item.createdAt;
-  if (!timeMs && item.id && typeof item.id === 'string' && item.id.startsWith('d-')) {
-    const parsed = parseInt(item.id.replace('d-', ''), 10);
-    if (!isNaN(parsed) && parsed > 1000000000000) {
-      timeMs = parsed;
-    }
-  }
-  if (!timeMs) return null;
-  const d = new Date(timeMs);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  const hours = String(d.getHours()).padStart(2, '0');
-  const mins = String(d.getMinutes()).padStart(2, '0');
-  return `${day}.${month}.${year} ${hours}:${mins}`;
-};
+import DebtPaymentHistoryList from './debt/DebtPaymentHistoryList';
 
 const DebtDetailModal = ({
   isOpen,
@@ -37,10 +20,8 @@ const DebtDetailModal = ({
 
   const filteredItems = items.filter(item => {
     const q = searchTerm.toLowerCase();
-    const dateStr = getItemDateString(item) || '';
     return (
       (item.note || '').toLowerCase().includes(q) ||
-      dateStr.toLowerCase().includes(q) ||
       (item.amount || '').toString().includes(q)
     );
   });
@@ -98,46 +79,42 @@ const DebtDetailModal = ({
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #10B981, #059669)',
+                background: '#10B981',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#FFF',
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)'
+                fontWeight: 'bold',
+                fontSize: '1.1rem'
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="6" width="20" height="12" rx="2" />
-                <circle cx="12" cy="12" r="2" />
-                <path d="M6 12h.01M18 12h.01" />
-              </svg>
+              ₺
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: isLight ? '#0F172A' : '#F8FAFC' }}>
-                {block.label || 'Borç / Alacak Detayları'}
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: isLight ? '#0F172A' : '#F8FAFC' }}>
+                {block.name || 'Borç / Alacak Detayı'}
               </h3>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: isLight ? '#64748B' : '#94A3B8', fontWeight: 600 }}>
-                Toplam {items.length} kayıt
-              </p>
+              <span style={{ fontSize: '0.75rem', color: isLight ? '#64748B' : '#94A3B8' }}>
+                {items.length} İşlem Kaydı
+              </span>
             </div>
           </div>
 
           <button
             onClick={onClose}
             style={{
-              background: isLight ? 'rgba(241, 245, 249, 0.9)' : 'rgba(255, 255, 255, 0.08)',
-              border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.12)',
-              color: isLight ? '#475569' : '#94A3B8',
-              width: '30px',
-              height: '30px',
-              borderRadius: '50%',
+              background: 'transparent',
+              border: 'none',
+              color: isLight ? '#64748B' : '#94A3B8',
               cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -168,102 +145,16 @@ const DebtDetailModal = ({
               {netTotal > 0 ? '+' : ''}{formatTurkishMoneyDisplay(netTotal)}
             </span>
           </div>
-
-          {items.length > 3 && (
-            <input
-              type="text"
-              placeholder="İşlemlerde ara (açıklama, tarih...)"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                marginTop: '12px',
-                padding: '10px 14px',
-                borderRadius: '12px',
-                background: isLight ? '#F8FAFC' : 'rgba(255, 255, 255, 0.05)',
-                border: isLight ? '1.5px solid #CBD5E1' : '1px solid var(--border-color)',
-                color: isLight ? '#0F172A' : '#F8FAFC',
-                fontSize: '0.88rem',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
-            />
-          )}
         </div>
 
         {/* Transaction Items List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 20px 20px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {filteredItems.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '30px 0', color: isLight ? '#64748B' : '#94A3B8', fontSize: '0.85rem' }}>
-              {items.length === 0 ? 'Henüz kaydedilmiş işlem bulunmuyor.' : 'Aramanızla eşleşen işlem bulunamadı.'}
-            </div>
-          ) : (
-            filteredItems.map(item => {
-              const dateStr = getItemDateString(item);
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '14px',
-                    background: isLight ? '#F8FAFC' : 'rgba(255, 255, 255, 0.04)',
-                    border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px'
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.92rem', fontWeight: 700, color: isLight ? '#0F172A' : '#F8FAFC', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.note || '—'}
-                    </div>
-                    {dateStr && (
-                      <div style={{ fontSize: '0.74rem', color: isLight ? '#64748B' : '#94A3B8', marginTop: '3px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.65, flexShrink: 0 }}>
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                          <line x1="16" y1="2" x2="16" y2="6" />
-                          <line x1="8" y1="2" x2="8" y2="6" />
-                          <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
-                        <span>{dateStr}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-                    <span style={{ fontSize: '1rem', fontWeight: 800, color: item.amount > 0 ? '#10B981' : '#EF4444' }}>
-                      {item.amount > 0 ? `+${formatTurkishMoneyDisplay(item.amount)}` : formatTurkishMoneyDisplay(item.amount)}
-                    </span>
-                    <button
-                      onClick={() => {
-                        if (triggerHaptic) triggerHaptic('warning');
-                        onDeleteItem(block.id, item.id);
-                      }}
-                      style={{
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        border: 'none',
-                        color: '#EF4444',
-                        width: '26px',
-                        height: '26px',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                      title="Sil"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 20px 20px 20px' }}>
+          <DebtPaymentHistoryList 
+            filteredItems={filteredItems}
+            onDeleteItem={(itemId) => onDeleteItem(block.id, itemId)}
+            triggerHaptic={triggerHaptic}
+            isLight={isLight}
+          />
         </div>
       </div>
     </div>

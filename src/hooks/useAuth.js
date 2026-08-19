@@ -6,6 +6,8 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import useSupabaseSync from './useSupabaseSync';
+import useUserProfile from './useUserProfile';
+import { useSubscriptionPlanWatcher } from './useSubscriptionPlanWatcher';
 import { sanitizeSingleLine } from '../utils/securityUtils';
 import { PLAN_LIMITS } from '../constants/paywallPlans';
 
@@ -28,10 +30,7 @@ export default function useAuth() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   // --- BILLING / SUBSCRIPTION PLAN STATES ---
-  // GÜVENLIK: Plan localStorage'dan başlatılmıyor — her zaman RevenueCat'ten gelir.
-  // localStorage yalnızca UI cache olarak kullanılır, plan kararı için kullanılmaz.
   const [userPlan, setUserPlan] = useState('lite');
-  const [planNotification, setPlanNotification] = useState(null);
   const prevPlanRef = useRef(userPlan);
 
   // --- SUB-HOOK: DATA SYNC ---
@@ -41,51 +40,8 @@ export default function useAuth() {
     setReminders,
   });
 
-  useEffect(() => {
-    const from = prevPlanRef.current;
-    const to = userPlan;
-    localStorage.setItem('s23_user_plan', to);
-
-    if (from !== to) {
-      const fromLevel = PLAN_LEVELS[from] || 1;
-      const toLevel = PLAN_LEVELS[to] || 1;
-      const isDown = toLevel < fromLevel;
-
-      // Handle 7-Day Payment Grace Period
-      if (isDown && (from === 'pro' || from === 'ultra') && to === 'lite') {
-        const GRACE_PERIOD_DAYS = 7;
-        const graceUntil = Date.now() + (GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
-        localStorage.setItem('s23_payment_failed_flag', 'true');
-        localStorage.setItem('s23_payment_grace_until', String(graceUntil));
-        localStorage.setItem('s23_previous_paid_plan', from);
-      } else if (to === 'pro' || to === 'ultra') {
-        localStorage.removeItem('s23_payment_failed_flag');
-        localStorage.removeItem('s23_payment_grace_until');
-        localStorage.removeItem('s23_previous_paid_plan');
-      }
-
-      // Kullanıcı bu hoş geldiniz ekranını daha önce gördü mü?
-      const seenKey = `s23_seen_plan_modal_${to}`;
-      const isSeen = localStorage.getItem(seenKey) === 'true';
-
-      if (!isSeen) {
-        setPlanNotification({
-          plan: to,
-          fromPlan: from,
-          title: isDown
-            ? `NoteUp ${to === 'pro' ? 'Pro Planına Düşüldü' : 'Lite Planına Düşüldü'}`
-            : (to === 'ultra' ? "👑 NoteUp Ultra'ya Hoş Geldiniz!" : "⚡ NoteUp Pro'ya Hoş Geldiniz!"),
-          message: isDown
-            ? `Aboneliğiniz sonlandırıldığı veya plan düşürdüğünüz için NoteUp ${to === 'pro' ? 'Pro' : 'Lite (Ücretsiz)'} seviyesine geçildi. Bazı ayrıcalıklar sınırlandırıldı.`
-            : (to === 'ultra'
-              ? "Tüm Ultra ayrıcalıklarınız (PDF Olarak Kaydet / Paylaş, 10GB Bulut, Sınırsız Paylaşım) başarıyla aktif edildi!"
-              : "Tüm Pro ayrıcalıklarınız (2GB Bulut, Sınırsız Not Şifreleme, Reklamsız) başarıyla aktif edildi!")
-        });
-      }
-
-      prevPlanRef.current = to;
-    }
-  }, [userPlan]);
+  // Delegate subscription plan changes & 7-day payment grace period monitoring to single-responsibility hook
+  const { planNotification, setPlanNotification } = useSubscriptionPlanWatcher(userPlan);
 
   // --- TOAST NOTIFICATION STATE ---
   const [toast, setToast] = useState(null);

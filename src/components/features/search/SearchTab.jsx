@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
+import { SearchBarInput } from './SearchBarInput';
+import { SearchResultsList } from './SearchResultsList';
 
 // ── Turkish-aware normalize helper ─────────────────────────────────────────────
 function normalize(str) {
@@ -200,231 +202,22 @@ const SearchTab = ({
       </div>
 
       {/* ── Search Bar ────────────────────────────────────────────────────────── */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        background: isLight ? 'rgba(255,255,255,0.9)' : 'rgba(30,30,50,0.85)',
-        backdropFilter: 'blur(16px)',
-        borderRadius: '18px',
-        border: isLight
-          ? '1.5px solid rgba(99,102,241,0.25)'
-          : '1.5px solid rgba(99,102,241,0.4)',
-        padding: '12px 16px',
-        boxShadow: '0 4px 24px rgba(99,102,241,0.10)',
-        transition: 'all 0.2s ease',
-      }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={handleQueryChange}
-          placeholder={lang === 'tr' ? 'Arama yap...' : 'Search...'}
-          style={{
-            flex: 1,
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            fontSize: '1rem',
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            caretColor: '#6366F1',
-          }}
-        />
-        {searchQuery.length > 0 && (
-          <button
-            onClick={clearSearch}
-            style={{
-              background: 'rgba(99,102,241,0.12)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '26px',
-              height: '26px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              flexShrink: 0,
-              color: '#6366F1',
-            }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        )}
-      </div>
-
-      {/* ── Result count badge ────────────────────────────────────────────────── */}
-      {hasQuery && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            color: results.length > 0 ? '#6366F1' : 'var(--text-muted)',
-            background: results.length > 0 ? 'rgba(99,102,241,0.10)' : 'transparent',
-            padding: results.length > 0 ? '4px 12px' : '0',
-            borderRadius: '20px',
-          }}>
-            {results.length > 0
-              ? (lang === 'tr' ? `${results.length} sonuç bulundu` : `${results.length} result${results.length !== 1 ? 's' : ''} found`)
-              : (lang === 'tr' ? 'Sonuç bulunamadı' : 'No results found')
-            }
-          </span>
-        </div>
-      )}
-
-      {/* ── Empty State ───────────────────────────────────────────────────────── */}
-      {!hasQuery && (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '16px',
-          padding: '48px 24px',
-          textAlign: 'center',
-        }}>
-          <div style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '24px',
-            background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </div>
-          <div>
-            <p style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 6px' }}>
-              {lang === 'tr' ? 'Ne aramak istiyorsunuz?' : 'What are you looking for?'}
-            </p>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
-              {lang === 'tr'
-                ? 'Başlık, metin, yapılacak, fatura, şifre, borç ve tüm eklentilerde anlık arama yapabilirsiniz.'
-                : 'Search instantly across titles, text, todos, bills, passwords, debts and all widgets.'}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ── No Results State ──────────────────────────────────────────────────── */}
-      {hasQuery && results.length === 0 && (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '40px 24px',
-          textAlign: 'center',
-        }}>
-          <div style={{
-            width: '70px',
-            height: '70px',
-            borderRadius: '20px',
-            background: 'rgba(239,68,68,0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              <line x1="8" y1="8" x2="14" y2="14" />
-              <line x1="14" y1="8" x2="8" y2="14" />
-            </svg>
-          </div>
-          <div>
-            <p style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px' }}>
-              {lang === 'tr' ? `"${debouncedQuery}" bulunamadı` : `"${debouncedQuery}" not found`}
-            </p>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
-              {lang === 'tr' ? 'Farklı bir kelime ya da kısaltma deneyin' : 'Try a different word or abbreviation'}
-            </p>
-          </div>
-        </div>
-      )}
+      <SearchBarInput
+        searchQuery={searchQuery}
+        handleQueryChange={handleQueryChange}
+        clearSearch={clearSearch}
+        isLight={isLight}
+        lang={lang}
+      />
 
       {/* ── Results List ──────────────────────────────────────────────────────── */}
-      {results.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {results.map(({ note, matchedStrings }) => (
-            <div
-              key={note.id}
-              onClick={() => {
-                window.history.pushState({ page: 'editor', noteId: note.id }, '');
-                openEditingNote(note);
-              }}
-              style={{
-                background: isLight ? 'rgba(255,255,255,0.90)' : 'rgba(24,24,37,0.80)',
-                backdropFilter: 'blur(12px)',
-                borderRadius: '16px',
-                border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.07)',
-                padding: '14px 16px',
-                cursor: 'pointer',
-                transition: 'all 0.18s ease',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-              }}
-            >
-              {/* Note title */}
-              <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 8px', lineHeight: 1.3 }}>
-                <HighlightText text={note.title || (lang === 'tr' ? 'Başlıksız Not' : 'Untitled Note')} query={debouncedQuery} />
-              </p>
-
-              {/* Match snippets */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                {matchedStrings.slice(0, 3).map((match, idx) => {
-                  const badge = TYPE_LABELS[match.type] || { tr: match.type, en: match.type, color: '#6B7280' };
-                  const badgeText = badge[lang] || badge['en'] || badge['tr'] || match.type;
-                  const trimLen = 120;
-                  const normMatch = normalize(match.text);
-                  const normQ = normalize(debouncedQuery);
-                  const matchIdx = normMatch.indexOf(normQ);
-                  let snippet = match.text;
-                  if (match.text.length > trimLen && matchIdx > -1) {
-                    const start = Math.max(0, matchIdx - 30);
-                    const end = Math.min(match.text.length, matchIdx + normQ.length + 60);
-                    snippet = (start > 0 ? '...' : '') + match.text.slice(start, end) + (end < match.text.length ? '...' : '');
-                  }
-
-                  return (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <span style={{
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        padding: '2px 7px',
-                        borderRadius: '6px',
-                        background: `${badge.color}18`,
-                        color: badge.color,
-                        flexShrink: 0,
-                        marginTop: '2px',
-                        whiteSpace: 'nowrap',
-                        border: `1px solid ${badge.color}30`,
-                      }}>{badgeText}</span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        <HighlightText text={snippet} query={debouncedQuery} />
-                      </span>
-                    </div>
-                  );
-                })}
-                {matchedStrings.length > 3 && (
-                  <span style={{ fontSize: '0.75rem', color: '#6366F1', fontWeight: 700, marginTop: '2px' }}>
-                    +{matchedStrings.length - 3} {lang === 'tr' ? 'daha fazla eşleşme' : 'more matches'}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <SearchResultsList
+        results={results}
+        openEditingNote={openEditingNote}
+        debouncedQuery={debouncedQuery}
+        lang={lang}
+        isLight={isLight}
+      />
     </div>
   );
 };

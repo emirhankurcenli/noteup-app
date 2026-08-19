@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { ToolbarFontSelector } from './toolbar/ToolbarFontSelector';
+import { ToolbarTextStyleButtons } from './toolbar/ToolbarTextStyleButtons';
+import { ToolbarColorPickerRow } from './toolbar/ToolbarColorPickerRow';
 
 const NoteFormatToolbar = ({
   showFormatToolbar,
@@ -192,98 +195,23 @@ const NoteFormatToolbar = ({
           boxSizing: 'border-box'
         }}
       >
-        {/* ROW 1: Font Trigger Button + Bold & Bullet Buttons + Close Button */}
+        {/* ROW 1: Font Trigger Button + Bold & Bullet Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-          {/* Custom Font Picker Trigger Button */}
-          <button
-            onClick={() => setShowFontPickerModal(true)}
-            onMouseDown={(e) => e.preventDefault()}
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '8px',
-              padding: '8px 12px',
-              borderRadius: '12px',
-              background: isLight ? '#F1F5F9' : 'rgba(255,255,255,0.08)',
-              border: isLight ? '1.5px solid #CBD5E1' : '1.5px solid rgba(255,255,255,0.15)',
-              color: isLight ? '#0F172A' : '#F8FAFC',
-              cursor: 'pointer',
-              minWidth: 0,
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-              <div style={{
-                width: '26px',
-                height: '26px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#FFF',
-                flexShrink: 0,
-                boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)'
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="4 7 4 4 20 4 20 7" />
-                  <line x1="9" y1="20" x2="15" y2="20" />
-                  <line x1="12" y1="4" x2="12" y2="20" />
-                </svg>
-              </div>
-
-              <span style={{ 
-                fontSize: '0.85rem', 
-                fontWeight: 800, 
-                fontFamily: currentFontObj.value,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {currentFontObj.label}
-              </span>
-            </div>
-
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-
-          {/* Bold Button */}
-          <button
-            className={`format-btn ${isBoldActive ? 'active' : ''}`}
-            style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '12px',
-              border: isBoldActive ? 'none' : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.15)'),
-              background: isBoldActive
-                ? 'linear-gradient(135deg, #8B5CF6, #6D28D9)'
-                : (isLight ? '#F1F5F9' : 'rgba(255,255,255,0.06)'),
-              color: isBoldActive ? '#FFF' : (isLight ? '#0F172A' : '#F8FAFC'),
-              fontWeight: 800,
-              fontSize: '1rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              boxShadow: isBoldActive ? '0 4px 12px rgba(139, 92, 246, 0.35)' : 'none'
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const nextBold = !isBoldActive;
-              setIsBoldActive(nextBold);
-              applyFormatChange({ fontWeight: nextBold ? 'bold' : 'normal' });
-            }}
-            onMouseDown={(e) => e.preventDefault()}
-            title="Bold"
-          >
-            B
-          </button>
+          <ToolbarFontSelector
+            activeFont={activeFont}
+            setShowFontPickerModal={setShowFontPickerModal}
+            showFontPickerModal={showFontPickerModal}
+            applyFormatChange={applyFormatChange}
+            isLight={isLight}
+          />
+          <ToolbarTextStyleButtons
+            isBoldActive={isBoldActive}
+            applyFormatChange={applyFormatChange}
+            activeBlock={activeBlock}
+            handleUpdateBlock={handleUpdateBlock}
+            activeFormatBlockId={activeFormatBlockId}
+            isLight={isLight}
+          />
 
           {/* Bullet List Button */}
           <button
@@ -389,55 +317,12 @@ const NoteFormatToolbar = ({
         </div>
 
         {/* ROW 2: Text Color Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '8px', borderTop: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,0.08)' }}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: isLight ? '#64748B' : '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            METİN RENGİ
-          </span>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '6px' }}>
-            {colors.map(c => {
-              const isSelected = isSameColor(activeColor, c.value);
-              const dotBg = c.value === 'var(--text-primary)' 
-                ? (isLight ? '#0F172A' : '#F8FAFC') 
-                : c.value;
-
-              return (
-                <div
-                  key={c.value}
-                  className={`color-dot ${isSelected ? 'active' : ''}`}
-                  onMouseDown={(e) => e.preventDefault()}
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: dotBg,
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    boxShadow: isSelected ? `0 0 0 3px ${isLight ? '#FFF' : '#1E293B'}, 0 0 0 5px ${dotBg}` : 'none',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: c.value === 'var(--text-primary)' ? (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.2)') : 'none'
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setActiveColor(c.value);
-                    applyFormatChange({ color: c.value });
-                  }}
-                  title={c.label}
-                >
-                  {isSelected && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={c.value === 'var(--text-primary)' ? (isLight ? '#FFF' : '#000') : '#FFF'} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <ToolbarColorPickerRow
+          activeColor={activeColor}
+          applyFormatChange={applyFormatChange}
+          isSameColor={isSameColor}
+          isLight={isLight}
+        />
       </div>
 
       {/* ULTRA PREMIUM FONT PICKER MODAL */}

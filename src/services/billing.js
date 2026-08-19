@@ -5,7 +5,7 @@ import * as webBilling from '../platform/web/billing.web';
 import { Purchases } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
 
-const getRevenueCatApiKey = () => {
+export const getRevenueCatApiKey = () => {
   const plt = detectPlatform();
   if (plt === 'android') return androidBilling.getApiKey();
   if (plt === 'ios') return iosBilling.getApiKey();

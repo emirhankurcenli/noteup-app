@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getPaymentGraceStatus, getDataRetentionStatus } from '../../../utils/subscriptionGraceUtils';
+import AccountProfileHeader from './account/AccountProfileHeader';
+import LogoutActionCard from './account/LogoutActionCard';
 
 const cleanText = (text) => {
   if (typeof text !== 'string') return text || '';
@@ -25,14 +27,6 @@ const AccountSubTab = ({
   lang,
   t,
 }) => {
-  const [tempName, setTempName] = useState(profileName || user?.name || '');
-
-  useEffect(() => {
-    setTempName(profileName || user?.name || '');
-  }, [profileName, user?.name]);
-
-  const isNameChanged = tempName.trim() !== '' && tempName.trim() !== (profileName || user?.name || '');
-
   const usedBytes = getStorageUsageBytes();
   const limitBytes = PLAN_STORAGE_LIMITS[userPlan] || PLAN_STORAGE_LIMITS.lite;
   const percent = Math.min(100, Math.round((usedBytes / limitBytes) * 100));
@@ -45,131 +39,16 @@ const AccountSubTab = ({
     <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       
       {/* HERO PROFILE CARD */}
-      <div style={{
-        padding: '24px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(24, 24, 37, 0.75)',
-        backdropFilter: 'blur(16px)',
-        borderRadius: '20px',
-        border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
-        position: 'relative'
-      }}>
-        
-        {/* Avatar with Edit Badge */}
-        <div 
-          onClick={() => setShowAvatarPicker(true)} 
-          style={{ cursor: 'pointer', position: 'relative', width: '90px', height: '90px', marginBottom: '14px' }}
-        >
-          <img 
-            src={user.photoURL} 
-            alt="Avatar" 
-            style={{
-              width: '90px',
-              height: '90px',
-              borderRadius: '50%',
-              border: '3px solid var(--btn-primary-bg)',
-              objectFit: 'cover',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
-            }}
-            onError={(e) => {
-              e.target.src = DEFAULT_AVATARS[0].url;
-            }} 
-          />
-          <div style={{
-            position: 'absolute',
-            right: '2px',
-            bottom: '2px',
-            background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
-            width: '28px',
-            height: '28px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            border: '2px solid #FFF'
-          }}>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-          </div>
-        </div>
-
-        {/* User Info */}
-        <div style={{ textAlign: 'center', width: '100%', marginBottom: '16px' }}>
-          <span style={{ fontSize: '1.25rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFFFFF' }}>{user.name}</span>
-          <span style={{ fontSize: '0.85rem', color: isLight ? '#1E293B' : '#CBD5E1', fontWeight: 700, display: 'block', marginTop: '2px' }}>{user.email}</span>
-        </div>
-
-        {/* Profile Name Input with Apply Button */}
-        <div style={{ width: '100%', borderTop: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
-          <label style={{ fontSize: '0.78rem', fontWeight: 800, color: isLight ? '#1E293B' : '#CBD5E1', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t('profileNameLabel')}
-          </label>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
-            <input 
-              type="text" 
-              className="input-field" 
-              placeholder={t('profileNamePlaceholder')} 
-              value={tempName}
-              onChange={(e) => setTempName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && isNameChanged) {
-                  triggerHaptic('medium');
-                  handleUpdateProfileName(tempName);
-                }
-              }}
-              style={{ 
-                flex: 1,
-                padding: '10px 14px',
-                borderRadius: '12px',
-                fontSize: '0.9rem',
-                fontWeight: 700,
-                color: isLight ? '#0F172A' : '#FFFFFF',
-                background: isLight ? '#F8FAFC' : 'rgba(0,0,0,0.2)',
-                border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.1)'
-              }}
-            />
-            <button
-              onClick={() => {
-                if (isNameChanged) {
-                  triggerHaptic('medium');
-                  handleUpdateProfileName(tempName);
-                }
-              }}
-              disabled={!isNameChanged}
-              style={{
-                padding: '10px 16px',
-                borderRadius: '12px',
-                border: 'none',
-                fontSize: '0.85rem',
-                fontWeight: 800,
-                cursor: isNameChanged ? 'pointer' : 'not-allowed',
-                background: isNameChanged 
-                  ? 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' 
-                  : (isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'),
-                color: isNameChanged ? '#FFFFFF' : (isLight ? '#94A3B8' : '#64748B'),
-                boxShadow: isNameChanged ? '0 4px 14px rgba(59,130,246,0.35)' : 'none',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                opacity: isNameChanged ? 1 : 0.6
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              {lang === 'tr' ? 'Uygula' : 'Apply'}
-            </button>
-          </div>
-        </div>
-      </div>
+      <AccountProfileHeader 
+        user={user}
+        setShowAvatarPicker={setShowAvatarPicker}
+        profileName={profileName}
+        handleUpdateProfileName={handleUpdateProfileName}
+        DEFAULT_AVATARS={DEFAULT_AVATARS}
+        triggerHaptic={triggerHaptic}
+        isLight={isLight}
+        t={t}
+      />
 
       {/* PLAN STATUS BANNER (Tam Arka Plan & Marka Renkleri ile Uyumlu) */}
       <div
@@ -408,7 +287,7 @@ const AccountSubTab = ({
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
-        background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(24, 24, 37, 0.75)',
+        background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(18, 24, 36, 0.85)',
         backdropFilter: 'blur(12px)',
         borderRadius: '16px',
         border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.08)',
@@ -462,7 +341,7 @@ const AccountSubTab = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(24, 24, 37, 0.75)',
+          background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(18, 24, 36, 0.85)',
           backdropFilter: 'blur(12px)',
           borderRadius: '16px',
           border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.08)',
@@ -520,35 +399,12 @@ const AccountSubTab = ({
       </div>
 
       {/* SECTION: Sign Out Action */}
-      <div style={{ marginTop: '8px' }}>
-        <button 
-          onClick={handleLogout}
-          style={{
-            width: '100%',
-            padding: '14px',
-            borderRadius: '16px',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            background: isLight ? 'rgba(254, 242, 242, 0.9)' : 'rgba(239, 68, 68, 0.08)',
-            color: '#EF4444',
-            fontSize: '0.9rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.1)'
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-          {cleanText(t('signOutBtn'))}
-        </button>
-      </div>
+      <LogoutActionCard 
+        handleLogout={handleLogout}
+        triggerHaptic={triggerHaptic}
+        isLight={isLight}
+        lang={lang}
+      />
 
     </div>
   );

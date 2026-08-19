@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { sanitizeSingleLine, sanitizeText } from '../../utils/securityUtils';
+import FeedbackTypeTabs from './feedback/FeedbackTypeTabs';
 
 const FeedbackModal = ({
   show,

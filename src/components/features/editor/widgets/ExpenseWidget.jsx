@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { formatTurkishMoneyDisplay, formatTurkishMoneyInput } from '../../../../utils/money';
 import ExpenseDetailModal from '../../../modals/ExpenseDetailModal';
+import { ExpenseFormInput } from './expense/ExpenseFormInput';
+import { ExpenseListTable } from './expense/ExpenseListTable';
 
 const ExpenseWidget = ({
   block,
@@ -243,47 +245,19 @@ const ExpenseWidget = ({
       </div>
 
       {/* Input Form Row */}
-      <form onSubmit={onAddItem} style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-        <input
-          type="text"
-          className="input-field"
-          placeholder="Açıklama"
-          value={fs.description || ''}
-          onChange={(e) => updateBlockForm(block.id, { description: e.target.value })}
-          style={{ flex: 1.2, padding: '8px 12px', fontSize: '0.85rem', borderRadius: '10px' }}
-        />
-        <input
-          type="text"
-          inputMode="decimal"
-          className="input-field"
-          placeholder="Tutar..."
-          value={fs.amount || ''}
-          onChange={(e) => updateBlockForm(block.id, { amount: formatTurkishMoneyInput(e.target.value) })}
-          style={{ flex: 0.8, padding: '8px 12px', fontSize: '0.85rem', borderRadius: '10px', minWidth: '70px' }}
-        />
-        <button
-          type="submit"
-          className="btn-primary"
-          onClick={onAddItem}
-          style={{
-            padding: '8px 14px',
-            fontSize: '0.9rem',
-            fontWeight: 700,
-            flexShrink: 0,
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #F43F5E, #E11D48)',
-            border: 'none',
-            color: '#FFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(244, 63, 94, 0.3)',
-            cursor: 'pointer'
-          }}
-        >
-          Ekle
-        </button>
-      </form>
+      <ExpenseFormInput
+        blockId={block.id}
+        fs={fs}
+        updateBlockForm={updateBlockForm}
+        onAddItem={onAddItem}
+      />
+
+      {/* Expense List Table */}
+      <ExpenseListTable
+        items={items}
+        blockId={block.id}
+        handleDeleteExpenseItem={handleDeleteExpenseItem}
+      />
 
       {/* Detail Footer Button */}
       {items.length > 0 && (

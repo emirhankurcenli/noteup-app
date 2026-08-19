@@ -1,6 +1,8 @@
 import React from 'react';
 import { exportNoteAsPDF } from '../../utils/pdfExport';
 import { requestBiometricAuth } from '../../services/biometricService';
+import ShareQrCodeCard from './share/ShareQrCodeCard';
+import ExportFormatButtons from './share/ExportFormatButtons';
 
 const cleanText = (str) => {
   if (!str) return '';

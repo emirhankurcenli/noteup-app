@@ -1,4 +1,5 @@
 import React from 'react';
+import PlanFeatureMatrixCard from './paywall/PlanFeatureMatrixCard';
 
 // Feature Icons Map for Plan Notification Modal
 const FeatureIcon = ({ featureKey, color, included }) => {
