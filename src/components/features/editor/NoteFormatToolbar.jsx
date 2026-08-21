@@ -207,9 +207,6 @@ const NoteFormatToolbar = ({
           <ToolbarTextStyleButtons
             isBoldActive={isBoldActive}
             applyFormatChange={applyFormatChange}
-            activeBlock={activeBlock}
-            handleUpdateBlock={handleUpdateBlock}
-            activeFormatBlockId={activeFormatBlockId}
             isLight={isLight}
           />
 
