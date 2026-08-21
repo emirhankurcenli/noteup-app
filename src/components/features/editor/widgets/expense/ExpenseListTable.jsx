@@ -26,13 +26,18 @@ export const ExpenseListTable = ({ items, blockId, handleDeleteExpenseItem }) =>
               {formatTurkishMoneyDisplay(item.amount)} TL
             </span>
             <button
-              onClick={() => handleDeleteExpenseItem(blockId, idx)}
+              type="button"
+              onClick={() => handleDeleteExpenseItem(blockId, item.id || idx)}
               style={{
                 background: 'none',
                 border: 'none',
                 color: '#EF4444',
                 cursor: 'pointer',
                 fontSize: '0.9rem',
+                padding: '4px 6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               ✕

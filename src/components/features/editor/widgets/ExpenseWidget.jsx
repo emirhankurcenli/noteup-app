@@ -28,7 +28,7 @@ const ExpenseWidget = ({
   };
 
   const onAddItem = (e) => {
-    e.preventDefault();
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
     handleAddExpenseItem(block.id);
   };
 

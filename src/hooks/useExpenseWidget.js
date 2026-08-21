@@ -20,13 +20,15 @@ const useExpenseWidget = ({
 }) => {
   const handleAddExpenseItem = (blockId) => {
     const fs = blockFormStates[blockId] || {};
-    if (!fs.amount && !fs.description) return;
-    
-    const cleanDesc = sanitizeSingleLine(fs.description || 'Gider', 100);
-    const cleanAmountStr = sanitizeMoneyInput(fs.amount || '0');
+    const rawDesc = (fs.expenseName !== undefined ? fs.expenseName : (fs.description || fs.name || fs.noteText || '')).trim();
+    const rawAmountStr = fs.expenseAmount !== undefined ? fs.expenseAmount : (fs.amount || '');
+
+    const cleanAmountStr = sanitizeMoneyInput(rawAmountStr || '0');
     const amountVal = parseTurkishMoneyToFloat(cleanAmountStr);
     
-    if (amountVal <= 0 && !fs.description) return;
+    if (amountVal <= 0 && !rawDesc) return;
+
+    const cleanDesc = sanitizeSingleLine(rawDesc || 'Harcama', 100);
 
     if (triggerHaptic) triggerHaptic('light');
 
@@ -34,6 +36,7 @@ const useExpenseWidget = ({
     const now = Date.now();
     const newItem = {
       id: 'exp-' + now,
+      name: cleanDesc,
       description: cleanDesc,
       amount: amountVal,
       dateStr: formatExpenseDate(now),
@@ -45,14 +48,20 @@ const useExpenseWidget = ({
 
     setBlockFormStates(prev => ({
       ...prev,
-      [blockId]: { ...prev[blockId], amount: '', description: '' }
+      [blockId]: {
+        ...prev[blockId],
+        amount: '',
+        description: '',
+        expenseAmount: '',
+        expenseName: ''
+      }
     }));
   };
 
-  const handleDeleteExpenseItem = (blockId, itemId) => {
+  const handleDeleteExpenseItem = (blockId, itemIdOrIdx) => {
     if (triggerHaptic) triggerHaptic('warning');
     const block = (editingNote?.blocks || []).find(b => b.id === blockId);
-    const updatedItems = (block?.items || []).filter(i => i.id !== itemId);
+    const updatedItems = (block?.items || []).filter((i, idx) => i.id !== itemIdOrIdx && idx !== itemIdOrIdx);
     handleUpdateBlock(blockId, { items: updatedItems });
   };
 
