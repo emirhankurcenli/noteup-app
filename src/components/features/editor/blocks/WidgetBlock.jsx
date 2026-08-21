@@ -12,8 +12,13 @@ export const WidgetBlock = ({
   block,
   idx,
   theme,
+  t,
+  lang,
+  editingNote,
+  handleUpdateBlock,
   handleDeleteBlock,
-  blockFormStates,
+  blockFormStates = {},
+  setBlockFormStates,
   updateBlockForm,
   handleAddDebtItem,
   handleDeleteDebtItem,
@@ -46,7 +51,7 @@ export const WidgetBlock = ({
   checkAndRequestPermission,
   showPermissionDialog,
 }) => {
-  switch (block.widgetType) {
+  switch (block.type) {
     case 'todo':
       return (
         <TodoWidget
@@ -59,8 +64,13 @@ export const WidgetBlock = ({
           handleToggleTodoItem={handleToggleTodoItem}
           handleDeleteTodoItem={handleDeleteTodoItem}
           handleAddTodoItem={handleAddTodoItem}
-          onDeleteBlock={() => handleDeleteBlock(block.id)}
+          handleDeleteBlock={handleDeleteBlock}
+          onDeleteBlock={() => handleDeleteBlock?.(block.id)}
+          handleUpdateBlock={handleUpdateBlock}
           triggerHaptic={triggerHaptic}
+          theme={theme}
+          t={t}
+          lang={lang}
         />
       );
     case 'debt':
@@ -69,10 +79,15 @@ export const WidgetBlock = ({
           block={block}
           blockFormStates={blockFormStates}
           updateBlockForm={updateBlockForm}
+          handleUpdateBlock={handleUpdateBlock}
+          handleDeleteBlock={handleDeleteBlock}
+          onDeleteBlock={() => handleDeleteBlock?.(block.id)}
           handleAddDebtItem={handleAddDebtItem}
           handleDeleteDebtItem={handleDeleteDebtItem}
-          onDeleteBlock={() => handleDeleteBlock(block.id)}
           triggerHaptic={triggerHaptic}
+          theme={theme}
+          t={t}
+          lang={lang}
         />
       );
     case 'split':
@@ -80,12 +95,17 @@ export const WidgetBlock = ({
         <SplitWidget
           block={block}
           blockFormStates={blockFormStates}
+          setBlockFormStates={setBlockFormStates}
           updateBlockForm={updateBlockForm}
           handleSetupSplit={handleSetupSplit}
           handleAddSplitExpense={handleAddSplitExpense}
           handleDeleteSplitExpense={handleDeleteSplitExpense}
-          onDeleteBlock={() => handleDeleteBlock(block.id)}
+          handleDeleteBlock={handleDeleteBlock}
+          onDeleteBlock={() => handleDeleteBlock?.(block.id)}
           triggerHaptic={triggerHaptic}
+          theme={theme}
+          t={t}
+          lang={lang}
         />
       );
     case 'bill':
@@ -94,9 +114,21 @@ export const WidgetBlock = ({
           block={block}
           blockFormStates={blockFormStates}
           updateBlockForm={updateBlockForm}
-          onDeleteBlock={() => handleDeleteBillBlock(block.id)}
+          handleDeleteBillBlock={handleDeleteBillBlock}
+          onDeleteBlock={() => handleDeleteBillBlock?.(block.id)}
+          checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
+          setToast={setToast}
+          setQuickReminderTitle={setQuickReminderTitle}
+          setQuickReminderTime={setQuickReminderTime}
+          setPendingWidgetAlarmCtx={setPendingWidgetAlarmCtx}
           handlePayBill={handlePayBill}
+          editingNote={editingNote}
+          now={now}
+          reminders={reminders}
           triggerHaptic={triggerHaptic}
+          theme={theme}
+          t={t}
+          lang={lang}
         />
       );
     case 'password':
@@ -105,11 +137,16 @@ export const WidgetBlock = ({
           block={block}
           blockFormStates={blockFormStates}
           updateBlockForm={updateBlockForm}
-          onDeleteBlock={() => handleDeleteBlock(block.id)}
+          handleUpdateBlock={handleUpdateBlock}
+          handleDeleteBlock={handleDeleteBlock}
+          onDeleteBlock={() => handleDeleteBlock?.(block.id)}
           triggerHaptic={triggerHaptic}
           vaultUnlocked={vaultUnlocked}
           setVaultUnlocked={setVaultUnlocked}
           requestBiometricAuth={requestBiometricAuth}
+          theme={theme}
+          t={t}
+          lang={lang}
         />
       );
     case 'parking':
@@ -118,8 +155,16 @@ export const WidgetBlock = ({
           block={block}
           blockFormStates={blockFormStates}
           updateBlockForm={updateBlockForm}
-          onDeleteBlock={() => handleDeleteBlock(block.id)}
+          handleUpdateBlock={handleUpdateBlock}
+          handleDeleteBlock={handleDeleteBlock}
+          onDeleteBlock={() => handleDeleteBlock?.(block.id)}
           triggerHaptic={triggerHaptic}
+          setToast={setToast}
+          checkAndRequestPermission={checkAndRequestPermission}
+          showPermissionDialog={showPermissionDialog}
+          theme={theme}
+          t={t}
+          lang={lang}
         />
       );
     case 'exam':
@@ -128,8 +173,20 @@ export const WidgetBlock = ({
           block={block}
           blockFormStates={blockFormStates}
           updateBlockForm={updateBlockForm}
-          onDeleteBlock={() => handleDeleteExamBlock(block.id)}
+          handleDeleteExamBlock={handleDeleteExamBlock}
+          onDeleteBlock={() => handleDeleteExamBlock?.(block.id)}
+          checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
+          setToast={setToast}
+          setQuickReminderTitle={setQuickReminderTitle}
+          setQuickReminderTime={setQuickReminderTime}
+          setPendingWidgetAlarmCtx={setPendingWidgetAlarmCtx}
+          reminders={reminders}
+          editingNote={editingNote}
+          now={now}
           triggerHaptic={triggerHaptic}
+          theme={theme}
+          t={t}
+          lang={lang}
         />
       );
     case 'expense':
@@ -141,8 +198,13 @@ export const WidgetBlock = ({
           handleAddExpenseItem={handleAddExpenseItem}
           handleDeleteExpenseItem={handleDeleteExpenseItem}
           handleExpenseTitleChange={handleExpenseTitleChange}
-          onDeleteBlock={() => handleDeleteBlock(block.id)}
+          handleDeleteBlock={handleDeleteBlock}
+          onDeleteBlock={() => handleDeleteBlock?.(block.id)}
+          handleUpdateBlock={handleUpdateBlock}
           triggerHaptic={triggerHaptic}
+          theme={theme}
+          t={t}
+          lang={lang}
         />
       );
     default:
