@@ -313,8 +313,28 @@ const useR2Storage = ({
     }
   };
 
-  const showCustomConfirm = (message, onConfirm) => {
-    setConfirmDialog({ message, onConfirm: () => { onConfirm(); } });
+  const showCustomConfirm = (messageOrOptions, onConfirm) => {
+    if (typeof messageOrOptions === 'object' && messageOrOptions !== null) {
+      setConfirmDialog({
+        title: messageOrOptions.title,
+        message: messageOrOptions.message || messageOrOptions.msg,
+        onConfirm: () => {
+          if (typeof messageOrOptions.onConfirm === 'function') messageOrOptions.onConfirm();
+          else if (typeof onConfirm === 'function') onConfirm();
+        },
+        onCancel: messageOrOptions.onCancel,
+        confirmText: messageOrOptions.confirmText,
+        cancelText: messageOrOptions.cancelText,
+        icon: messageOrOptions.icon,
+      });
+    } else {
+      setConfirmDialog({
+        message: messageOrOptions,
+        onConfirm: () => {
+          if (typeof onConfirm === 'function') onConfirm();
+        }
+      });
+    }
   };
 
   const gc = useMediaGarbageCollector();

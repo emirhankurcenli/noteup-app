@@ -86,18 +86,28 @@ const ConfirmDialogModal = ({
               color: 'var(--text-primary)',
               letterSpacing: '-0.01em',
             }}>
-              {confirmDialog.title || getTr('confirmDeleteTitle', 'Silmeyi Onayla')}
+              {(typeof confirmDialog.title === 'string' ? confirmDialog.title : null) || getTr('confirmDeleteTitle', 'Silmeyi Onayla')}
             </h3>
-            {confirmDialog.message && (
-              <p style={{
-                margin: 0,
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)',
-                lineHeight: '1.5',
-              }}>
-                {confirmDialog.message}
-              </p>
-            )}
+            {(() => {
+              const msgText = typeof confirmDialog.message === 'string'
+                ? confirmDialog.message
+                : typeof confirmDialog.msg === 'string'
+                  ? confirmDialog.msg
+                  : typeof confirmDialog.message === 'object' && confirmDialog.message !== null
+                    ? (confirmDialog.message.msg || confirmDialog.message.message || '')
+                    : '';
+              if (!msgText) return null;
+              return (
+                <p style={{
+                  margin: 0,
+                  fontSize: '0.875rem',
+                  color: 'var(--text-secondary)',
+                  lineHeight: '1.5',
+                }}>
+                  {msgText}
+                </p>
+              );
+            })()}
           </div>
         </div>
 
