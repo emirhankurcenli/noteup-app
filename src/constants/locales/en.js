@@ -134,6 +134,8 @@ const en = {
   billTitle: 'Bill Tracker',
   billName: 'Bill Name',
   billAmount: 'Amount',
+  billSubscriberNo: 'Subscriber / Account No (Optional)',
+  billSubscriberNoLabel: 'Account No',
   billHintText: 'Sends a monthly recurring payment reminder at specified date & time',
   billDayOfMonth: 'Day of Month (1-31)',
   billTime: 'Payment Time',

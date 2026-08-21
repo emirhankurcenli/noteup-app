@@ -134,6 +134,8 @@ const tr = {
   billTitle: 'Fatura Takibi',
   billName: 'Fatura Adı',
   billAmount: 'Tutar (TL)',
+  billSubscriberNo: 'Abone / Müşteri No (Opsiyonel)',
+  billSubscriberNoLabel: 'Abone No',
   billHintText: 'Belirttiğiniz gün ve saatte her ay düzenli ödeme hatırlatıcısı gönderir',
   billDayOfMonth: 'Ayın Günü (1-31)',
   billTime: 'Ödeme Saati',

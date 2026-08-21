@@ -185,6 +185,7 @@ export default function useReminders({
               ...b,
               name: capturedCtx.name || titleToUse,
               amount: capturedCtx.amount !== undefined ? capturedCtx.amount : b.amount,
+              subscriberNo: capturedCtx.subscriberNo !== undefined ? capturedCtx.subscriberNo : (b.subscriberNo || ''),
               nextPaymentTime: capturedTime,
               reminderId: granted ? remId : b.reminderId,
               day: datePart ? parseInt(datePart.split('-')[2], 10) : b.day,
