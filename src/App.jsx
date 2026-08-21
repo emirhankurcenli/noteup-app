@@ -471,6 +471,7 @@ function App() {
     handleSaveBillWidget,
     handleDeleteBillBlock,
     handlePayBill,
+    handleDeleteBillPaymentItem,
     handleSaveExamWidget,
     handleDeleteExamBlock,
     handleTextareaKeyDown,
@@ -620,6 +621,7 @@ function App() {
         handleDeleteExamBlock={handleDeleteExamBlock}
         handleDeleteBillBlock={handleDeleteBillBlock}
         handlePayBill={handlePayBill}
+        handleDeleteBillPaymentItem={handleDeleteBillPaymentItem}
         handleInsertWidget={handleInsertWidget}
         handleSendNudge={handleSendNudge}
         startRecording={startRecording}

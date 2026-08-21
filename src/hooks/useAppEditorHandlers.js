@@ -127,6 +127,7 @@ export default function useAppEditorHandlers({
     handleSaveBillWidget,
     handleDeleteBillBlock,
     handlePayBill,
+    handleDeleteBillPaymentItem,
     handleSaveExamWidget,
     handleDeleteExamBlock,
   } = useWidgetHandlers({
@@ -215,6 +216,7 @@ export default function useAppEditorHandlers({
     handleSaveBillWidget,
     handleDeleteBillBlock,
     handlePayBill,
+    handleDeleteBillPaymentItem,
     handleSaveExamWidget,
     handleDeleteExamBlock,
     handleTextareaKeyDown,

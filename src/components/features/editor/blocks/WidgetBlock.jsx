@@ -45,6 +45,7 @@ export const WidgetBlock = ({
   now,
   handleDeleteBillBlock,
   handlePayBill,
+  handleDeleteBillPaymentItem,
   vaultUnlocked,
   setVaultUnlocked,
   requestBiometricAuth,
@@ -122,6 +123,8 @@ export const WidgetBlock = ({
           setQuickReminderTime={setQuickReminderTime}
           setPendingWidgetAlarmCtx={setPendingWidgetAlarmCtx}
           handlePayBill={handlePayBill}
+          handleDeleteBillPaymentItem={handleDeleteBillPaymentItem}
+          handleUpdateBlock={handleUpdateBlock}
           editingNote={editingNote}
           now={now}
           reminders={reminders}

@@ -83,6 +83,7 @@ export default function AppWorkspaceContainer({
   handleDeleteExamBlock,
   handleDeleteBillBlock,
   handlePayBill,
+  handleDeleteBillPaymentItem,
   handleInsertWidget,
   handleSendNudge,
   startRecording,
@@ -213,6 +214,7 @@ export default function AppWorkspaceContainer({
         handleDeleteExamBlock={handleDeleteExamBlock}
         handleDeleteBillBlock={handleDeleteBillBlock}
         handlePayBill={handlePayBill}
+        handleDeleteBillPaymentItem={handleDeleteBillPaymentItem}
         handleInsertWidget={handleInsertWidget}
         handleSendNudge={handleSendNudge}
         startRecording={startRecording}

@@ -211,14 +211,48 @@ export const useBillWidget = ({
       scheduleNotification(newReminder);
     }
 
+    const paymentRecord = {
+      id: 'pay-' + Date.now(),
+      paidAt: Date.now(),
+      amount: block.amount !== undefined ? block.amount : parseFloat(block.billAmount) || 0,
+      subscriberNo: block.subscriberNo || '',
+      cycleDate: block.nextPaymentTime || nextTime,
+      billName: block.name || block.billName || 'Fatura'
+    };
+
+    const updatedPaymentHistory = [...(block.paymentHistory || []), paymentRecord];
+    const updatedLegacyHistory = [...(block.history || []), Date.now()];
+
     handleUpdateBlock(blockId, {
       reminderId: reminderId,
+      nextPaymentTime: nextTime,
       nextBillDate: nextTime,
-      lastPaidAt: new Date().toISOString()
+      lastPaidAt: new Date().toISOString(),
+      paymentHistory: updatedPaymentHistory,
+      history: updatedLegacyHistory
     });
 
     if (triggerHaptic) triggerHaptic('success');
     setToast({ title: "✅ Fatura Ödendi İşaretlendi", msg: `Gelecek ödeme tarihi (${nextTime.split('T')[0]}) olarak güncellendi.` });
+  };
+
+  const handleDeleteBillPaymentItem = (blockId, paymentItemId, paidTime) => {
+    if (!editingNote) return;
+    const block = (editingNote.blocks || []).find(b => b.id === blockId);
+    if (!block) return;
+
+    const updatedPaymentHistory = (block.paymentHistory || []).filter(p => p.id !== paymentItemId);
+    const updatedLegacyHistory = (block.history || []).filter(ts => ts !== paidTime && ts !== paymentItemId);
+
+    handleUpdateBlock(blockId, {
+      paymentHistory: updatedPaymentHistory,
+      history: updatedLegacyHistory
+    });
+
+    if (triggerHaptic) triggerHaptic('warning');
+    if (setToast) {
+      setToast({ title: "🗑️ Ödeme Kaydı Silindi", msg: "Fatura ödeme geçmişinden kayıt kaldırıldı." });
+    }
   };
 
   const handleDeleteBillWidget = (blockId) => {
@@ -251,6 +285,7 @@ export const useBillWidget = ({
     handleDeleteBillWidget,
     handleDeleteBillBlock,
     handlePayBill,
+    handleDeleteBillPaymentItem,
     calculateNextBillDate,
   };
 };

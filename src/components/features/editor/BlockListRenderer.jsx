@@ -70,6 +70,7 @@ const BlockListRenderer = ({
   now,
   handleDeleteBillBlock,
   handlePayBill,
+  handleDeleteBillPaymentItem,
   isRecording,
   recordingSeconds,
   cancelRecording,
@@ -248,6 +249,7 @@ const BlockListRenderer = ({
                 now={now}
                 handleDeleteBillBlock={handleDeleteBillBlock}
                 handlePayBill={handlePayBill}
+                handleDeleteBillPaymentItem={handleDeleteBillPaymentItem}
                 vaultUnlocked={vaultUnlocked}
                 setVaultUnlocked={setVaultUnlocked}
                 requestBiometricAuth={requestBiometricAuth}

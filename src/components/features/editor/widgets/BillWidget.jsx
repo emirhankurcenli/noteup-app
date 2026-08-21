@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { formatTurkishMoneyInput, formatTurkishMoneyDisplay, parseTurkishMoneyToFloat } from '../../../../utils/money';
+import BillDetailModal from '../../../modals/BillDetailModal';
 
 const getNowLocalDateTimeString = () => {
   const d = new Date();
@@ -22,18 +23,23 @@ const BillWidget = ({
   setQuickReminderTime,
   setPendingWidgetAlarmCtx,
   handlePayBill,
+  handleDeleteBillPaymentItem,
+  handleUpdateBlock,
   editingNote,
   lang,
   triggerHaptic,
   theme = 'dark',
-  t
+  t = (k) => k
 }) => {
   const isLight = theme === 'light';
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const bfs = blockFormStates[block.id] || {};
   const name = bfs.tempName !== undefined ? bfs.tempName : (block.name || '');
   const amount = bfs.tempAmount !== undefined ? bfs.tempAmount : (formatTurkishMoneyDisplay(block.amount) || '');
   const subscriberNo = bfs.tempSubscriberNo !== undefined ? bfs.tempSubscriberNo : (block.subscriberNo || '');
   const isEditing = bfs.isEditing || !block.setupDone;
+
+  const paymentCount = (block.paymentHistory && block.paymentHistory.length) || (block.history && block.history.length) || 0;
 
   const getRemainingDaysText = () => {
     if (!block.nextPaymentTime) return '';
@@ -350,6 +356,7 @@ const BillWidget = ({
         flexDirection: 'column',
         gap: '8px'
       }}>
+        {/* 1. Bu Ay Ödendi Butonu */}
         <button 
           className="btn-primary" 
           style={{ 
@@ -377,9 +384,41 @@ const BillWidget = ({
           ✓ {t('billPay')}
         </button>
 
+        {/* 2. Tüm Detayları Gör / Ödeme Geçmişi Butonu */}
+        <button
+          type="button"
+          onClick={() => {
+            if (triggerHaptic) triggerHaptic('light');
+            setShowDetailModal(true);
+          }}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            background: isLight ? 'rgba(139, 92, 246, 0.08)' : 'rgba(139, 92, 246, 0.12)',
+            border: isLight ? '1px solid rgba(139, 92, 246, 0.25)' : '1px solid rgba(139, 92, 246, 0.3)',
+            borderRadius: '12px',
+            color: isLight ? '#7C3AED' : '#C084FC',
+            fontSize: '0.82rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>{t('billSeeAllDetails') || 'Tüm Detayları Gör'} {paymentCount > 0 ? `(${paymentCount})` : ''}</span>
+        </button>
+
+        {/* Mini Son 3 Ödeme Rozeti */}
         {block.history && block.history.length > 0 && (
-          <div style={{ marginTop: '4px' }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>{t('billHistory')}:</span>
+          <div style={{ marginTop: '2px' }}>
+            <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)', fontWeight: 600 }}>{t('billHistory')}:</span>
             <div style={{ 
               display: 'flex', 
               gap: '6px', 
@@ -405,6 +444,18 @@ const BillWidget = ({
           </div>
         )}
       </div>
+
+      {/* Fatura Detay Modalı */}
+      <BillDetailModal
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        block={block}
+        onDeletePaymentItem={handleDeleteBillPaymentItem}
+        triggerHaptic={triggerHaptic}
+        setToast={setToast}
+        theme={theme}
+        t={t}
+      />
     </div>
   );
 };

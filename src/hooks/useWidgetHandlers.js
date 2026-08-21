@@ -187,6 +187,7 @@ const useWidgetHandlers = ({
     handleSaveBillWidget: billExamHandlers.handleSaveBillWidget,
     handleDeleteBillBlock: billExamHandlers.handleDeleteBillBlock,
     handlePayBill: billExamHandlers.handlePayBill,
+    handleDeleteBillPaymentItem: billExamHandlers.handleDeleteBillPaymentItem,
     handleSaveExamWidget: billExamHandlers.handleSaveExamWidget,
     handleDeleteExamBlock: billExamHandlers.handleDeleteExamBlock,
   };

@@ -212,6 +212,7 @@ const NoteEditor = ({
   handleDeleteExamBlock,
   handleDeleteBillBlock,
   handlePayBill,
+  handleDeleteBillPaymentItem,
   handleInsertWidget,
   handleSendNudge,
   startRecording,
@@ -460,6 +461,7 @@ const NoteEditor = ({
           now={now}
           handleDeleteBillBlock={handleDeleteBillBlock}
           handlePayBill={handlePayBill}
+          handleDeleteBillPaymentItem={handleDeleteBillPaymentItem}
           isRecording={isRecording}
           recordingSeconds={recordingSeconds}
           cancelRecording={cancelRecording}
