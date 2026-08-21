@@ -305,6 +305,38 @@ export const EditorOptionsMenuDropdown = (props) => {
         <span>{lang === 'tr' ? 'Hesap Bölüşücü' : 'Bill Splitter'}</span>
       </button>
 
+      {/* 4h. Gider Takibi */}
+      <button
+        onClick={() => {
+          if (typeof handleInsertWidget === 'function') handleInsertWidget('expense');
+          setShowEditorMenu(false);
+        }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '8px 10px',
+          background: 'none',
+          border: 'none',
+          borderRadius: '10px',
+          color: 'var(--text-primary)',
+          cursor: 'pointer',
+          fontSize: '0.86rem',
+          fontWeight: 600,
+          textAlign: 'left',
+          width: '100%'
+        }}
+      >
+        <div style={{ width: '26px', height: '26px', borderRadius: '7px', background: isLight ? '#E11D48' : 'rgba(244, 63, 94, 0.18)', border: isLight ? 'none' : '1px solid rgba(244, 63, 94, 0.35)', color: isLight ? '#FFF' : '#FB7185', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: isLight ? '0 2px 6px rgba(225, 29, 72, 0.4)' : 'none' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+            <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+            <path d="M18 12a2 2 0 0 0 0 4h3v-4z" />
+          </svg>
+        </div>
+        <span>{lang === 'tr' ? 'Gider Takibi' : 'Expense Tracker'}</span>
+      </button>
+
       {/* 4h. Görsel Ekle */}
       <button
         onClick={() => {
