@@ -268,11 +268,11 @@ export const useBillWidget = ({
               await handleCancelReminder(rem);
             }
           }
-          handleDeleteBlock(blockId);
+          handleDeleteBlock(blockId, true);
         }
       });
     } else {
-      handleDeleteBlock(blockId);
+      handleDeleteBlock(blockId, true);
     }
   };
 

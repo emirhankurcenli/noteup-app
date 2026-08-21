@@ -419,7 +419,7 @@ const useR2Storage = ({
           });
           return;
         }
-        const widgetTypes = ['debt', 'todo', 'bill', 'split', 'password', 'parking', 'exam'];
+        const widgetTypes = ['debt', 'todo', 'bill', 'split', 'password', 'parking', 'exam', 'expense'];
         if (widgetTypes.includes(blockToDelete.type)) {
           showCustomConfirm("Bu eklentiyi silmek istediğinize emin misiniz?", () => {
             performDeleteBlock(blockId);
