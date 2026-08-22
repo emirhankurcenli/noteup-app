@@ -2,6 +2,7 @@ import { parseTurkishMoneyToFloat } from '../utils/money';
 import useBillExamWidgets from './useBillExamWidgets';
 import useExpenseWidget from './useExpenseWidget';
 import { sanitizeSingleLine, sanitizeMoneyInput } from '../utils/securityUtils';
+import { splitBlockAtSelection, getLastSavedSelection } from '../utils/selectionUtils';
 
 const useWidgetHandlers = ({
   editingNote,
@@ -75,7 +76,8 @@ const useWidgetHandlers = ({
 
     trackAttachmentAdded();
     const blocks = editingNote.blocks || [];
-    const { id: focusedId } = focusedBlockRef.current || {};
+    const savedSelection = getLastSavedSelection();
+    const focusedId = (focusedBlockRef?.current?.id) || savedSelection.blockId;
 
     const newWidget = {
       id: 'b-' + Date.now(),
@@ -109,16 +111,30 @@ const useWidgetHandlers = ({
     }
 
     // 3. Odak bir metin bloğu üzerindeyse:
-    const plainText = (focusedBlock.content || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
-    const isTextEmpty = plainText === '';
+    const targetEl = document.querySelector(`[data-block-id="${focusedBlock.id}"]`);
+    const { textBefore, textAfter, isSplit } = splitBlockAtSelection(targetEl, savedSelection.range);
+
+    const isBeforeEmpty = (textBefore || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() === '';
+    const isAfterEmpty = (textAfter || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() === '';
 
     let replacementBlocks = [];
-    if (isTextEmpty) {
-      // İmlecin olduğu yerde metin YOKSA -> O boş bloğun yerine eklentiyi koy
+
+    if (isBeforeEmpty && isAfterEmpty) {
+      // Metin tamamen boşsa -> O boş bloğun yerine eklentiyi koy
       replacementBlocks = [...widgetGroup, newTextAfterBlock];
+    } else if (isBeforeEmpty && !isAfterEmpty) {
+      // İmleç en baştaysa -> Eklenti en başa, metin eklentinin altına
+      const updatedAfter = { ...focusedBlock, content: textAfter };
+      replacementBlocks = [...widgetGroup, updatedAfter];
+    } else if (!isBeforeEmpty && isAfterEmpty) {
+      // İmleç en sondaysa -> Metin üstte, eklenti altta, altına yeni boş satır
+      const updatedFocused = { ...focusedBlock, content: textBefore };
+      replacementBlocks = [updatedFocused, ...widgetGroup, newTextAfterBlock];
     } else {
-      // İmlecin olduğu yerde metin VARSA -> Metin üstte kalsın, eklenti BİR ALTINA geçsin
-      replacementBlocks = [focusedBlock, ...widgetGroup, newTextAfterBlock];
+      // İmleç ortadaysa (Örn: "imleç burda" ile "Aaaaa" arası) -> Tam ortaya girer!
+      const updatedFocused = { ...focusedBlock, content: textBefore };
+      const updatedAfter = { id: 'b-' + (Date.now() + 4), type: 'text', content: textAfter };
+      replacementBlocks = [updatedFocused, ...widgetGroup, updatedAfter];
     }
 
     const updated = [...blocks];

@@ -154,3 +154,55 @@ export const getCurrentFormatState = (targetElement) => {
 
   return state;
 };
+
+export const splitBlockAtSelection = (targetElement, customRange = null) => {
+  if (!targetElement) return { textBefore: '', textAfter: '', isSplit: false };
+
+  const range = customRange || lastSavedRange;
+  if (!range || !targetElement.contains(range.startContainer)) {
+    return {
+      textBefore: targetElement.innerHTML || '',
+      textAfter: '',
+      isSplit: false
+    };
+  }
+
+  try {
+    // 1. Everything before the cursor
+    const rangeBefore = document.createRange();
+    rangeBefore.selectNodeContents(targetElement);
+    rangeBefore.setEnd(range.startContainer, range.startOffset);
+    const divBefore = document.createElement('div');
+    divBefore.appendChild(rangeBefore.cloneContents());
+
+    // 2. Everything after the cursor
+    const rangeAfter = document.createRange();
+    rangeAfter.selectNodeContents(targetElement);
+    rangeAfter.setStart(range.endContainer, range.endOffset);
+    const divAfter = document.createElement('div');
+    divAfter.appendChild(rangeAfter.cloneContents());
+
+    const cleanHtml = (html) => {
+      let h = (html || '').trim();
+      h = h.replace(/^(<br\s*\/?>|<div>\s*<br\s*\/?>\s*<\/div>)+/i, '');
+      h = h.replace(/(<br\s*\/?>|<div>\s*<br\s*\/?>\s*<\/div>)+$/i, '');
+      return h.trim();
+    };
+
+    const textBefore = cleanHtml(divBefore.innerHTML);
+    const textAfter = cleanHtml(divAfter.innerHTML);
+
+    return {
+      textBefore,
+      textAfter,
+      isSplit: true,
+    };
+  } catch (err) {
+    console.warn('splitBlockAtSelection error:', err);
+    return {
+      textBefore: targetElement.innerHTML || '',
+      textAfter: '',
+      isSplit: false
+    };
+  }
+};
