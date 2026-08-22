@@ -60,14 +60,48 @@ export const applyRichFormat = ({
 
   restoreSelection(targetEl);
 
+  const sel = window.getSelection();
+  const hasTextSelected = sel && sel.rangeCount > 0 && !sel.isCollapsed;
+
   try {
     document.execCommand('styleWithCSS', false, true);
   } catch (e) {}
 
-  try {
-    document.execCommand(command, false, value);
-  } catch (err) {
-    console.warn(`execCommand('${command}') failed:`, err);
+  // 1. If text is highlighted (Basılı tutularak seçilen metin)
+  if (hasTextSelected) {
+    try {
+      document.execCommand(command, false, value);
+    } catch (err) {
+      console.warn(`execCommand('${command}') failed on selection:`, err);
+    }
+  } else {
+    // 2. If no text is selected -> Cursor position for UPCOMING typing (Seçim yapıldıktan sonra yazılacak metin)
+    try {
+      document.execCommand(command, false, value);
+    } catch (err) {
+      console.warn(`execCommand('${command}') failed on cursor:`, err);
+    }
+
+    // Fallback for empty block or Android soft caret: ensure styled typing container
+    const isElementEmpty = !targetEl.textContent || targetEl.textContent.trim() === '';
+    if (isElementEmpty && (command === 'foreColor' || command === 'fontName' || command === 'bold')) {
+      const span = document.createElement('span');
+      if (command === 'foreColor' && value) span.style.color = value;
+      if (command === 'fontName' && value) span.style.fontFamily = value;
+      if (command === 'bold') span.style.fontWeight = 'bold';
+      span.innerHTML = '&#8203;'; // zero-width space to hold the caret
+
+      targetEl.innerHTML = '';
+      targetEl.appendChild(span);
+
+      if (sel) {
+        const range = document.createRange();
+        range.setStart(span.firstChild, 1);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
   }
 
   // Save new selection state after applying format
