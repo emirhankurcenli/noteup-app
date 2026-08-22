@@ -75,7 +75,7 @@ const useWidgetHandlers = ({
 
     trackAttachmentAdded();
     const blocks = editingNote.blocks || [];
-    const { id: focusedId, pos: cursorPos } = focusedBlockRef.current;
+    const { id: focusedId } = focusedBlockRef.current || {};
 
     const newWidget = {
       id: 'b-' + Date.now(),
@@ -89,8 +89,9 @@ const useWidgetHandlers = ({
     const focusedBlock = focusedIdx >= 0 ? blocks[focusedIdx] : null;
 
     if (!focusedBlock) {
+      // 1. Odak yoksa -> En son bloğun hemen altına ekle
       const lastBlock = blocks[blocks.length - 1];
-      if (lastBlock && lastBlock.type === 'text' && (lastBlock.content || '').trim() === '') {
+      if (lastBlock && lastBlock.type === 'text' && (lastBlock.content || '').replace(/<[^>]*>/g, '').trim() === '') {
         const updated = [...blocks.slice(0, -1), ...widgetGroup, newTextAfterBlock];
         handleUpdateNote('blocks', updated, true);
       } else {
@@ -100,42 +101,24 @@ const useWidgetHandlers = ({
     }
 
     if (focusedBlock.type !== 'text') {
+      // 2. Odak zaten bir widget üzerindeyse -> O widget'ın altına ekle
       const updated = [...blocks];
-      updated.splice(focusedIdx + 1, 0, ...widgetGroup);
+      updated.splice(focusedIdx + 1, 0, ...widgetGroup, newTextAfterBlock);
       handleUpdateNote('blocks', updated, true);
       return newWidget.id;
     }
 
-    const text = focusedBlock.content || '';
-    const pos = Math.min(cursorPos, text.length);
-
-    let textBefore = text.substring(0, pos);
-    let textAfter = text.substring(pos);
-
-    if (textBefore.endsWith('\n')) {
-      textBefore = textBefore.substring(0, textBefore.length - 1);
-    }
-    if (textAfter.startsWith('\n')) {
-      textAfter = textAfter.substring(1);
-    }
-
-    const isBeforeEmpty = textBefore.trim() === '';
-    const isAfterEmpty = textAfter.trim() === '';
+    // 3. Odak bir metin bloğu üzerindeyse:
+    const plainText = (focusedBlock.content || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    const isTextEmpty = plainText === '';
 
     let replacementBlocks = [];
-
-    if (isBeforeEmpty && isAfterEmpty) {
+    if (isTextEmpty) {
+      // İmlecin olduğu yerde metin YOKSA -> O boş bloğun yerine eklentiyi koy
       replacementBlocks = [...widgetGroup, newTextAfterBlock];
-    } else if (isBeforeEmpty && !isAfterEmpty) {
-      const updatedAfter = { ...focusedBlock, content: textAfter };
-      replacementBlocks = [...widgetGroup, updatedAfter];
-    } else if (!isBeforeEmpty && isAfterEmpty) {
-      const updatedFocused = { ...focusedBlock, content: textBefore };
-      replacementBlocks = [updatedFocused, ...widgetGroup, newTextAfterBlock];
     } else {
-      const updatedFocused = { ...focusedBlock, content: textBefore };
-      const updatedAfter = { ...newTextAfterBlock, content: textAfter };
-      replacementBlocks = [updatedFocused, ...widgetGroup, updatedAfter];
+      // İmlecin olduğu yerde metin VARSA -> Metin üstte kalsın, eklenti BİR ALTINA geçsin
+      replacementBlocks = [focusedBlock, ...widgetGroup, newTextAfterBlock];
     }
 
     const updated = [...blocks];
