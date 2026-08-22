@@ -138,14 +138,29 @@ export default function useAuth() {
         console.warn("Yerel önbellek okuma hatası:", e);
       }
 
+      // Check active cloud gifts for this user
+      let isCloudGiftActive = false;
+      try {
+        if (dbProf?.friend_code) {
+          const { data: gifts } = await supabase
+            .from('friend_gifts')
+            .select('id')
+            .eq('receiver_code', dbProf.friend_code)
+            .gt('expires_at', Date.now())
+            .limit(1);
+          if (gifts && gifts.length > 0) isCloudGiftActive = true;
+        }
+      } catch (giftErr) {}
+
       // Sync RevenueCat plan & Supabase DB plan — Admin paneli hediye/değişikliğini anında uygular
       syncRevenueCatUser(u).then(activePlan => {
         const getWeight = (p) => p === 'ultra' ? 3 : p === 'pro' ? 2 : 1;
         const rcW = getWeight(activePlan);
         const dbW = getWeight(dbPlan);
         const localW = getWeight(localStorage.getItem('s23_user_plan'));
+        const giftW = isCloudGiftActive ? 3 : 1;
 
-        const maxW = Math.max(rcW, dbW, localW);
+        const maxW = Math.max(rcW, dbW, localW, giftW);
         const finalPlan = maxW === 3 ? 'ultra' : maxW === 2 ? 'pro' : 'lite';
 
         setUserPlan(finalPlan);

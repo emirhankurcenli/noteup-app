@@ -62,10 +62,13 @@ const usePaywallBilling = ({
             const pkgId = (pkg.identifier || "").toLowerCase();
             const prodId = (pkg.product?.identifier || "").toLowerCase();
 
+            // Pro Monthly Matching (Android & iOS)
             if (
               pkgId === "$rc_monthly" ||
               prodId.includes("pro_monthly") ||
-              pkgId.includes("pro_monthly")
+              pkgId.includes("pro_monthly") ||
+              prodId.includes("noteup_pro_monthly") ||
+              prodId === "noteup_pro_monthly"
             ) {
               newPkgs.pro_monthly = pkg;
               if (pkg.product?.priceString)
@@ -73,10 +76,14 @@ const usePaywallBilling = ({
               if (pkg.product?.price)
                 newPrices.pro_monthly_num = pkg.product.price;
             }
+
+            // Pro Annual Matching (Android & iOS)
             if (
               pkgId === "$rc_annual" ||
               prodId.includes("pro_annual") ||
-              pkgId.includes("pro_annual")
+              pkgId.includes("pro_annual") ||
+              prodId.includes("noteup_pro_annual") ||
+              prodId === "noteup_pro_annual"
             ) {
               newPkgs.pro_annual = pkg;
               if (pkg.product?.priceString)
@@ -84,9 +91,13 @@ const usePaywallBilling = ({
               if (pkg.product?.price)
                 newPrices.pro_annual_num = pkg.product.price;
             }
+
+            // Ultra Monthly Matching (Android & iOS)
             if (
               pkgId.includes("ultra_monthly") ||
-              prodId.includes("ultra_monthly")
+              prodId.includes("ultra_monthly") ||
+              prodId.includes("noteup_ultra_monthly") ||
+              prodId === "noteup_ultra_monthly"
             ) {
               newPkgs.ultra_monthly = pkg;
               if (pkg.product?.priceString)
@@ -94,9 +105,13 @@ const usePaywallBilling = ({
               if (pkg.product?.price)
                 newPrices.ultra_monthly_num = pkg.product.price;
             }
+
+            // Ultra Annual Matching (Android & iOS)
             if (
               pkgId.includes("ultra_annual") ||
-              prodId.includes("ultra_annual")
+              prodId.includes("ultra_annual") ||
+              prodId.includes("noteup_ultra_annual") ||
+              prodId === "noteup_ultra_annual"
             ) {
               newPkgs.ultra_annual = pkg;
               if (pkg.product?.priceString)
@@ -126,7 +141,6 @@ const usePaywallBilling = ({
     setSelectedPlan(planId);
 
     if (planId === "lite") {
-      // Lite'a geç: onay modali olmadan doğrudan uygula
       if (onSelectPlan) onSelectPlan("lite", false);
       if (onClose) onClose();
       return;
@@ -140,16 +154,37 @@ const usePaywallBilling = ({
         rawPackages.find((p) => {
           const pId = (p.identifier || "").toLowerCase();
           const prodId = (p.product?.identifier || "").toLowerCase();
-          return pId.includes(planId) || prodId.includes(planId);
+          return pId.includes(planId) || prodId.includes(planId) || prodId.includes(`noteup_${planId}`);
         }) || rawPackages[0];
     }
 
     if (Capacitor.isNativePlatform()) {
       if (!targetPackage) {
-        // Google Play ürünleri yüklenemedi, sessizce dön
-        console.warn("[Paywall] Hedef paket bulunamadı:", planId);
+        // Offerings might still be loading or need refresh
+        try {
+          setLoading(true);
+          const apiKey = getRevenueCatApiKey();
+          if (apiKey) await Purchases.configure({ apiKey });
+          const freshOfferings = await Purchases.getOfferings();
+          const pkgs = freshOfferings?.current?.availablePackages || [];
+          if (pkgs.length > 0) {
+            targetPackage = pkgs.find(p => {
+              const pId = (p.identifier || "").toLowerCase();
+              const prodId = (p.product?.identifier || "").toLowerCase();
+              return pId.includes(planId) || prodId.includes(planId) || prodId.includes(`noteup_${planId}`);
+            }) || pkgs[0];
+          }
+        } catch (offerErr) {
+          console.warn("Offering retry failed:", offerErr);
+        }
+      }
+
+      if (!targetPackage) {
+        setLoading(false);
+        alert("Mağaza ürünleri şu an yükleniyor, lütfen birkaç saniye sonra tekrar deneyin.");
         return;
       }
+
       try {
         setLoading(true);
         const result = await Purchases.purchasePackage({
@@ -162,18 +197,21 @@ const usePaywallBilling = ({
         if (
           active["ultra"] !== undefined ||
           active["NoteUp Ultra"] !== undefined ||
-          active["Ultra"] !== undefined
+          active["Ultra"] !== undefined ||
+          active["noteup_ultra"] !== undefined
         ) {
           activePlan = "ultra";
         } else if (
           active["pro"] !== undefined ||
           active["NoteUp Pro"] !== undefined ||
-          active["Pro"] !== undefined
+          active["Pro"] !== undefined ||
+          active["noteup_pro"] !== undefined
         ) {
           activePlan = "pro";
         }
 
         if (onSelectPlan) onSelectPlan(activePlan);
+        localStorage.setItem('s23_user_plan', activePlan);
         if (onClose) onClose();
       } catch (err) {
         if (err && !err.userCancelled) {
@@ -187,6 +225,7 @@ const usePaywallBilling = ({
       setTimeout(() => {
         setLoading(false);
         if (onSelectPlan) onSelectPlan(planId, true);
+        localStorage.setItem('s23_user_plan', planId);
         if (onClose) onClose();
       }, 1000);
     }

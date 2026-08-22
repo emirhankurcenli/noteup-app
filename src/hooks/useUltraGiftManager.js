@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
 const getCurrentMonthKey = () => {
@@ -51,6 +51,37 @@ export const useUltraGiftManager = ({ myCode, userPlan, setToast, triggerHaptic 
     }
   });
 
+  // Fetch active gifts from Supabase Cloud on launch
+  useEffect(() => {
+    if (!myCode) return;
+    async function checkCloudGifts() {
+      try {
+        const { data: gifts, error } = await supabase
+          .from('friend_gifts')
+          .select('*')
+          .eq('receiver_code', myCode)
+          .gt('expires_at', Date.now())
+          .order('granted_at', { ascending: false })
+          .limit(1);
+
+        if (!error && gifts && gifts.length > 0) {
+          const activeGift = gifts[0];
+          const payload = {
+            fromCode: activeGift.sender_code,
+            periodKey: activeGift.period_key,
+            expiresAt: activeGift.expires_at,
+          };
+          localStorage.setItem(`s23_ultra_gift_received_${myCode}`, JSON.stringify(payload));
+          setUltraGiftFrom(payload);
+          localStorage.setItem('s23_user_plan', 'ultra');
+        }
+      } catch (err) {
+        console.warn("Check cloud gifts error:", err);
+      }
+    }
+    checkCloudGifts();
+  }, [myCode]);
+
   const grantedUltraFriendCode = ultraGrantRecord?.periodKey === getCurrentMonthKey() ? ultraGrantRecord.targetCode : null;
   const isPrimaryUltra = userPlan === 'ultra' && !ultraGiftFrom;
   const isGiftedUltra = !!ultraGiftFrom;
@@ -67,7 +98,6 @@ export const useUltraGiftManager = ({ myCode, userPlan, setToast, triggerHaptic 
     }
 
     try {
-      // Direct DB RPC or record save
       const grantData = {
         periodKey: getCurrentMonthKey(),
         targetCode: targetFriendCode,
@@ -79,17 +109,29 @@ export const useUltraGiftManager = ({ myCode, userPlan, setToast, triggerHaptic 
       localStorage.setItem(`s23_ultra_grant_record_${myCode}`, JSON.stringify(grantData));
       setUltraGrantRecord(grantData);
 
-      // Save gifted payload for target code
-      const giftReceivedPayload = {
-        fromCode: myCode,
-        periodKey: getCurrentMonthKey(),
-        expiresAt: getCurrentPeriodEndMs(),
-      };
-      localStorage.setItem(`s23_ultra_gift_received_${targetFriendCode}`, JSON.stringify(giftReceivedPayload));
-
+      // 1. Save to Supabase friend_gifts table
       try {
-        await supabase.from('profiles').update({ user_plan: 'ultra' }).eq('friend_code', targetFriendCode);
-      } catch (e) {}
+        await supabase.from('friend_gifts').insert([{
+          sender_code: myCode,
+          receiver_code: targetFriendCode,
+          plan_type: 'ultra',
+          period_key: getCurrentMonthKey(),
+          granted_at: Date.now(),
+          expires_at: getCurrentPeriodEndMs(),
+        }]);
+      } catch (insertErr) {
+        console.warn("friend_gifts insert:", insertErr);
+      }
+
+      // 2. Call claim_friend_gift RPC to update receiver profile safely
+      try {
+        await supabase.rpc('claim_friend_gift', {
+          target_friend_code: targetFriendCode,
+          target_plan: 'ultra',
+        });
+      } catch (rpcErr) {
+        console.warn("claim_friend_gift RPC:", rpcErr);
+      }
 
       if (triggerHaptic) triggerHaptic('success');
       if (setToast) {
