@@ -1,7 +1,9 @@
 import React from 'react';
 
 const UltraGiftBannerCard = ({ isGiftedUltra, ultraGiftFrom, isLight }) => {
-  if (!isGiftedUltra || !ultraGiftFrom) return null;
+  // [EARLY ACCESS] Hediye Ultra banner'ı geçici pasif
+  return null;
+  // [EARLY ACCESS ORIGINAL] if (!isGiftedUltra || !ultraGiftFrom) return null;
 
   return (
     <div style={{

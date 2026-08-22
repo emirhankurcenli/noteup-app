@@ -76,19 +76,8 @@ const FriendsListSection = ({
                     <p style={{ fontSize: '0.85rem', fontWeight: 700, color: isLight ? '#0F172A' : 'var(--text-primary)', margin: 0 }}>
                       {friend.name}
                     </p>
-                    {isGrantedUltra && (
-                      <span style={{
-                        fontSize: '0.65rem',
-                        padding: '1px 6px',
-                        borderRadius: '8px',
-                        background: 'rgba(245, 158, 11, 0.15)',
-                        color: '#F59E0B',
-                        fontWeight: 800,
-                        border: '1px solid rgba(245, 158, 11, 0.3)'
-                      }}>
-                        ULTRA AKTİF
-                      </span>
-                    )}
+                    {/* [EARLY ACCESS] Arkadaşa Ultra Hediye rozeti geçici pasif */}
+                    {/* {isGrantedUltra && ( ... )} */}
                   </div>
                   <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '2px 0 0 0', fontFamily: 'monospace' }}>
                     Kod: {friend.code}
@@ -97,38 +86,10 @@ const FriendsListSection = ({
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {userPlan === 'ultra' && !isGiftedUltra && (
-                  <button
-                    onClick={() => handleGrantUltraGift && handleGrantUltraGift(friend.code, friend.name)}
-                    style={{
-                      padding: '6px 10px',
-                      borderRadius: '8px',
-                      border: isGrantedUltra ? '1px solid rgba(245, 158, 11, 0.4)' : 'none',
-                      background: isGrantedUltra
-                        ? 'rgba(245, 158, 11, 0.15)'
-                        : hasOtherGrantedInPeriod
-                        ? 'rgba(148, 163, 184, 0.2)'
-                        : 'linear-gradient(135deg, #F59E0B, #D97706)',
-                      color: isGrantedUltra
-                        ? '#F59E0B'
-                        : hasOtherGrantedInPeriod
-                        ? '#94A3B8'
-                        : '#FFF',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      cursor: hasOtherGrantedInPeriod ? 'default' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      boxShadow: isGrantedUltra || hasOtherGrantedInPeriod ? 'none' : '0 2px 8px rgba(245, 158, 11, 0.3)',
-                      opacity: hasOtherGrantedInPeriod ? 0.6 : 1
-                    }}
-                    title={isGrantedUltra ? 'Ultra hediyesi bu dönem boyunca aktiftir ve geri alınamaz' : '1 arkadaşına Ultra plan hediye et'}
-                  >
-                    <span>👑</span>
-                    {isGrantedUltra ? 'Ultra Aktif' : hasOtherGrantedInPeriod ? 'Hak Kullanıldı' : 'Ultra Hediye Et'}
-                  </button>
-                )}
+                {/* [EARLY ACCESS] Ultra Hediye Et butonu geçici olarak pasif — herkes zaten Ultra */}
+                {/* {userPlan === 'ultra' && !isGiftedUltra && (
+                  <button ...>
+                )} */}
 
                 <button 
                   onClick={() => {
