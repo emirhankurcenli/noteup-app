@@ -44,8 +44,8 @@ export const useSubscriptionPlanWatcher = (userPlan) => {
           message: isDown
             ? `Aboneliğiniz sonlandırıldığı için NoteUp ${to === 'pro' ? 'Pro' : 'Lite (Ücretsiz)'} seviyesine geçildi.`
             : to === 'ultra'
-            ? 'Tüm Ultra ayrıcalıklarınız (PDF Kaydet, 10GB Bulut, Sınırsız Paylaşım) aktif edildi!'
-            : 'Tüm Pro ayrıcalıklarınız (2GB Bulut, Sınırsız Not Şifreleme, Reklamsız) aktif edildi!',
+            ? 'Tüm Ultra ayrıcalıklarınız (PDF Kaydet, 5GB Bulut, Sınırsız Paylaşım) aktif edildi!'
+            : 'Tüm Pro ayrıcalıklarınız (1GB Bulut, Sınırsız Not Şifreleme, Reklamsız) aktif edildi!',
         });
       }
 
