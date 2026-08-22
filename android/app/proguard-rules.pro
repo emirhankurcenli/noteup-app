@@ -27,3 +27,8 @@
     public static *** v(...);
     public static *** i(...);
 }
+
+# ─── 7. Suppress Optional Mediation Dependencies (AdMob / Unity) ───────────────
+-dontwarn com.unity3d.**
+-dontwarn com.google.android.gms.ads.**
+-dontwarn com.amazon.**
