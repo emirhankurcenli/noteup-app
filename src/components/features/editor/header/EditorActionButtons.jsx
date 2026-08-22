@@ -101,8 +101,10 @@ export const EditorActionButtons = ({
           }
           if (targetBlockId) {
             const focusTarget = () => {
-              const el = document.querySelector(`textarea[data-block-id="${targetBlockId}"]`);
-              if (el) try { el.focus({ preventScroll: true }); } catch (err) { el.focus(); }
+              const el = document.querySelector(`[data-block-id="${targetBlockId}"]`);
+              if (el) {
+                try { el.focus({ preventScroll: true }); } catch (err) { el.focus(); }
+              }
             };
             focusTarget();
             queueMicrotask(focusTarget);

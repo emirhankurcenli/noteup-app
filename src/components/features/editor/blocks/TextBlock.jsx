@@ -19,9 +19,7 @@ export const TextBlock = ({
       style={{
         fontFamily: block.fontFamily || 'inherit',
         color: block.color || 'var(--text-primary)',
-        ...(block.content && block.content.includes('<')
-          ? {}
-          : { fontWeight: block.fontWeight === 'bold' || block.isBold ? 'bold' : 'normal' }),
+        fontWeight: block.fontWeight === 'bold' || block.isBold ? 'bold' : 'normal',
       }}
       ref={(el) => {
         if (el) {

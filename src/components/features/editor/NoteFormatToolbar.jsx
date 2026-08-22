@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ToolbarFontSelector } from './toolbar/ToolbarFontSelector';
+import { FONTS, ToolbarFontSelector } from './toolbar/ToolbarFontSelector';
 import { ToolbarTextStyleButtons } from './toolbar/ToolbarTextStyleButtons';
-import { ToolbarColorPickerRow } from './toolbar/ToolbarColorPickerRow';
+import { COLORS, ToolbarColorPickerRow } from './toolbar/ToolbarColorPickerRow';
 
 const NoteFormatToolbar = ({
   showFormatToolbar,
@@ -18,18 +18,16 @@ const NoteFormatToolbar = ({
   const [isBoldActive, setIsBoldActive] = useState(false);
   const [activeFont, setActiveFont] = useState('inherit');
 
-  const activeBlock = (editingNote?.blocks || []).find(b => b.id === activeFormatBlockId);
+  const blocks = editingNote?.blocks || [];
+  const textBlocks = blocks.filter(b => b.type === 'text');
+  const targetBlockId = activeFormatBlockId || (textBlocks[0] ? textBlocks[0].id : null);
+  const activeBlock = blocks.find(b => b.id === targetBlockId);
 
-  const colors = [
-    { value: 'var(--text-primary)', label: 'Varsayılan' },
-    { value: '#EF4444', label: 'Kırmızı' },
-    { value: '#3B82F6', label: 'Mavi' },
-    { value: '#10B981', label: 'Yeşil' },
-    { value: '#F59E0B', label: 'Turuncu' },
-    { value: '#8B5CF6', label: 'Mor' },
-    { value: '#EC4899', label: 'Pembe' },
-    { value: '#94A3B8', label: 'Gri' }
-  ];
+  useEffect(() => {
+    if (showFormatToolbar && !activeFormatBlockId && targetBlockId && setActiveFormatBlockId) {
+      setActiveFormatBlockId(targetBlockId);
+    }
+  }, [showFormatToolbar, activeFormatBlockId, targetBlockId, setActiveFormatBlockId]);
 
   const normColor = (c) => {
     if (!c) return '';
@@ -56,58 +54,29 @@ const NoteFormatToolbar = ({
   };
 
   useEffect(() => {
-    const syncState = () => {
-      if (activeBlock) {
-        let currentColor = activeBlock.color || 'var(--text-primary)';
-
-        if (document.queryCommandValue) {
-          try {
-            const cmdColor = document.queryCommandValue('foreColor');
-            if (cmdColor) currentColor = cmdColor;
-          } catch (e) {}
-        } else {
-          const sel = window.getSelection();
-          if (sel && sel.anchorNode) {
-            const parentEl = sel.anchorNode.nodeType === 3 ? sel.anchorNode.parentElement : sel.anchorNode;
-            if (parentEl) {
-              const compColor = window.getComputedStyle(parentEl).color;
-              if (compColor) currentColor = compColor;
-            }
-          }
-        }
-
-        const matched = colors.find(c => isSameColor(c.value, currentColor));
-        if (matched) {
-          setActiveColor(matched.value);
-        } else {
-          setActiveColor(currentColor);
-        }
-
-        let isBold = activeBlock.fontWeight === 'bold' || activeBlock.isBold === true;
-        if (document.queryCommandState) {
-          try {
-            if (document.queryCommandState('bold')) isBold = true;
-          } catch (e) {}
-        }
-        setIsBoldActive(isBold);
-        setActiveFont(activeBlock.fontFamily || 'inherit');
+    if (activeBlock) {
+      let currentColor = activeBlock.color || 'var(--text-primary)';
+      const matched = COLORS.find(c => isSameColor(c.value, currentColor));
+      if (matched) {
+        setActiveColor(matched.value);
+      } else {
+        setActiveColor(currentColor);
       }
-    };
 
-    syncState();
-    document.addEventListener('selectionchange', syncState);
-    return () => document.removeEventListener('selectionchange', syncState);
-  }, [activeFormatBlockId, activeBlock?.color, activeBlock?.fontWeight, activeBlock?.isBold, activeBlock?.fontFamily]);
+      const isBold = activeBlock.fontWeight === 'bold' || activeBlock.isBold === true;
+      setIsBoldActive(isBold);
+      setActiveFont(activeBlock.fontFamily || 'inherit');
+    }
+  }, [activeBlock?.id, activeBlock?.color, activeBlock?.fontWeight, activeBlock?.isBold, activeBlock?.fontFamily]);
 
-  if (!showFormatToolbar || !activeFormatBlockId || editingNote?.deletedAt) return null;
-  if (!activeBlock || activeBlock.type !== 'text') return null;
+  if (!showFormatToolbar || editingNote?.deletedAt || !activeBlock) return null;
 
   const isLight = theme === 'light';
 
-  const focusActiveTextarea = (targetId = activeFormatBlockId) => {
+  const focusActiveTextarea = (targetId = targetBlockId) => {
     if (!targetId) return;
     const focusNow = () => {
-      const el = document.querySelector(`textarea[data-block-id="${targetId}"]`);
+      const el = document.querySelector(`[data-block-id="${targetId}"]`);
       if (el) {
         try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
       }
@@ -117,72 +86,60 @@ const NoteFormatToolbar = ({
   };
 
   const applyFormatChange = (updatedProp) => {
-    const el = document.querySelector(`[data-block-id="${activeFormatBlockId}"]`);
-    if (el) {
-      try { el.focus(); } catch (err) {}
-    }
+    if (!targetBlockId) return;
+    const el = document.querySelector(`[data-block-id="${targetBlockId}"]`);
 
-    try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
+    const sel = window.getSelection();
+    const hasSelection = sel && sel.rangeCount > 0 && !sel.isCollapsed && el && el.contains(sel.anchorNode);
 
-    if (updatedProp.hasOwnProperty('fontWeight')) {
-      try { document.execCommand('bold', false, null); } catch (e) {}
-    } else if (updatedProp.hasOwnProperty('color')) {
-      try { document.execCommand('foreColor', false, updatedProp.color); } catch (e) {}
-    } else if (updatedProp.hasOwnProperty('fontFamily')) {
-      try { document.execCommand('fontName', false, updatedProp.fontFamily || 'inherit'); } catch (e) {}
-    }
-
-    if (el) {
-      const plainText = (el.innerText || el.textContent || '').replace(/\u8203/g, '').trim();
-      let nextProps = {};
-
-      // If block is empty, set block-level default fallback
-      if (plainText === '') {
-        if (updatedProp.hasOwnProperty('fontWeight')) {
-          nextProps.fontWeight = updatedProp.fontWeight;
-          nextProps.isBold = updatedProp.fontWeight === 'bold';
-        }
-        if (updatedProp.hasOwnProperty('color')) {
-          nextProps.color = updatedProp.color;
-        }
-        if (updatedProp.hasOwnProperty('fontFamily')) {
-          nextProps.fontFamily = updatedProp.fontFamily;
-        }
+    if (hasSelection) {
+      try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
+      if (updatedProp.hasOwnProperty('fontWeight')) {
+        try { document.execCommand('bold', false, null); } catch (e) {}
+      } else if (updatedProp.hasOwnProperty('color')) {
+        try { document.execCommand('foreColor', false, updatedProp.color); } catch (e) {}
+      } else if (updatedProp.hasOwnProperty('fontFamily')) {
+        try { document.execCommand('fontName', false, updatedProp.fontFamily || 'inherit'); } catch (e) {}
       }
-
-      handleUpdateBlock(activeFormatBlockId, { ...nextProps, content: el.innerHTML }, true);
     }
+
+    let nextProps = {};
+    if (updatedProp.hasOwnProperty('fontWeight')) {
+      const nextBold = updatedProp.fontWeight === 'bold';
+      nextProps.fontWeight = updatedProp.fontWeight;
+      nextProps.isBold = nextBold;
+      setIsBoldActive(nextBold);
+    }
+    if (updatedProp.hasOwnProperty('color')) {
+      nextProps.color = updatedProp.color;
+      setActiveColor(updatedProp.color);
+    }
+    if (updatedProp.hasOwnProperty('fontFamily')) {
+      nextProps.fontFamily = updatedProp.fontFamily;
+      setActiveFont(updatedProp.fontFamily);
+    }
+
+    if (el) {
+      nextProps.content = el.innerHTML;
+    }
+
+    handleUpdateBlock(targetBlockId, nextProps, true);
   };
-
-
-  const fonts = [
-    { label: 'System UI', value: 'inherit', description: 'Standart Mobil Font', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-    { label: 'Inter', value: 'Inter', description: 'Modern & Temiz Sans-serif', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-    { label: 'Roboto', value: 'Roboto', description: 'Klasik Android Tipografisi', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-    { label: 'Playfair Display', value: 'Playfair Display', description: 'Şık & Zarif Serif', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-    { label: 'Fira Code', value: 'Fira Code', description: 'Yazılımcı & Daktilo Stili', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-    { label: 'Pacifico', value: 'Pacifico', description: 'Estetik El Yazısı', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-    { label: 'Montserrat', value: 'Montserrat', description: 'Güçlü & Geometrik', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-    { label: 'Outfit', value: 'Outfit', description: 'Futurist & Premium', preview: 'Aa Bb Cc 123 — Harika Notlar' }
-  ];
-
-
-
-  const currentFontObj = fonts.find(f => f.value === activeFont) || fonts[0];
 
   return (
     <>
       <div 
         className="editor-format-bar animate-pop" 
         onMouseDown={(e) => e.preventDefault()}
+        onTouchStart={(e) => e.preventDefault()}
         onClick={(e) => e.stopPropagation()}
         style={{
           position: 'sticky',
           top: '6px',
           zIndex: 120,
           margin: '10px 0 16px 0',
-          padding: '16px',
-          borderRadius: '22px',
+          padding: '14px 16px',
+          borderRadius: '20px',
           background: isLight ? '#FFFFFF' : 'var(--bg-card, #1E293B)',
           border: isLight ? '1.5px solid rgba(203, 213, 225, 0.9)' : '1.5px solid rgba(255, 255, 255, 0.14)',
           boxShadow: isLight ? '0 14px 36px rgba(0, 0, 0, 0.1)' : '0 16px 45px rgba(0, 0, 0, 0.45)',
@@ -190,20 +147,19 @@ const NoteFormatToolbar = ({
           WebkitBackdropFilter: 'blur(20px)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '14px',
+          gap: '12px',
           width: '100%',
           boxSizing: 'border-box'
         }}
       >
         {/* ROW 1: Font Trigger Button + Bold & Bullet Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
           <ToolbarFontSelector
             activeFont={activeFont}
             setShowFontPickerModal={setShowFontPickerModal}
-            showFontPickerModal={showFontPickerModal}
-            applyFormatChange={applyFormatChange}
             isLight={isLight}
           />
+          
           <ToolbarTextStyleButtons
             isBoldActive={isBoldActive}
             applyFormatChange={applyFormatChange}
@@ -212,6 +168,7 @@ const NoteFormatToolbar = ({
 
           {/* Bullet List Button */}
           <button
+            type="button"
             className={`format-btn ${activeBlock.bullet ? 'active' : ''}`}
             style={{
               width: '38px',
@@ -248,8 +205,8 @@ const NoteFormatToolbar = ({
                 const lines = normalized.split('\n').filter(line => line.trim() !== '');
 
                 if (lines.length > 0) {
-                  const blocks = editingNote.blocks || [];
-                  const idx = blocks.findIndex(b => b.id === activeFormatBlockId);
+                  const currentBlocks = editingNote.blocks || [];
+                  const idx = currentBlocks.findIndex(b => b.id === targetBlockId);
                   
                   const newBlocks = lines.map((line, lIdx) => ({
                     id: 'b-' + (Date.now() + lIdx),
@@ -261,22 +218,25 @@ const NoteFormatToolbar = ({
                     bullet: true
                   }));
 
-                  const updated = [...blocks];
+                  const updated = [...currentBlocks];
                   updated.splice(idx, 1, ...newBlocks);
                   handleUpdateNote('blocks', updated, true);
-                  setActiveFormatBlockId(newBlocks[newBlocks.length - 1].id);
-                  focusActiveTextarea();
+                  if (setActiveFormatBlockId) {
+                    setActiveFormatBlockId(newBlocks[newBlocks.length - 1].id);
+                  }
+                  focusActiveTextarea(newBlocks[newBlocks.length - 1].id);
                   return;
                 }
               }
 
-              handleUpdateBlock(activeFormatBlockId, { 
+              handleUpdateBlock(targetBlockId, { 
                 bullet: !activeBlock.bullet 
               }, true);
-              focusActiveTextarea();
+              focusActiveTextarea(targetBlockId);
             }}
             onMouseDown={(e) => e.preventDefault()}
-            title="Bullet List"
+            onTouchStart={(e) => e.preventDefault()}
+            title="Madde İşareti (Bullet List)"
           >
             •
           </button>
@@ -284,9 +244,9 @@ const NoteFormatToolbar = ({
           {/* Close Button */}
           {setShowFormatToolbar && (
             <button
+              type="button"
               onClick={() => {
                 setShowFormatToolbar(false);
-                // Toolbar kapanınca odak kaybı istenebilir, textarea'ya geri dönme
               }}
               onMouseDown={(e) => e.preventDefault()}
               onTouchStart={(e) => e.preventDefault()}
@@ -295,8 +255,8 @@ const NoteFormatToolbar = ({
                 border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.12)',
                 color: isLight ? '#475569' : '#94A3B8',
                 cursor: 'pointer',
-                width: '32px',
-                height: '32px',
+                width: '34px',
+                height: '34px',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -396,8 +356,10 @@ const NoteFormatToolbar = ({
               </div>
 
               <button
+                type="button"
                 onClick={() => setShowFontPickerModal(false)}
                 onMouseDown={(e) => e.preventDefault()}
+                onTouchStart={(e) => e.preventDefault()}
                 style={{
                   background: isLight ? 'rgba(241, 245, 249, 0.9)' : 'rgba(255, 255, 255, 0.08)',
                   border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.12)',
@@ -418,7 +380,7 @@ const NoteFormatToolbar = ({
               </button>
             </div>
 
-            {/* Scrollable Font Options - Minimalist & Compact */}
+            {/* Scrollable Font Options */}
             <div style={{ 
               padding: '12px 16px 20px 16px', 
               display: 'flex', 
@@ -427,15 +389,15 @@ const NoteFormatToolbar = ({
               overflowY: 'auto',
               maxHeight: 'calc(80vh - 80px)'
             }}>
-              {fonts.map(f => {
+              {FONTS.map(f => {
                 const isSelected = activeFont === f.value;
 
                 return (
                   <div
                     key={f.value}
                     onMouseDown={(e) => e.preventDefault()}
+                    onTouchStart={(e) => e.preventDefault()}
                     onClick={() => {
-                      setActiveFont(f.value);
                       applyFormatChange({ fontFamily: f.value });
                       setShowFontPickerModal(false);
                     }}
