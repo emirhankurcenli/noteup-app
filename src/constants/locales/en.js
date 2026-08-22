@@ -233,6 +233,7 @@ const en = {
   catFeature: 'Feature Request',
   catBug: 'Bug Report',
   catDesign: 'UI / Design',
+  catDeleteAccount: 'Account & Data Deletion Request',
   catOther: 'Other',
   appLanguage: 'App Language',
   trashBannerText: 'This note is in the Trash.',

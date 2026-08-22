@@ -29,6 +29,7 @@ const FeedbackModal = ({
     { id: 'istek', label: t('catFeature') || 'Özellik İsteği', icon: '💡' },
     { id: 'hata', label: t('catBug') || 'Hata Bildirimi', icon: '🐞' },
     { id: 'gorus', label: t('catDesign') || 'Tasarım / Arayüz', icon: '💬' },
+    { id: 'hesap_silme', label: t('catDeleteAccount') || 'Hesap & Veri Silme Talebi', icon: '🗑️' },
   ];
 
   const selectedCategoryObj = categories.find(c => c.id === category) || categories[0];

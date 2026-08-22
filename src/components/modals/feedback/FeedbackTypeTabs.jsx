@@ -2,9 +2,10 @@ import React from 'react';
 
 const FeedbackTypeTabs = ({ type, setType, triggerHaptic, isLight }) => {
   const types = [
-    { id: 'bug', label: '🐛 Hata Bildir' },
-    { id: 'feature', label: '💡 Özellik İste' },
-    { id: 'general', label: '💬 Genel Görüş' }
+    { id: 'feature', label: '💡 İstek' },
+    { id: 'bug', label: '🐛 Hata' },
+    { id: 'general', label: '💬 Görüş' },
+    { id: 'delete_account', label: '🗑️ Hesap Sil' }
   ];
 
   return (

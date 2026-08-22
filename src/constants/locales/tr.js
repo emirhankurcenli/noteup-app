@@ -235,6 +235,7 @@ const tr = {
   catFeature: 'Özellik İsteği',
   catBug: 'Hata Bildirimi',
   catDesign: 'Tasarım / Arayüz',
+  catDeleteAccount: 'Hesap & Veri Silme Talebi',
   catOther: 'Diğer',
   appLanguage: 'Uygulama Dili',
   trashBannerText: 'Bu not Çöp Kutusunda bulunuyor.',

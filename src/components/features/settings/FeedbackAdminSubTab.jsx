@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabaseClient';
 
 const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
@@ -66,9 +66,14 @@ const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
   const getCategoryBadge = (cat) => {
     switch (cat) {
       case 'hata':
+      case 'bug':
         return { label: '🐞 Hata Bildirimi', bg: '#FEF2F2', color: '#EF4444', border: '#FCA5A5' };
       case 'gorus':
+      case 'general':
         return { label: '💬 Genel Görüş', bg: '#EFF6FF', color: '#3B82F6', border: '#93C5FD' };
+      case 'hesap_silme':
+      case 'delete_account':
+        return { label: '🗑️ Hesap Silme Talebi', bg: '#FEE2E2', color: '#B91C1C', border: '#F87171' };
       default:
         return { label: '💡 İstek & Öneri', bg: '#FEF3C7', color: '#D97706', border: '#FCD34D' };
     }
@@ -118,12 +123,13 @@ const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
       </div>
 
       {/* Filter Tabs */}
-      <div style={{ display: 'flex', gap: '6px' }}>
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
         {[
           { id: 'all', label: `Tümü (${feedbacks.length})` },
           { id: 'istek', label: '💡 İstekler' },
           { id: 'hata', label: '🐞 Hatalar' },
           { id: 'gorus', label: '💬 Görüşler' },
+          { id: 'hesap_silme', label: '🗑️ Hesap Silme' },
         ].map(tab => (
           <button
             key={tab.id}
