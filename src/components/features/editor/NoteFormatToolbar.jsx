@@ -191,46 +191,9 @@ const NoteFormatToolbar = ({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              const content = activeBlock.content || '';
-              const hasHtmlLines = /<br\s*[\/]?>|<\/div>|<\/p>|\n/i.test(content);
-              
-              if (!activeBlock.bullet && hasHtmlLines) {
-                const normalized = content
-                  .replace(/<br\s*[\/]?>/gi, '\n')
-                  .replace(/<\/p>/gi, '\n')
-                  .replace(/<\/div>/gi, '\n')
-                  .replace(/<p[^>]*>/gi, '')
-                  .replace(/<div[^>]*>/gi, '');
-                
-                const lines = normalized.split('\n').filter(line => line.trim() !== '');
-
-                if (lines.length > 0) {
-                  const currentBlocks = editingNote.blocks || [];
-                  const idx = currentBlocks.findIndex(b => b.id === targetBlockId);
-                  
-                  const newBlocks = lines.map((line, lIdx) => ({
-                    id: 'b-' + (Date.now() + lIdx),
-                    type: 'text',
-                    content: line,
-                    fontFamily: activeBlock.fontFamily,
-                    fontWeight: activeBlock.fontWeight,
-                    color: activeBlock.color,
-                    bullet: true
-                  }));
-
-                  const updated = [...currentBlocks];
-                  updated.splice(idx, 1, ...newBlocks);
-                  handleUpdateNote('blocks', updated, true);
-                  if (setActiveFormatBlockId) {
-                    setActiveFormatBlockId(newBlocks[newBlocks.length - 1].id);
-                  }
-                  focusActiveTextarea(newBlocks[newBlocks.length - 1].id);
-                  return;
-                }
-              }
-
+              const nextBullet = !activeBlock.bullet;
               handleUpdateBlock(targetBlockId, { 
-                bullet: !activeBlock.bullet 
+                bullet: nextBullet 
               }, true);
               focusActiveTextarea(targetBlockId);
             }}
