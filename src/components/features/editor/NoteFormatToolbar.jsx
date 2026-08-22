@@ -88,7 +88,7 @@ const NoteFormatToolbar = ({
         command: 'bold',
         targetBlockId,
         onUpdateContent: (content) => {
-          handleUpdateBlock(targetBlockId, { content, fontWeight: updatedProp.fontWeight, isBold: nextBold }, true);
+          handleUpdateBlock(targetBlockId, { content }, true);
         }
       });
       setIsBoldActive(nextBold);
@@ -98,7 +98,7 @@ const NoteFormatToolbar = ({
         value: updatedProp.color,
         targetBlockId,
         onUpdateContent: (content) => {
-          handleUpdateBlock(targetBlockId, { content, color: updatedProp.color }, true);
+          handleUpdateBlock(targetBlockId, { content }, true);
         }
       });
       setActiveColor(updatedProp.color);
@@ -108,7 +108,7 @@ const NoteFormatToolbar = ({
         value: updatedProp.fontFamily || 'inherit',
         targetBlockId,
         onUpdateContent: (content) => {
-          handleUpdateBlock(targetBlockId, { content, fontFamily: updatedProp.fontFamily }, true);
+          handleUpdateBlock(targetBlockId, { content }, true);
         }
       });
       setActiveFont(updatedProp.fontFamily);

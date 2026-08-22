@@ -33,8 +33,6 @@ export const TextBlock = ({
       data-block-id={block.id}
       style={{
         fontFamily: block.fontFamily || 'inherit',
-        color: block.color || 'var(--text-primary)',
-        fontWeight: block.fontWeight === 'bold' || block.isBold ? 'bold' : 'normal',
       }}
       ref={(el) => {
         if (el) {
