@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --emptyOutDir",
+    "clean": "node -e \"const fs=require('fs'); ['dist','android/app/src/main/assets/public','ios/App/App/public'].forEach(d=>{try{fs.rmSync(d,{recursive:true,force:true})}catch(e){}})\"",
+    "build": "npm run clean && vite build --emptyOutDir",
     "lint": "oxlint",
     "preview": "vite preview"
   },
