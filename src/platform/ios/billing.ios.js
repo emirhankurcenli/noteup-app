@@ -1,7 +1,7 @@
 import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
 
 export const getApiKey = () => {
-  return import.meta.env.VITE_REVENUECAT_IOS_KEY || import.meta.env.VITE_REVENUECAT_KEY || "";
+  return import.meta.env.VITE_REVENUECAT_IOS_KEY || import.meta.env.VITE_REVENUECAT_KEY || "appl_yufUAZavCzJzYAxDYOivipQgpMR";
 };
 
 export const initBilling = async (setUserPlan) => {

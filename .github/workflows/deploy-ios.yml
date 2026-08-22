@@ -20,6 +20,15 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
+      - name: Create .env file for build
+        run: |
+          cat << 'EOF' > .env
+          VITE_REVENUECAT_KEY=goog_klpvzugPjsJwnTuzpqHEafDShcM
+          VITE_REVENUECAT_IOS_KEY=appl_yufUAZavCzJzYAxDYOivipQgpMR
+          VITE_SUPABASE_URL=https://qgrzvhejdwsmuzuwmpyj.supabase.co
+          VITE_SUPABASE_ANON_KEY=sb_publishable_AJEZjo6jPlfypapcBOTDSw_5RvzTL2u
+          EOF
+
       - name: Build Web Application
         run: npm run build
 
