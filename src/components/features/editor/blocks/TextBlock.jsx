@@ -9,17 +9,19 @@ export const TextBlock = ({
   handleTextareaKeyDown,
   handleUpdateBlock,
 }) => {
-  return (
+  const contentNode = (
     <div
       className="block-textarea content-editable-block"
       contentEditable="true"
       suppressContentEditableWarning={true}
-      data-placeholder={idx === 0 ? t('noteBodyPlaceholder') : ''}
+      data-placeholder={idx === 0 && !block.bullet ? t('noteBodyPlaceholder') : (block.bullet ? 'Madde...' : '')}
       data-block-id={block.id}
       style={{
         fontFamily: block.fontFamily || 'inherit',
         color: block.color || 'var(--text-primary)',
         fontWeight: block.fontWeight === 'bold' || block.isBold ? 'bold' : 'normal',
+        flex: block.bullet ? 1 : undefined,
+        minWidth: block.bullet ? 0 : undefined,
       }}
       ref={(el) => {
         if (el) {
@@ -45,6 +47,17 @@ export const TextBlock = ({
       }}
     />
   );
+
+  if (block.bullet) {
+    return (
+      <div className="block-wrapper-bullet">
+        <span className="block-bullet-dot">•</span>
+        {contentNode}
+      </div>
+    );
+  }
+
+  return contentNode;
 };
 
 export default TextBlock;
