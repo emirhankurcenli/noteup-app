@@ -2918,26 +2918,42 @@ html, body, #root {
   box-shadow: 0 0 8px rgba(255,255,255,0.4);
 }
 
-/* Bullet list görünümü */
-.block-wrapper-bullet {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  width: 100%;
+/* ===================== RICH TEXT & NATIVE LIST ENGINE ===================== */
+.block-textarea ul,
+.content-editable-block ul {
+  list-style-type: disc !important;
+  margin: 6px 0 8px 24px !important;
+  padding-left: 4px !important;
 }
-.block-bullet-dot {
-  font-size: 1.3rem;
-  line-height: 1.7;
+
+.block-textarea ol,
+.content-editable-block ol {
+  list-style-type: decimal !important;
+  margin: 6px 0 8px 24px !important;
+  padding-left: 4px !important;
+}
+
+.block-textarea li,
+.content-editable-block li {
+  margin-bottom: 6px;
+  line-height: 1.65;
+  color: inherit;
+}
+
+.block-textarea li::marker,
+.content-editable-block li::marker {
   color: var(--primary, #8B5CF6);
-  margin-right: 8px;
-  margin-left: 2px;
-  padding-top: 2px;
-  flex-shrink: 0;
-  user-select: none;
-  font-weight: 900;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  font-weight: 700;
+  font-size: 1.15em;
+}
+
+.block-textarea p,
+.content-editable-block p,
+.block-textarea div,
+.content-editable-block div {
+  margin: 0;
+  padding: 0;
+  line-height: inherit;
 }
 
 /* ==========================================================================

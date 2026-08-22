@@ -1,4 +1,5 @@
 import React from 'react';
+import { saveCurrentSelection } from '../../../../utils/selectionUtils';
 
 export const TextBlock = ({
   block,
@@ -9,37 +10,54 @@ export const TextBlock = ({
   handleTextareaKeyDown,
   handleUpdateBlock,
 }) => {
-  const contentNode = (
+  const handleSaveSelection = () => {
+    setActiveFormatBlockId(block.id);
+    saveCurrentSelection(block.id);
+  };
+
+  // Ensure legacy bullet blocks are seamlessly converted to native HTML lists
+  const getInitialContent = () => {
+    let content = block.content || '';
+    if (block.bullet && !content.toLowerCase().includes('<ul') && !content.toLowerCase().includes('<li')) {
+      return `<ul><li>${content}</li></ul>`;
+    }
+    return content;
+  };
+
+  return (
     <div
       className="block-textarea content-editable-block"
       contentEditable="true"
       suppressContentEditableWarning={true}
-      data-placeholder={idx === 0 && !block.bullet ? t('noteBodyPlaceholder') : (block.bullet ? 'Madde...' : '')}
+      data-placeholder={idx === 0 ? t('noteBodyPlaceholder') : ''}
       data-block-id={block.id}
       style={{
         fontFamily: block.fontFamily || 'inherit',
         color: block.color || 'var(--text-primary)',
         fontWeight: block.fontWeight === 'bold' || block.isBold ? 'bold' : 'normal',
-        flex: block.bullet ? 1 : undefined,
-        minWidth: block.bullet ? 0 : undefined,
       }}
       ref={(el) => {
         if (el) {
           if (el.dataset.initializedId !== block.id) {
-            el.innerHTML = block.content || '';
+            el.innerHTML = getInitialContent();
             el.dataset.initializedId = block.id;
           } else if (el.innerHTML !== (block.content || '') && document.activeElement !== el) {
-            el.innerHTML = block.content || '';
+            el.innerHTML = getInitialContent();
           }
         }
       }}
-      onFocus={() => {
-        setActiveFormatBlockId(block.id);
+      onFocus={(e) => {
+        handleSaveSelection();
         ensureElementVisible(block.id);
       }}
-      onClick={() => setActiveFormatBlockId(block.id)}
+      onClick={handleSaveSelection}
+      onKeyUp={handleSaveSelection}
+      onMouseUp={handleSaveSelection}
+      onTouchEnd={handleSaveSelection}
+      onSelect={handleSaveSelection}
       onKeyDown={(e) => handleTextareaKeyDown(e, block.id, idx)}
       onInput={(e) => {
+        handleSaveSelection();
         handleUpdateBlock(block.id, { content: e.currentTarget.innerHTML }, true);
       }}
       onBlur={(e) => {
@@ -47,17 +65,6 @@ export const TextBlock = ({
       }}
     />
   );
-
-  if (block.bullet) {
-    return (
-      <div className="block-wrapper-bullet">
-        <span className="block-bullet-dot">•</span>
-        {contentNode}
-      </div>
-    );
-  }
-
-  return contentNode;
 };
 
 export default TextBlock;

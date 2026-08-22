@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FONTS, ToolbarFontSelector } from './toolbar/ToolbarFontSelector';
 import { ToolbarTextStyleButtons } from './toolbar/ToolbarTextStyleButtons';
 import { COLORS, ToolbarColorPickerRow } from './toolbar/ToolbarColorPickerRow';
+import { applyRichFormat } from '../../../utils/selectionUtils';
 
 const NoteFormatToolbar = ({
   showFormatToolbar,
@@ -53,6 +54,11 @@ const NoteFormatToolbar = ({
     return false;
   };
 
+  const isListActive = Boolean(
+    activeBlock?.bullet || 
+    (activeBlock?.content && (activeBlock.content.toLowerCase().includes('<ul') || activeBlock.content.toLowerCase().includes('<li')))
+  );
+
   useEffect(() => {
     if (activeBlock) {
       let currentColor = activeBlock.color || 'var(--text-primary)';
@@ -73,57 +79,55 @@ const NoteFormatToolbar = ({
 
   const isLight = theme === 'light';
 
-  const focusActiveTextarea = (targetId = targetBlockId) => {
-    if (!targetId) return;
-    const focusNow = () => {
-      const el = document.querySelector(`[data-block-id="${targetId}"]`);
-      if (el) {
-        try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
-      }
-    };
-    queueMicrotask(focusNow);
-    setTimeout(focusNow, 30);
-  };
-
   const applyFormatChange = (updatedProp) => {
     if (!targetBlockId) return;
-    const el = document.querySelector(`[data-block-id="${targetBlockId}"]`);
 
-    const sel = window.getSelection();
-    const hasSelection = sel && sel.rangeCount > 0 && !sel.isCollapsed && el && el.contains(sel.anchorNode);
-
-    if (hasSelection) {
-      try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
-      if (updatedProp.hasOwnProperty('fontWeight')) {
-        try { document.execCommand('bold', false, null); } catch (e) {}
-      } else if (updatedProp.hasOwnProperty('color')) {
-        try { document.execCommand('foreColor', false, updatedProp.color); } catch (e) {}
-      } else if (updatedProp.hasOwnProperty('fontFamily')) {
-        try { document.execCommand('fontName', false, updatedProp.fontFamily || 'inherit'); } catch (e) {}
-      }
-    }
-
-    let nextProps = {};
     if (updatedProp.hasOwnProperty('fontWeight')) {
       const nextBold = updatedProp.fontWeight === 'bold';
-      nextProps.fontWeight = updatedProp.fontWeight;
-      nextProps.isBold = nextBold;
+      applyRichFormat({
+        command: 'bold',
+        targetBlockId,
+        onUpdateContent: (content) => {
+          handleUpdateBlock(targetBlockId, { content, fontWeight: updatedProp.fontWeight, isBold: nextBold }, true);
+        }
+      });
       setIsBoldActive(nextBold);
-    }
-    if (updatedProp.hasOwnProperty('color')) {
-      nextProps.color = updatedProp.color;
+    } else if (updatedProp.hasOwnProperty('color')) {
+      applyRichFormat({
+        command: 'foreColor',
+        value: updatedProp.color,
+        targetBlockId,
+        onUpdateContent: (content) => {
+          handleUpdateBlock(targetBlockId, { content, color: updatedProp.color }, true);
+        }
+      });
       setActiveColor(updatedProp.color);
-    }
-    if (updatedProp.hasOwnProperty('fontFamily')) {
-      nextProps.fontFamily = updatedProp.fontFamily;
+    } else if (updatedProp.hasOwnProperty('fontFamily')) {
+      applyRichFormat({
+        command: 'fontName',
+        value: updatedProp.fontFamily || 'inherit',
+        targetBlockId,
+        onUpdateContent: (content) => {
+          handleUpdateBlock(targetBlockId, { content, fontFamily: updatedProp.fontFamily }, true);
+        }
+      });
       setActiveFont(updatedProp.fontFamily);
     }
+  };
 
-    if (el) {
-      nextProps.content = el.innerHTML;
-    }
+  const handleToggleBulletList = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!targetBlockId) return;
 
-    handleUpdateBlock(targetBlockId, nextProps, true);
+    applyRichFormat({
+      command: 'insertUnorderedList',
+      targetBlockId,
+      onUpdateContent: (content) => {
+        const hasList = content.toLowerCase().includes('<ul') || content.toLowerCase().includes('<li');
+        handleUpdateBlock(targetBlockId, { content, bullet: hasList }, true);
+      }
+    });
   };
 
   return (
@@ -169,16 +173,16 @@ const NoteFormatToolbar = ({
           {/* Bullet List Button */}
           <button
             type="button"
-            className={`format-btn ${activeBlock.bullet ? 'active' : ''}`}
+            className={`format-btn ${isListActive ? 'active' : ''}`}
             style={{
               width: '38px',
               height: '38px',
               borderRadius: '12px',
-              border: activeBlock.bullet ? 'none' : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.15)'),
-              background: activeBlock.bullet
+              border: isListActive ? 'none' : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.15)'),
+              background: isListActive
                 ? 'linear-gradient(135deg, #8B5CF6, #6D28D9)'
                 : (isLight ? '#F1F5F9' : 'rgba(255,255,255,0.06)'),
-              color: activeBlock.bullet ? '#FFF' : (isLight ? '#0F172A' : '#F8FAFC'),
+              color: isListActive ? '#FFF' : (isLight ? '#0F172A' : '#F8FAFC'),
               fontWeight: 800,
               fontSize: '1.2rem',
               cursor: 'pointer',
@@ -186,17 +190,9 @@ const NoteFormatToolbar = ({
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: activeBlock.bullet ? '0 4px 12px rgba(139, 92, 246, 0.35)' : 'none'
+              boxShadow: isListActive ? '0 4px 12px rgba(139, 92, 246, 0.35)' : 'none'
             }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const nextBullet = !activeBlock.bullet;
-              handleUpdateBlock(targetBlockId, { 
-                bullet: nextBullet 
-              }, true);
-              focusActiveTextarea(targetBlockId);
-            }}
+            onClick={handleToggleBulletList}
             onMouseDown={(e) => e.preventDefault()}
             onTouchStart={(e) => e.preventDefault()}
             title="Madde İşareti (Bullet List)"
