@@ -64,8 +64,12 @@ export const PLANS = {
 
 export const PLAN_LEVELS = { lite: 1, pro: 2, ultra: 3 };
 
+// [EARLY ACCESS] Tüm planlar Ultra limitleriyle çalışır — abonelik sistemi geçici olarak pasif
 export const PLAN_LIMITS = {
-  lite: { maxDevices: 1, maxStorageMb: 50, maxSharedNotes: 5, maxEncryptedNotes: 5 },
-  pro: { maxDevices: 3, maxStorageMb: 1024, maxSharedNotes: Infinity, maxEncryptedNotes: Infinity },
+  lite: { maxDevices: Infinity, maxStorageMb: 5120, maxSharedNotes: Infinity, maxEncryptedNotes: Infinity },
+  pro: { maxDevices: Infinity, maxStorageMb: 5120, maxSharedNotes: Infinity, maxEncryptedNotes: Infinity },
   ultra: { maxDevices: Infinity, maxStorageMb: 5120, maxSharedNotes: Infinity, maxEncryptedNotes: Infinity },
 };
+// [EARLY ACCESS ORIGINAL]
+// lite: { maxDevices: 1, maxStorageMb: 50, maxSharedNotes: 5, maxEncryptedNotes: 5 },
+// pro: { maxDevices: 3, maxStorageMb: 1024, maxSharedNotes: Infinity, maxEncryptedNotes: Infinity },

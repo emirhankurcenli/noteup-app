@@ -3,7 +3,10 @@ import React, { createContext, useContext, useState } from 'react';
 const ModalContext = createContext(null);
 
 export const ModalProvider = ({ children }) => {
-  const [showPaywall, setShowPaywall] = useState(false);
+  // [EARLY ACCESS] Paywall geçici olarak devre dışı — tüm setShowPaywall(true) çağrıları yok sayılır
+  const showPaywall = false;
+  const setShowPaywall = () => {};
+  // [EARLY ACCESS ORIGINAL] const [showPaywall, setShowPaywall] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(null);

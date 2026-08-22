@@ -50,154 +50,116 @@ const AccountSubTab = ({
         t={t}
       />
 
-      {/* PLAN STATUS BANNER (Tam Arka Plan & Marka Renkleri ile Uyumlu) */}
+      {/* [EARLY ACCESS] Abonelik kartı yerine Erken Erişim bilgilendirme kartı */}
       <div
-        onClick={() => setShowPaywall(true)}
         style={{
           position: 'relative',
-          background: userPlan === 'lite'
-            ? (isLight 
-                ? 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)' 
-                : 'linear-gradient(135deg, #181825 0%, #0F0F1A 100%)')
-            : userPlan === 'ultra'
-              ? (isLight ? 'linear-gradient(135deg, #FFFBEB, #FEF3C7)' : 'linear-gradient(135deg, #2d1f00, #1a1200)')
-              : (isLight ? 'linear-gradient(135deg, #EFF6FF, #DBEAFE)' : 'linear-gradient(135deg, #0f172a, #1e3a5f)'),
+          background: isLight
+            ? 'linear-gradient(135deg, #EDE9FE 0%, #F5F3FF 100%)'
+            : 'linear-gradient(135deg, #1e1145 0%, #0f0a2a 100%)',
           borderRadius: '20px',
-          padding: '16px 18px',
-          cursor: 'pointer',
+          padding: '20px 18px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px',
+          alignItems: 'center',
+          gap: '10px',
           overflow: 'hidden',
-          boxShadow: isLight 
-            ? '0 6px 20px rgba(0, 0, 0, 0.04)' 
-            : (userPlan === 'lite' ? '0 8px 24px rgba(0, 0, 0, 0.25)' : '0 0 25px rgba(59,130,246,0.18)'),
-          border: userPlan === 'lite'
-            ? (isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)')
-            : `1.5px solid ${userPlan === 'ultra' ? 'rgba(245,158,11,0.5)' : 'rgba(59,130,246,0.5)'}`,
-          transition: 'all 0.2s ease',
+          boxShadow: isLight
+            ? '0 6px 20px rgba(99, 102, 241, 0.1)'
+            : '0 0 25px rgba(139, 92, 246, 0.2)',
+          border: isLight
+            ? '1.5px solid rgba(139, 92, 246, 0.25)'
+            : '1.5px solid rgba(139, 92, 246, 0.35)',
         }}
       >
-        {/* Radial Background Glow Accent for Lite Plan */}
-        {userPlan === 'lite' && (
+        {/* Radial Glow */}
+        <div style={{
+          position: 'absolute',
+          top: '-30px',
+          right: '-30px',
+          width: '140px',
+          height: '140px',
+          borderRadius: '50%',
+          background: isLight
+            ? 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(255,255,255,0) 70%)'
+            : 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(0,0,0,0) 70%)',
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', zIndex: 1 }}>
+          {/* Icon Badge */}
           <div style={{
-            position: 'absolute',
-            top: '-20px',
-            right: '-20px',
-            width: '120px',
-            height: '120px',
-            borderRadius: '50%',
-            background: isLight 
-              ? 'radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, rgba(255,255,255,0) 70%)'
-              : 'radial-gradient(circle, rgba(249, 115, 22, 0.25) 0%, rgba(139, 92, 246, 0) 70%)',
-            pointerEvents: 'none'
-          }} />
-        )}
-
-        {/* ÜST SATIR: İkon + Başlık + Buton */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-            {/* 3D Icon Badge */}
-            <div style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '12px',
-              background: userPlan === 'lite'
-                ? 'linear-gradient(135deg, #F97316, #FB923C)'
-                : userPlan === 'ultra'
-                  ? 'linear-gradient(135deg, #F59E0B, #D97706)'
-                  : 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              boxShadow: userPlan === 'lite'
-                ? '0 4px 14px rgba(249, 115, 22, 0.35)'
-                : '0 4px 14px rgba(0,0,0,0.15)',
-              fontSize: '1.3rem'
-            }}>
-              {userPlan === 'ultra' ? '👑' : userPlan === 'pro' ? '⚡' : '🚀'}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
-              <span style={{
-                fontSize: '0.68rem',
-                color: isLight ? '#64748B' : '#94A3B8',
-                fontWeight: 800,
-                letterSpacing: '0.6px',
-                textTransform: 'uppercase'
-              }}>
-                Mevcut Abonelik
-              </span>
-
-              <span style={{
-                fontSize: '1.08rem',
-                fontWeight: 800,
-                letterSpacing: '-0.2px',
-                color: userPlan === 'lite' 
-                  ? (isLight ? '#0F172A' : '#FFFFFF') 
-                  : (userPlan === 'ultra' ? '#D97706' : (isLight ? '#0F172A' : '#F1F5F9')),
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {userPlan === 'ultra' && 'NoteUp Ultra'}
-                {userPlan === 'pro' && 'NoteUp Pro'}
-                {userPlan === 'lite' && 'NoteUp Lite'}
-              </span>
-            </div>
-          </div>
-
-          {/* CTA Button */}
-          <div style={{
-            background: userPlan === 'ultra'
-              ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
-              : userPlan === 'pro'
-              ? 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)'
-              : 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
-            color: '#FFFFFF',
-            border: 'none',
-            fontSize: '0.84rem',
-            fontWeight: 800,
-            padding: '9px 16px',
+            width: '42px',
+            height: '42px',
             borderRadius: '12px',
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
-            zIndex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            boxShadow: userPlan === 'ultra'
-              ? '0 4px 14px rgba(245, 158, 11, 0.4)'
-              : userPlan === 'pro'
-              ? '0 4px 14px rgba(59, 130, 246, 0.4)'
-              : '0 4px 14px rgba(249, 115, 22, 0.4)'
-          }}>
-            {userPlan === 'lite' ? 'Yükselt' : 'Planı Gör'}
-          </div>
-        </div>
-
-        {/* ALT SATIR BANNER: "7 gün ücretsiz dene" Uyumlu Alt Şerit */}
-        {userPlan === 'lite' && (
-          <div style={{
-            width: '100%',
-            padding: '8px 12px',
-            borderRadius: '10px',
-            background: isLight ? 'rgba(249, 115, 22, 0.06)' : 'rgba(249, 115, 22, 0.12)',
-            border: isLight ? '1px dashed rgba(249, 115, 22, 0.25)' : '1px dashed rgba(249, 115, 22, 0.3)',
+            background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '6px',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            color: isLight ? '#EA580C' : '#FB923C',
-            zIndex: 1
+            flexShrink: 0,
+            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+            fontSize: '1.3rem'
           }}>
-            <span>7 Gün Ücretsiz Dene · İstediğin Zaman İptal Et</span>
+            🎉
           </div>
-        )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
+            <span style={{
+              fontSize: '0.68rem',
+              color: isLight ? '#6366F1' : '#A78BFA',
+              fontWeight: 800,
+              letterSpacing: '0.6px',
+              textTransform: 'uppercase'
+            }}>
+              Erken Erişim
+            </span>
+            <span style={{
+              fontSize: '1.08rem',
+              fontWeight: 800,
+              letterSpacing: '-0.2px',
+              color: isLight ? '#0F172A' : '#F1F5F9',
+            }}>
+              Tüm Özellikler Açık!
+            </span>
+          </div>
+
+          {/* Badge */}
+          <div style={{
+            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+            color: '#FFFFFF',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            padding: '6px 12px',
+            borderRadius: '10px',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+            zIndex: 1,
+            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+          }}>
+            👑 ULTRA
+          </div>
+        </div>
+
+        {/* Alt bilgi */}
+        <div style={{
+          width: '100%',
+          padding: '8px 12px',
+          borderRadius: '10px',
+          background: isLight ? 'rgba(99, 102, 241, 0.06)' : 'rgba(139, 92, 246, 0.12)',
+          border: isLight ? '1px dashed rgba(99, 102, 241, 0.25)' : '1px dashed rgba(139, 92, 246, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          fontSize: '0.78rem',
+          fontWeight: 700,
+          color: isLight ? '#6366F1' : '#A78BFA',
+          zIndex: 1
+        }}>
+          <span>NoteUp'ın tüm Pro & Ultra özelliklerini ücretsiz kullanıyorsunuz ✨</span>
+        </div>
       </div>
+      {/* [EARLY ACCESS END] — Aşağıdaki orijinal abonelik kartı kodu kaldırıldı (satır 53-200) */}
 
       {/* 7-DAY PAYMENT GRACE PERIOD BANNER */}
       {paymentGrace.inPaymentGrace && (

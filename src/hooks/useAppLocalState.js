@@ -32,7 +32,10 @@ export default function useAppLocalState({ notes, userPlan }) {
   }, [activeTab]);
 
   const [profileSubTab, setProfileSubTab] = useState('account');
-  const [showPaywall, setShowPaywall] = useState(false);
+  // [EARLY ACCESS] Paywall geçici olarak devre dışı
+  const showPaywall = false;
+  const setShowPaywall = () => {};
+  // [EARLY ACCESS ORIGINAL] const [showPaywall, setShowPaywall] = useState(false);
   const [cropperImage, setCropperImage] = useState(null);
   const [showAdModal, setShowAdModal] = useState(false);
 
@@ -55,6 +58,9 @@ export default function useAppLocalState({ notes, userPlan }) {
   }, [notes]);
 
   const trackAttachmentAdded = async () => {
+    // [EARLY ACCESS] Reklamlar geçici olarak devre dışı
+    return;
+    // [EARLY ACCESS ORIGINAL]
     if (userPlan !== 'lite') return;
     const currentRaw = localStorage.getItem('s23_attachment_count');
     const currentCount = currentRaw ? parseInt(currentRaw, 10) : 0;

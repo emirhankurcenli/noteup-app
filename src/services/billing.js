@@ -13,6 +13,9 @@ export const getRevenueCatApiKey = () => {
 };
 
 export const initRevenueCat = async (setUserPlan) => {
+  // [EARLY ACCESS] RevenueCat geçici olarak devre dışı — StoreKit/Google Play Billing başlatılmaz
+  return;
+  // [EARLY ACCESS ORIGINAL — aşağıdaki kod abonelikler aktif edildiğinde geri açılacak]
   const plt = detectPlatform();
   if (plt === 'android') return await androidBilling.initBilling(setUserPlan);
   if (plt === 'ios') return await iosBilling.initBilling(setUserPlan);
@@ -20,6 +23,9 @@ export const initRevenueCat = async (setUserPlan) => {
 };
 
 export const syncRevenueCatUser = async (user) => {
+  // [EARLY ACCESS] RevenueCat sync geçici olarak devre dışı — daima 'ultra' döner
+  return 'ultra';
+  // [EARLY ACCESS ORIGINAL — aşağıdaki kod abonelikler aktif edildiğinde geri açılacak]
   if (!Capacitor.isNativePlatform()) return null;
   try {
     if (user) {
