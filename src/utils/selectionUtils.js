@@ -111,3 +111,46 @@ export const applyRichFormat = ({
     onUpdateContent(targetEl.innerHTML);
   }
 };
+
+export const getCurrentFormatState = (targetElement) => {
+  const state = {
+    isBold: false,
+    isList: false,
+  };
+
+  try {
+    state.isBold = document.queryCommandState('bold');
+  } catch (e) {}
+
+  try {
+    state.isList = document.queryCommandState('insertUnorderedList');
+  } catch (e) {}
+
+  // Fallback: check DOM parent node of current selection
+  try {
+    const sel = window.getSelection();
+    if (sel && sel.anchorNode) {
+      let node = sel.anchorNode;
+      if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+      
+      if (node) {
+        if (!state.isList && (node.closest('li') || node.closest('ul'))) {
+          state.isList = true;
+        }
+        if (!state.isBold) {
+          const bTag = node.closest('b') || node.closest('strong');
+          if (bTag) {
+            state.isBold = true;
+          } else {
+            const weight = window.getComputedStyle(node).fontWeight;
+            if (weight === 'bold' || parseInt(weight, 10) >= 700) {
+              state.isBold = true;
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
+  return state;
+};

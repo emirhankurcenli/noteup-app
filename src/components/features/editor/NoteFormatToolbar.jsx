@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FONTS, ToolbarFontSelector } from './toolbar/ToolbarFontSelector';
 import { ToolbarTextStyleButtons } from './toolbar/ToolbarTextStyleButtons';
 import { COLORS, ToolbarColorPickerRow } from './toolbar/ToolbarColorPickerRow';
-import { applyRichFormat } from '../../../utils/selectionUtils';
+import { applyRichFormat, getCurrentFormatState } from '../../../utils/selectionUtils';
 
 const NoteFormatToolbar = ({
   showFormatToolbar,
@@ -18,6 +18,7 @@ const NoteFormatToolbar = ({
   const [activeColor, setActiveColor] = useState('var(--text-primary)');
   const [isBoldActive, setIsBoldActive] = useState(false);
   const [activeFont, setActiveFont] = useState('inherit');
+  const [isListActive, setIsListActive] = useState(false);
 
   const blocks = editingNote?.blocks || [];
   const textBlocks = blocks.filter(b => b.type === 'text');
@@ -54,10 +55,25 @@ const NoteFormatToolbar = ({
     return false;
   };
 
-  const isListActive = Boolean(
-    activeBlock?.bullet || 
-    (activeBlock?.content && (activeBlock.content.toLowerCase().includes('<ul') || activeBlock.content.toLowerCase().includes('<li')))
-  );
+  const updateActiveFormatStates = () => {
+    const el = targetBlockId ? document.querySelector(`[data-block-id="${targetBlockId}"]`) : null;
+    const formatState = getCurrentFormatState(el);
+    setIsListActive(formatState.isList);
+    setIsBoldActive(formatState.isBold);
+  };
+
+  useEffect(() => {
+    updateActiveFormatStates();
+
+    const handleSelectionChange = () => {
+      updateActiveFormatStates();
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, [targetBlockId, activeBlock?.content]);
 
   useEffect(() => {
     if (activeBlock) {
@@ -68,12 +84,9 @@ const NoteFormatToolbar = ({
       } else {
         setActiveColor(currentColor);
       }
-
-      const isBold = activeBlock.fontWeight === 'bold' || activeBlock.isBold === true;
-      setIsBoldActive(isBold);
       setActiveFont(activeBlock.fontFamily || 'inherit');
     }
-  }, [activeBlock?.id, activeBlock?.color, activeBlock?.fontWeight, activeBlock?.isBold, activeBlock?.fontFamily]);
+  }, [activeBlock?.id, activeBlock?.color, activeBlock?.fontFamily]);
 
   if (!showFormatToolbar || editingNote?.deletedAt || !activeBlock) return null;
 
@@ -89,6 +102,7 @@ const NoteFormatToolbar = ({
         targetBlockId,
         onUpdateContent: (content) => {
           handleUpdateBlock(targetBlockId, { content }, true);
+          setTimeout(updateActiveFormatStates, 30);
         }
       });
       setIsBoldActive(nextBold);
@@ -99,6 +113,7 @@ const NoteFormatToolbar = ({
         targetBlockId,
         onUpdateContent: (content) => {
           handleUpdateBlock(targetBlockId, { content }, true);
+          setTimeout(updateActiveFormatStates, 30);
         }
       });
       setActiveColor(updatedProp.color);
@@ -109,6 +124,7 @@ const NoteFormatToolbar = ({
         targetBlockId,
         onUpdateContent: (content) => {
           handleUpdateBlock(targetBlockId, { content }, true);
+          setTimeout(updateActiveFormatStates, 30);
         }
       });
       setActiveFont(updatedProp.fontFamily);
@@ -124,8 +140,8 @@ const NoteFormatToolbar = ({
       command: 'insertUnorderedList',
       targetBlockId,
       onUpdateContent: (content) => {
-        const hasList = content.toLowerCase().includes('<ul') || content.toLowerCase().includes('<li');
-        handleUpdateBlock(targetBlockId, { content, bullet: hasList }, true);
+        handleUpdateBlock(targetBlockId, { content }, true);
+        setTimeout(updateActiveFormatStates, 30);
       }
     });
   };
