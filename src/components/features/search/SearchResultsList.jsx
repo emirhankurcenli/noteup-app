@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const TYPE_LABELS = {
   title: { tr: 'Başlık', en: 'Title', color: '#3B82F6' },
@@ -15,13 +16,14 @@ const TYPE_LABELS = {
   image: { tr: 'Görsel', en: 'Image', color: '#F43F5E' },
 };
 
-export const SearchResultsList = ({ results, openEditingNote, debouncedQuery, lang, isLight }) => {
+export const SearchResultsList = ({ results, openEditingNote, debouncedQuery, isLight }) => {
+  const { t, lang } = useLanguage();
   if (!results || results.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
         <span style={{ fontSize: '2rem' }}>🔍</span>
         <p style={{ marginTop: '8px', fontSize: '0.9rem', fontWeight: 600 }}>
-          {lang === 'tr' ? 'Aramanızla eşleşen not bulunamadı.' : 'No matching notes found.'}
+          {t('noNotesFound')}
         </p>
       </div>
     );
@@ -47,7 +49,7 @@ export const SearchResultsList = ({ results, openEditingNote, debouncedQuery, la
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-              {note.title || 'Başlıksız Not'}
+              {note.title || t('untitledNote')}
             </h3>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
               {new Date(note.updatedAt || Date.now()).toLocaleDateString()}

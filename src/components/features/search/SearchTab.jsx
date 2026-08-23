@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import { useLanguage } from '../../../context/LanguageContext';
 import { SearchBarInput } from './SearchBarInput';
 import { SearchResultsList } from './SearchResultsList';
 
@@ -139,11 +140,14 @@ const SearchTab = ({
   notes = [],
   openEditingNote,
   theme,
-  lang,
-  t,
+  lang: propLang,
+  t: propT,
   searchQuery = '',
   setSearchQuery,
 }) => {
+  const { t: ctxT, lang: ctxLang } = useLanguage();
+  const t = propT || ctxT;
+  const lang = propLang || ctxLang;
   const isLight = theme === 'light';
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const debounceRef = useRef(null);
@@ -194,11 +198,8 @@ const SearchTab = ({
       {/* ── Header ───────────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: '4px' }}>
         <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
-          {lang === 'tr' ? '🔍 Arama' : '🔍 Search'}
+          🔍 {t('search')}
         </h2>
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-          {lang === 'tr' ? 'Tüm notlarda, başlıklarda ve eklentilerde ara' : 'Search across all notes, titles and widgets'}
-        </span>
       </div>
 
       {/* ── Search Bar ────────────────────────────────────────────────────────── */}
@@ -207,7 +208,6 @@ const SearchTab = ({
         handleQueryChange={handleQueryChange}
         clearSearch={clearSearch}
         isLight={isLight}
-        lang={lang}
       />
 
       {/* ── Results List ──────────────────────────────────────────────────────── */}
@@ -215,7 +215,6 @@ const SearchTab = ({
         results={results}
         openEditingNote={openEditingNote}
         debouncedQuery={debouncedQuery}
-        lang={lang}
         isLight={isLight}
       />
     </div>

@@ -35,6 +35,11 @@ const ProfileTab = ({
   friends,
   handleDisconnect,
   permissionStates,
+  handleRequestMicPermission,
+  handleRequestStoragePermission,
+  handleRequestAudioPermission,
+  handleRequestLocationPermission,
+  checkAndRequestNotificationPermission,
   handleLogout,
   DEFAULT_AVATARS,
   deletedNotesCount = 0,
@@ -119,6 +124,11 @@ const ProfileTab = ({
             setLang={setLang}
             triggerHaptic={triggerHaptic}
             permissionStates={permissionStates}
+            handleRequestMicPermission={handleRequestMicPermission}
+            handleRequestStoragePermission={handleRequestStoragePermission}
+            handleRequestAudioPermission={handleRequestAudioPermission}
+            handleRequestLocationPermission={handleRequestLocationPermission}
+            checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
             handleLogout={handleLogout}
             isLight={isLight}
             t={t}

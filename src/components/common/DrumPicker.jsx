@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 // Safe helper to parse "YYYY-MM-DDTHH:mm" datetime string
 const parseDateTimeString = (val) => {
@@ -200,12 +201,17 @@ function DrumSeparator() {
   );
 }
 
-const DrumPicker = ({ value, onChange, lang = 'tr', triggerHaptic }) => {
+const DrumPicker = ({ value, onChange, lang: propLang, triggerHaptic }) => {
+  const { t, lang: ctxLang } = useLanguage();
+  const lang = propLang || ctxLang || 'tr';
   const initial = parseDateTimeString(value);
 
-  const monthNames = lang === 'tr'
-    ? ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara']
-    : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthsFromTranslation = t('monthsList');
+  const monthNames = Array.isArray(monthsFromTranslation)
+    ? monthsFromTranslation
+    : (lang === 'tr'
+      ? ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara']
+      : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']);
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 6 }, (_, i) => {
@@ -270,21 +276,21 @@ const DrumPicker = ({ value, onChange, lang = 'tr', triggerHaptic }) => {
           items={days}
           selectedIndex={clampedDay}
           onChange={(i) => setSelDay(i)}
-          label={lang === 'tr' ? 'Gün' : 'Day'}
+          label={t('dayLabel')}
           triggerHaptic={triggerHaptic}
         />
         <DrumColumn
           items={months}
           selectedIndex={selMonth}
           onChange={(i) => setSelMonth(i)}
-          label={lang === 'tr' ? 'Ay' : 'Month'}
+          label={t('monthLabel')}
           triggerHaptic={triggerHaptic}
         />
         <DrumColumn
           items={years}
           selectedIndex={selYear}
           onChange={(i) => setSelYear(i)}
-          label={lang === 'tr' ? 'Yıl' : 'Year'}
+          label={t('yearLabel')}
           triggerHaptic={triggerHaptic}
         />
       </div>
@@ -303,7 +309,7 @@ const DrumPicker = ({ value, onChange, lang = 'tr', triggerHaptic }) => {
           items={hours}
           selectedIndex={selHour}
           onChange={(i) => setSelHour(i)}
-          label={lang === 'tr' ? 'Saat' : 'Hour'}
+          label={t('hourLabel')}
           triggerHaptic={triggerHaptic}
         />
         <DrumSeparator />
@@ -311,7 +317,7 @@ const DrumPicker = ({ value, onChange, lang = 'tr', triggerHaptic }) => {
           items={minutes}
           selectedIndex={selMinute}
           onChange={(i) => setSelMinute(i)}
-          label={lang === 'tr' ? 'Dakika' : 'Minute'}
+          label={t('minuteLabel')}
           triggerHaptic={triggerHaptic}
         />
       </div>

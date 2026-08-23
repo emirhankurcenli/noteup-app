@@ -19,11 +19,25 @@ export const LanguageProvider = ({ children }) => {
     return TRANSLATIONS[lang]?.[key] || TRANSLATIONS['en']?.[key] || TRANSLATIONS['tr']?.[key] || key;
   };
 
+  const BCP47_LOCALES = {
+    tr: 'tr-TR',
+    en: 'en-US',
+    de: 'de-DE',
+    es: 'es-ES',
+    fr: 'fr-FR',
+    it: 'it-IT',
+    ru: 'ru-RU',
+    ar: 'ar-SA',
+    ja: 'ja-JP',
+    zh: 'zh-CN',
+  };
+
   const formatReminderDate = (dateStr) => {
     const date = new Date(dateStr);
     const now = new Date();
+    const currentLocale = BCP47_LOCALES[lang] || 'en-US';
     const timeOptions = { hour: '2-digit', minute: '2-digit' };
-    const formattedTime = date.toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US', timeOptions);
+    const formattedTime = date.toLocaleTimeString(currentLocale, timeOptions);
     const isToday = date.toDateString() === now.toDateString();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -34,7 +48,7 @@ export const LanguageProvider = ({ children }) => {
       return `${t('tomorrow')}, ${formattedTime}`;
     } else {
       const dateOptions = { day: 'numeric', month: 'short', weekday: 'short' };
-      const formattedDate = date.toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US', dateOptions);
+      const formattedDate = date.toLocaleDateString(currentLocale, dateOptions);
       return `${formattedDate} - ${formattedTime}`;
     }
   };

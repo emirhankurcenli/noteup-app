@@ -137,7 +137,7 @@ const ExamWidget = ({
                 <line x1="5" y1="3" x2="2" y2="6" />
                 <line x1="19" y1="3" x2="22" y2="6" />
               </svg>
-              {lang === 'tr' ? 'Alarm Kur' : 'Set Alarm'}
+              {t ? t('setReminderBtn') : (lang === 'tr' ? 'Alarm Kur' : 'Set Alarm')}
             </button>
           </div>
         </div>
@@ -145,8 +145,10 @@ const ExamWidget = ({
     );
   }
 
+  const BCP47_LOCALES = { tr: 'tr-TR', en: 'en-US', de: 'de-DE', es: 'es-ES', fr: 'fr-FR', it: 'it-IT', ru: 'ru-RU', ar: 'ar-SA', ja: 'ja-JP', zh: 'zh-CN' };
+  const currentLocale = BCP47_LOCALES[lang] || 'en-US';
   const examLabel = block.examMs
-    ? new Date(block.examMs).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    ? new Date(block.examMs).toLocaleDateString(currentLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     : '';
 
   return (

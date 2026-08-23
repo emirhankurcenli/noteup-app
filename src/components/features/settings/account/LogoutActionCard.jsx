@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../../../../context/LanguageContext';
 
-const LogoutActionCard = ({ handleLogout, triggerHaptic, isLight, lang }) => {
+const LogoutActionCard = ({ handleLogout, triggerHaptic, isLight }) => {
+  const { t, lang } = useLanguage();
   const [showConfirm, setShowConfirm] = useState(false);
 
   return (
@@ -41,7 +43,7 @@ const LogoutActionCard = ({ handleLogout, triggerHaptic, isLight, lang }) => {
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
-          <span>{lang === 'tr' ? 'Çıkış Yap' : 'Log Out'}</span>
+          <span>{t('signOutBtn')}</span>
         </button>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -63,7 +65,7 @@ const LogoutActionCard = ({ handleLogout, triggerHaptic, isLight, lang }) => {
                 cursor: 'pointer'
               }}
             >
-              {lang === 'tr' ? 'İptal' : 'Cancel'}
+              {t('cancelBtn')}
             </button>
             <button
               onClick={() => {
@@ -82,7 +84,7 @@ const LogoutActionCard = ({ handleLogout, triggerHaptic, isLight, lang }) => {
                 cursor: 'pointer'
               }}
             >
-              {lang === 'tr' ? 'Evet, Çıkış Yap' : 'Yes, Log Out'}
+              {t('signOutBtn')}
             </button>
           </div>
         </div>

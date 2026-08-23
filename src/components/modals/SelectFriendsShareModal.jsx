@@ -133,10 +133,10 @@ const SelectFriendsShareModal = ({
             </div>
             <div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: isLight ? '#0F172A' : '#F8FAFC', margin: 0 }}>
-                {cleanText(t?.('shareWithFriend')) || (lang === 'tr' ? 'Arkadaşınla Paylaş' : 'Share with Friend')}
+                {cleanText(t?.('shareWithFriend'))}
               </h3>
               <p style={{ fontSize: '0.75rem', color: isLight ? '#64748B' : '#94A3B8', margin: '2px 0 0 0' }}>
-                {lang === 'tr' ? 'Notu kimlerle paylaşmak istersiniz?' : 'Select friends to share this note'}
+                {t?.('selectFriendsToShare')}
               </p>
             </div>
           </div>
@@ -180,7 +180,7 @@ const SelectFriendsShareModal = ({
           fontSize: '0.75rem',
         }}>
           <span style={{ color: isLight ? '#64748B' : '#94A3B8', fontWeight: 600 }}>
-            {lang === 'tr' ? 'Seçilen Davet:' : 'Selected Invites:'}
+            {t?.('selectedInvites')}
           </span>
           <span style={{
             fontWeight: 800,
@@ -199,6 +199,7 @@ const SelectFriendsShareModal = ({
           handleFriendToggle={handleFriendToggle}
           isLight={isLight}
           lang={lang}
+          t={t}
         />
 
         {/* Footer Actions */}
@@ -221,7 +222,7 @@ const SelectFriendsShareModal = ({
               cursor: 'pointer',
             }}
           >
-            {cleanText(t?.('cancelBtn')) || (lang === 'tr' ? 'Vazgeç' : 'Cancel')}
+            {cleanText(t?.('cancelBtn'))}
           </button>
 
           {friends && friends.length > 0 && (
@@ -248,7 +249,7 @@ const SelectFriendsShareModal = ({
                 transition: 'all 0.2s ease',
               }}
             >
-              {cleanText(t?.('shareWithFriends')) || (lang === 'tr' ? 'Paylaş' : 'Share')}
+              {cleanText(t?.('shareBtn'))}
             </button>
           )}
         </div>

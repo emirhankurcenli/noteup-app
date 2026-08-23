@@ -118,11 +118,11 @@ const ShareOptionsModal = ({
           <button
             onClick={async () => {
               if (editingNote?.isLocked) {
-                const title = lang === 'tr' ? 'Kilitli Not Görseli' : 'Locked Note Image';
-                const subtitle = lang === 'tr' ? 'Notu görsel olarak aktarmak için kimliğinizi doğrulayın' : 'Authenticate to export note image';
+                const title = t('lockedNoteImgAuthTitle');
+                const subtitle = t('lockedNoteImgAuthSub');
                 const ok = await requestBiometricAuth(title, subtitle);
                 if (!ok) {
-                  setToast?.({ title: '⚠️', msg: lang === 'tr' ? 'Kimlik doğrulama başarısız.' : 'Authentication failed.' });
+                  setToast?.({ title: '⚠️', msg: t('authFailed') });
                   return;
                 }
               }
@@ -164,10 +164,10 @@ const ShareOptionsModal = ({
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <span style={{ fontWeight: 800, fontSize: '0.9rem', color: isLight ? '#065F46' : '#F8FAFC' }}>
-                {cleanText(t('shareAsImage')) || 'Görsel Olarak Paylaş'}
+                {cleanText(t('shareAsImage'))}
               </span>
               <span style={{ fontSize: '0.72rem', color: isLight ? '#059669' : '#6EE7B7', lineHeight: 1.3, fontWeight: 600 }}>
-                Notu yüksek kaliteli kart görseli olarak oluşturur
+                {t('shareAsImageSub')}
               </span>
             </div>
 
@@ -176,85 +176,105 @@ const ShareOptionsModal = ({
             </svg>
           </button>
 
-          {/* Option 2: Share with Friend */}
-          <button
-            onClick={async () => {
-              if (checkAndRequestNotificationPermission) {
-                const granted = await checkAndRequestNotificationPermission();
-                if (!granted) return;
-              }
-              if (editingNote?.isLocked) {
-                const title = lang === 'tr' ? 'Kilitli Not Paylaşımı' : 'Share Locked Note';
-                const subtitle = lang === 'tr' ? 'Notu arkadaşınızla paylaşmak için kimliğinizi doğrulayın' : 'Authenticate to share note with friend';
-                const ok = await requestBiometricAuth(title, subtitle);
-                if (!ok) {
-                  setToast?.({ title: '⚠️', msg: lang === 'tr' ? 'Kimlik doğrulama başarısız.' : 'Authentication failed.' });
-                  return;
+          {/* Option 2: Share with Friend (Only for Note Owner!) */}
+          {!editingNote?.sharedFrom ? (
+            <button
+              onClick={async () => {
+                if (checkAndRequestNotificationPermission) {
+                  const granted = await checkAndRequestNotificationPermission();
+                  if (!granted) return;
                 }
-              }
-              setShowShareModal(false);
-              if (typeof setActiveShareNoteId === 'function' && editingNote) {
-                setActiveShareNoteId(editingNote.id);
-              }
-            }}
-            style={{
-              padding: '14px 16px',
-              borderRadius: '16px',
-              border: isLight ? '1px solid rgba(59, 130, 246, 0.25)' : '1px solid rgba(59, 130, 246, 0.3)',
-              background: isLight ? '#F0F7FF' : 'rgba(59, 130, 246, 0.12)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
-              textAlign: 'left',
-              transition: 'all 0.2s ease',
-              boxShadow: isLight ? '0 2px 8px rgba(59, 130, 246, 0.06)' : 'none'
-            }}
-          >
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFF',
-              flexShrink: 0,
-              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                if (editingNote?.isLocked) {
+                  const title = t('lockedNoteAuthTitle');
+                  const subtitle = t('lockedNoteAuthSub');
+                  const ok = await requestBiometricAuth(title, subtitle);
+                  if (!ok) {
+                    setToast?.({ title: '⚠️', msg: t('authFailed') });
+                    return;
+                  }
+                }
+                setShowShareModal(false);
+                if (typeof setActiveShareNoteId === 'function' && editingNote) {
+                  setActiveShareNoteId(editingNote.id);
+                }
+              }}
+              style={{
+                padding: '14px 16px',
+                borderRadius: '16px',
+                border: isLight ? '1px solid rgba(59, 130, 246, 0.25)' : '1px solid rgba(59, 130, 246, 0.3)',
+                background: isLight ? '#F0F7FF' : 'rgba(59, 130, 246, 0.12)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                textAlign: 'left',
+                transition: 'all 0.2s ease',
+                boxShadow: isLight ? '0 2px 8px rgba(59, 130, 246, 0.06)' : 'none'
+              }}
+            >
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#FFF',
+                flexShrink: 0,
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: isLight ? '#1E3A8A' : '#F8FAFC' }}>
+                  {cleanText(t('shareWithFriend'))}
+                </span>
+                <span style={{ fontSize: '0.72rem', color: isLight ? '#2563EB' : '#93C5FD', lineHeight: 1.3, fontWeight: 600 }}>
+                  {t('shareWithFriendSub')}
+                </span>
+              </div>
+
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isLight ? '#3B82F6' : '#93C5FD'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <polyline points="9 18 15 12 9 6" />
               </svg>
-            </div>
-
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <span style={{ fontWeight: 800, fontSize: '0.9rem', color: isLight ? '#1E3A8A' : '#F8FAFC' }}>
-                {cleanText(t('shareWithFriend')) || (lang === 'tr' ? 'Arkadaşınla Paylaş' : 'Share with Friend')}
+            </button>
+          ) : (
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: '16px',
+                border: isLight ? '1px dashed #CBD5E1' : '1px dashed rgba(255, 255, 255, 0.15)',
+                background: isLight ? '#F8FAFC' : 'rgba(255, 255, 255, 0.03)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                opacity: 0.85
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>🔒</span>
+              <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+                {t('onlyOwnerCanShareNotice') || 'Bu not sizinle paylaşıldığı için yalnızca asıl sahibi başkalarıyla paylaşabilir.'}
               </span>
-              <span style={{ fontSize: '0.72rem', color: isLight ? '#2563EB' : '#93C5FD', lineHeight: 1.3, fontWeight: 600 }}>
-                {lang === 'tr' ? 'Notu arkadaşına doğrudan gönder' : 'Send note directly to a friend'}
-              </span>
             </div>
-
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isLight ? '#3B82F6' : '#93C5FD'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
+          )}
 
           {/* Option 3: Export/Share as PDF (Only for Ultra/VIP users) */}
           {(userPlan === 'ultra' || userPlan === 'vip') && (
             <button
               onClick={async () => {
                 if (editingNote?.isLocked) {
-                  const title = lang === 'tr' ? 'Kilitli Not PDF' : 'Locked Note PDF';
-                  const subtitle = lang === 'tr' ? 'Notu PDF olarak aktarmak için kimliğinizi doğrulayın' : 'Authenticate to export note PDF';
+                  const title = t('lockedNotePdfAuthTitle');
+                  const subtitle = t('lockedNotePdfAuthSub');
                   const ok = await requestBiometricAuth(title, subtitle);
                   if (!ok) {
-                    setToast?.({ title: '⚠️', msg: lang === 'tr' ? 'Kimlik doğrulama başarısız.' : 'Authentication failed.' });
+                    setToast?.({ title: '⚠️', msg: t('authFailed') });
                     return;
                   }
                 }
@@ -297,10 +317,10 @@ const ShareOptionsModal = ({
 
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ fontWeight: 800, fontSize: '0.9rem', color: isLight ? '#991B1B' : '#F8FAFC' }}>
-                  {lang === 'tr' ? 'PDF Olarak Kaydet / Paylaş' : 'Save / Share as PDF'}
+                  {t('savePdf')}
                 </span>
                 <span style={{ fontSize: '0.72rem', color: isLight ? '#EF4444' : '#FCA5A5', lineHeight: 1.3, fontWeight: 600 }}>
-                  Notu PDF dosyası olarak cihazınıza indirir veya paylaşır
+                  {t('savePdfSub')}
                 </span>
               </div>
 

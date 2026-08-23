@@ -233,8 +233,8 @@ const NotesGrid = ({
                 onClick={async () => {
                   if (note.isLocked) {
                     const ok = await requestBiometricAuth(
-                      lang === 'tr' ? 'Not Kilitli' : 'Note Locked',
-                      lang === 'tr' ? 'Notu açmak için parmak izi, yüz tanıma veya telefon şifrenizi girin' : 'Use Face ID, fingerprint or phone password to open note'
+                      t('noteLocked'),
+                      t('authToOpenNote')
                     );
                     if (!ok) {
                       setToast({ title: '🔒', msg: t('authFailed') });
@@ -253,7 +253,7 @@ const NotesGrid = ({
                     <div className="note-badges" style={{ marginTop: '4px' }}>
                       {note.isPinned && (
                         <span className="badge badge-shared" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8B5CF6', display: 'inline-flex', alignItems: 'center' }}>
-                          <PinIcon /> {cleanText((t('pinnedBadge') && t('pinnedBadge') !== 'pinnedBadge') ? t('pinnedBadge') : 'Sabitlendi')}
+                          <PinIcon /> {cleanText(t('pinnedBadge') || 'Sabitlendi')}
                         </span>
                       )}
                       {note.isLocked && (
@@ -261,7 +261,17 @@ const NotesGrid = ({
                           <LockIcon /> {cleanText(t('locked'))}
                         </span>
                       )}
-                      {note.isShared && (note.sharedFrom || (note.sharedWith && note.sharedWith.length > 0)) && <span className="badge badge-shared">{cleanText(t('shared'))}</span>}
+                      {note.isShared && (
+                        note.sharedFrom ? (
+                          <span className="badge badge-shared" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8B5CF6' }}>
+                            📥 {note.sharedFromName || note.sharedFrom || cleanText(t('sharedWithMe') || 'Gelen')}
+                          </span>
+                        ) : (
+                          <span className="badge badge-shared" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981' }}>
+                            📤 {cleanText(t('ownerBadge') || 'Sahip')}
+                          </span>
+                        )
+                      )}
                       {(() => {
                         const activeRem = reminders.find(r => r.noteId === note.id && r.active && new Date(r.time).getTime() > now);
                         if (!activeRem) return null;
@@ -312,12 +322,8 @@ const NotesGrid = ({
                           e.stopPropagation();
                           setActiveMenuNoteId(null);
                           const isLocking = !note.isLocked;
-                          const title = isLocking
-                            ? (lang === 'tr' ? 'Notu Kilitle' : 'Lock Note')
-                            : (lang === 'tr' ? 'Kilidi Kaldır' : 'Unlock Note');
-                          const subtitle = isLocking
-                            ? (lang === 'tr' ? 'Notu kilitlemek için parmak izi, yüz tanıma veya telefon şifrenizi girin' : 'Authenticate to lock note')
-                            : (lang === 'tr' ? 'Kilidi kaldırmak için parmak izi, yüz tanıma veya telefon şifrenizi girin' : 'Authenticate to unlock note');
+                          const title = isLocking ? t('lockNoteAuthTitle') : t('unlockNoteAuthTitle');
+                          const subtitle = isLocking ? t('lockNoteAuthSub') : t('unlockNoteAuthSub');
 
                           const ok = await requestBiometricAuth(title, subtitle);
                           if (ok) {
@@ -328,7 +334,7 @@ const NotesGrid = ({
                             });
                             setToast({
                               title: isLocking ? '🔒' : '🔓',
-                              msg: isLocking ? (lang === 'tr' ? 'Not kilitlendi.' : 'Note locked.') : (lang === 'tr' ? 'Notun kilidi kaldırıldı.' : 'Note unlocked.')
+                              msg: isLocking ? t('noteLockedToast') : t('noteUnlockedToast')
                             });
                           } else {
                             setToast({ title: '⚠️', msg: t('authFailed') });
@@ -363,9 +369,7 @@ const NotesGrid = ({
                             return upd;
                           });
                           setToast({
-                            title: isPinning 
-                              ? (lang === 'tr' ? 'Not başa sabitlendi.' : 'Note pinned to top.') 
-                              : (lang === 'tr' ? 'Sabitleme kaldırıldı.' : 'Note unpinned.'),
+                            title: isPinning ? t('notePinnedToast') : t('noteUnpinnedToast'),
                             msg: ''
                           });
                         }}
@@ -406,45 +410,47 @@ const NotesGrid = ({
                               </svg>
                             </span>
                             {activeRem 
-                              ? (lang === 'tr' ? 'Hatırlatıcıyı Kaldır' : 'Remove Reminder')
+                              ? t('removeReminder')
                               : cleanText(t('remind'))
                             }
                           </button>
                         );
                       })()}
-                      <button
-                        className="context-menu-btn"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          setActiveMenuNoteId(null);
-                          if (checkAndRequestNotificationPermission) {
-                            const granted = await checkAndRequestNotificationPermission();
-                            if (!granted) return;
-                          }
-                          if (note.isLocked) {
-                            const title = lang === 'tr' ? 'Kilitli Not Paylaşımı' : 'Share Locked Note';
-                            const subtitle = lang === 'tr' ? 'Notu arkadaşınızla paylaşmak için kimliğinizi doğrulayın' : 'Authenticate to share note';
-                            const ok = await requestBiometricAuth(title, subtitle);
-                            if (!ok) {
-                              setToast?.({ title: '⚠️', msg: lang === 'tr' ? 'Kimlik doğrulama başarısız.' : 'Authentication failed.' });
-                              return;
+                      {!note.sharedFrom && (
+                        <button
+                          className="context-menu-btn"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setActiveMenuNoteId(null);
+                            if (checkAndRequestNotificationPermission) {
+                              const granted = await checkAndRequestNotificationPermission();
+                              if (!granted) return;
                             }
-                          }
-                          if (typeof setActiveShareNoteId === 'function') {
-                            setActiveShareNoteId(note.id);
-                          }
-                        }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                            <circle cx="9" cy="7" r="4" />
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                          </svg>
-                        </span>
-                        {cleanText(t('shareWithFriend')) || (lang === 'tr' ? 'Arkadaşınla Paylaş' : 'Share with Friend')}
-                      </button>
+                            if (note.isLocked) {
+                              const title = t('lockedNoteAuthTitle');
+                              const subtitle = t('lockedNoteAuthSub');
+                              const ok = await requestBiometricAuth(title, subtitle);
+                              if (!ok) {
+                                setToast?.({ title: '⚠️', msg: t('authFailed') });
+                                return;
+                              }
+                            }
+                            if (typeof setActiveShareNoteId === 'function') {
+                              setActiveShareNoteId(note.id);
+                            }
+                          }}
+                        >
+                          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                              <circle cx="9" cy="7" r="4" />
+                              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                          </span>
+                          {cleanText(t('shareWithFriend'))}
+                        </button>
+                      )}
                       {(note.isShared || (note.sharedWith && note.sharedWith.length > 0) || note.sharedFrom) && (
                         <button
                           className="context-menu-btn"
@@ -462,7 +468,7 @@ const NotesGrid = ({
                               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                             </svg>
                           </span>
-                          {lang === 'tr' ? 'Bildirim Gönder 🔔' : 'Send Notification 🔔'}
+                          {t('sendNotifBtn')}
                         </button>
                       )}
                       <div className="context-menu-divider" />
@@ -475,15 +481,23 @@ const NotesGrid = ({
                         }}
                       >
                         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                            <path d="M10 11v6"/>
-                            <path d="M14 11v6"/>
-                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                          </svg>
+                          {note.sharedFrom ? (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                              <polyline points="16 17 21 12 16 7" />
+                              <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                          ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6"/>
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                              <path d="M10 11v6"/>
+                              <path d="M14 11v6"/>
+                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                            </svg>
+                          )}
                         </span>
-                        {cleanText(t('deleteBtn'))}
+                        {note.sharedFrom ? cleanText(t('leaveCollabBtn') || 'Paylaşımdan Ayrıl') : cleanText(t('deleteBtn'))}
                       </button>
                     </div>
                   )}

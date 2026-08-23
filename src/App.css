@@ -1792,10 +1792,11 @@ html, body, #root {
   width: 100%;
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
-  padding: 24px;
+  padding: 24px 24px max(28px, calc(20px + env(safe-area-inset-bottom, 20px))) 24px;
   animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
   border-top: 1px solid var(--border-color-active);
+  box-sizing: border-box;
 }
 
 .modal-header {

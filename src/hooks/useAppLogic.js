@@ -70,7 +70,20 @@ export default function useAppLogic(options = {}) {
 
   // ─── Sub-hooks ────────────────────────────────────────────────────────────
   const auth = useAuth();
-  
+
+  const sharing = useSharing({
+    user: auth.user,
+    myCode: auth.myCode,
+    profileName: auth.profileName,
+    userPlan: auth.userPlan,
+    setUserPlan: auth.setUserPlan,
+    notes: auth.notes,
+    saveNotes: (newNotes) => notesHook.saveNotes(newNotes),
+    setToast: auth.setToast,
+    setShowPaywall: options.setShowPaywall,
+    setShowRewardedAdModal: options.setShowRewardedAdModal,
+  });
+
   const notesHook = useNotes({
     user: auth.user,
     notes: auth.notes,
@@ -83,20 +96,9 @@ export default function useAppLogic(options = {}) {
     setConfirmDialog: options.setConfirmDialog,
     deleteFromR2: options.deleteFromR2,
     requestBiometricAuth: options.requestBiometricAuth,
-    lang
-  });
-
-  const sharing = useSharing({
-    user: auth.user,
+    lang,
     myCode: auth.myCode,
-    profileName: auth.profileName,
-    userPlan: auth.userPlan,
-    setUserPlan: auth.setUserPlan,
-    notes: auth.notes,
-    saveNotes: notesHook.saveNotes,
-    setToast: auth.setToast,
-    setShowPaywall: options.setShowPaywall,
-    setShowRewardedAdModal: options.setShowRewardedAdModal,
+    handleLeaveShare: sharing.handleLeaveShare
   });
 
   const remindersHook = useReminders({
@@ -186,6 +188,7 @@ export default function useAppLogic(options = {}) {
     handleSendShareInvitation: sharing.handleSendShareInvitation,
     handleAcceptShare: sharing.handleAcceptShare,
     handleRejectShare: sharing.handleRejectShare,
+    handleLeaveShare: sharing.handleLeaveShare,
     handleRewardedShareCallback: sharing.handleRewardedShareCallback,
     pendingShareReward: sharing.pendingShareReward,
     setPendingShareReward: sharing.setPendingShareReward,

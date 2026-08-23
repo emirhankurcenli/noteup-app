@@ -17,7 +17,9 @@ export default function useNotes({
   setConfirmDialog,
   deleteFromR2,
   requestBiometricAuth,
-  lang
+  lang,
+  myCode,
+  handleLeaveShare
 }) {
   // --- STATES ---
   const [editingNote, setEditingNote] = useState(null);
@@ -57,29 +59,61 @@ export default function useNotes({
       }
 
       if (user && user.uid) {
-        const notesToUpsert = cleanNotes.map(n => ({
-          id: n.id,
-          user_id: user.uid,
-          title: n.title || '',
-          blocks: n.blocks || [],
-          is_shared: n.isShared || false,
-          is_locked: n.isLocked || false,
-          is_pinned: Boolean(n.isPinned),
-          deleted_at: n.deletedAt ? Number(n.deletedAt) : null,
-          updated_at: n.updatedAt ? new Date(n.updatedAt).toISOString() : new Date().toISOString()
-        }));
+        // 1. Separate owned notes from received shared notes
+        const ownedNotes = cleanNotes.filter(n => !n.sharedFrom);
+        const receivedNotes = cleanNotes.filter(n => Boolean(n.sharedFrom));
 
-        let { error } = await supabase
-          .from('notes')
-          .upsert(notesToUpsert);
+        // 2. Upsert owned notes to Supabase notes table
+        if (ownedNotes.length > 0) {
+          const notesToUpsert = ownedNotes.map(n => ({
+            id: n.id,
+            user_id: user.uid,
+            title: n.title || '',
+            blocks: n.blocks || [],
+            is_shared: n.isShared || false,
+            is_locked: n.isLocked || false,
+            is_pinned: Boolean(n.isPinned),
+            deleted_at: n.deletedAt ? Number(n.deletedAt) : null,
+            updated_at: n.updatedAt ? new Date(n.updatedAt).toISOString() : new Date().toISOString()
+          }));
 
-        if (error && error.message && error.message.toLowerCase().includes('is_pinned')) {
-          const fallbackToUpsert = notesToUpsert.map(({ is_pinned, ...rest }) => rest);
-          const res = await supabase.from('notes').upsert(fallbackToUpsert);
-          error = res.error;
+          let { error } = await supabase
+            .from('notes')
+            .upsert(notesToUpsert);
+
+          if (error && error.message && error.message.toLowerCase().includes('is_pinned')) {
+            const fallbackToUpsert = notesToUpsert.map(({ is_pinned, ...rest }) => rest);
+            const res = await supabase.from('notes').upsert(fallbackToUpsert);
+            error = res.error;
+          }
+
+          if (error) console.error("Error upserting notes to Supabase:", error);
         }
 
-        if (error) console.error("Error upserting notes to Supabase:", error);
+        // 3. For received shared notes, update title & blocks on notes table and note_shares table
+        for (const rn of receivedNotes) {
+          try {
+            await supabase
+              .from('notes')
+              .update({
+                title: rn.title || '',
+                blocks: rn.blocks || [],
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', rn.id);
+
+            await supabase
+              .from('note_shares')
+              .update({
+                note_title: rn.title || '',
+                note_blocks: rn.blocks || [],
+                updated_at: new Date().toISOString()
+              })
+              .eq('note_id', rn.id);
+          } catch (updateErr) {
+            console.warn("Shared note remote update error:", updateErr);
+          }
+        }
       }
     } catch (err) {
       console.error("Notes persistence error:", err);
@@ -206,8 +240,47 @@ export default function useNotes({
 
   const handleMoveToTrash = async (noteId) => {
     const targetNote = (notes || []).find(n => n.id === noteId);
+    if (!targetNote) return;
 
-    if (targetNote && targetNote.isLocked && typeof requestBiometricAuth === 'function') {
+    // Rule: If user is NOT the owner (sharedFrom exists), prompt to leave share instead of moving to trash!
+    if (targetNote.sharedFrom) {
+      setConfirmDialog({
+        title: t('leaveCollabTitle') || 'Paylaşımdan Ayrıl',
+        message: t('leaveCollabMsg') || 'Bu notun sahibi siz değilsiniz. Notu çöp kutusuna taşıyamazsınız, fakat paylaşımdan ayrılabilirsiniz. Not listenizden kaldırılacaktır.',
+        icon: '👋',
+        confirmText: t('leaveCollabBtn') || 'Paylaşımdan Ayrıl',
+        cancelText: t('confirmCancel') || 'Vazgeç',
+        danger: true,
+        onConfirm: async () => {
+          if (typeof handleLeaveShare === 'function') {
+            await handleLeaveShare(noteId);
+          } else {
+            try {
+              if (myCode) {
+                await supabase.from('note_shares').delete().eq('note_id', noteId).eq('to_code', myCode);
+              }
+            } catch (err) {}
+            const updatedNotes = (notes || []).filter(n => n.id !== noteId);
+            saveNotes(updatedNotes);
+            setToast?.({
+              title: "👋 Paylaşımdan Ayrıldınız",
+              msg: `"${targetNote.title || 'Not'}" listenizden kaldırıldı.`
+            });
+          }
+
+          if (editingNote?.id === noteId) {
+            if (window.history.state && window.history.state.page === 'editor') {
+              window.history.replaceState({ page: 'root' }, '');
+            }
+            setEditingNote(null);
+          }
+        }
+      });
+      return;
+    }
+
+    // Standard trash logic for owned notes...
+    if (targetNote.isLocked && typeof requestBiometricAuth === 'function') {
       const ok = await requestBiometricAuth(
         lang === 'tr' ? 'Kilitli Notu Sil' : 'Delete Locked Note',
         lang === 'tr' ? 'Kilitli notu silmek için parmak izi, yüz tanıma veya telefon şifrenizi girin' : 'Authenticate to delete locked note'
@@ -226,6 +299,19 @@ export default function useNotes({
       cancelText: t('confirmCancel'),
       danger: true,
       onConfirm: async () => {
+        // If owned note was shared, revoke all shares in Supabase so recipients lose access
+        if (targetNote.isShared) {
+          try {
+            await supabase
+              .from('note_shares')
+              .update({ status: 'revoked', updated_at: new Date().toISOString() })
+              .eq('note_id', noteId)
+              .eq('from_code', myCode);
+          } catch (revokeErr) {
+            console.warn("Error revoking shares on trash:", revokeErr);
+          }
+        }
+
         const noteReminders = reminders.filter(r => r.noteId === noteId);
         for (const rem of noteReminders) {
           try {

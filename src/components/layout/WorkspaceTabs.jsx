@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import NotesGrid from '../features/notes/NotesGrid';
+import SharedNotesTab from '../features/notes/SharedNotesTab';
 import RemindersTab from '../features/notes/RemindersTab';
 import TrashTab from '../features/notes/TrashTab';
 import ProfileTab from '../features/settings/ProfileTab';
 import SearchTab from '../features/search/SearchTab';
 
 const WorkspaceTabs = ({
+  handleLeaveShare,
   activeTab,
   getVisibleNotes,
   notes,
@@ -21,6 +23,10 @@ const WorkspaceTabs = ({
   openEditingNote,
   setActiveTab,
   checkAndRequestNotificationPermission,
+  handleRequestMicPermission,
+  handleRequestStoragePermission,
+  handleRequestAudioPermission,
+  handleRequestLocationPermission,
   setReminderNoteId,
   setShowReminderModal,
   setActiveShareNoteId,
@@ -141,32 +147,32 @@ const WorkspaceTabs = ({
       )}
 
       {/* TAB: SHARED NOTES VIEW */}
-      {activeTab === 'shared' && (() => {
-        const sharedNotesList = (notes || []).filter(n => n && !n.deletedAt && (n.isShared || (n.sharedWith && n.sharedWith.length > 0)));
-        return (
-          <NotesGrid
-            visibleNotes={sharedNotesList}
-            reminders={reminders}
-            activeMenuNoteId={activeMenuNoteId}
-            setActiveMenuNoteId={setActiveMenuNoteId}
-            requestBiometricAuth={requestBiometricAuth}
-            setNotes={setNotes}
-            persistNotes={persistNotes}
-            setToast={setToast}
-            getRemainingTimeText={getRemainingTimeText}
-            handleMoveToTrash={handleMoveToTrash}
-            openEditingNote={openEditingNote}
-            setReminderNoteId={setReminderNoteId}
-            setShowReminderModal={setShowReminderModal}
-            handleCancelReminder={handleCancelReminder}
-            setActiveShareNoteId={setActiveShareNoteId}
-            setNudgeTargetNote={setNudgeTargetNote}
-            checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
-            lang={lang}
-            t={t}
-          />
-        );
-      })()}
+      {activeTab === 'shared' && (
+        <SharedNotesTab
+          notes={notes}
+          reminders={reminders}
+          activeMenuNoteId={activeMenuNoteId}
+          setActiveMenuNoteId={setActiveMenuNoteId}
+          requestBiometricAuth={requestBiometricAuth}
+          setNotes={setNotes}
+          persistNotes={persistNotes}
+          setToast={setToast}
+          getRemainingTimeText={getRemainingTimeText}
+          handleMoveToTrash={handleMoveToTrash}
+          openEditingNote={openEditingNote}
+          setReminderNoteId={setReminderNoteId}
+          setShowReminderModal={setShowReminderModal}
+          handleCancelReminder={handleCancelReminder}
+          setActiveShareNoteId={setActiveShareNoteId}
+          setNudgeTargetNote={setNudgeTargetNote}
+          checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
+          theme={theme}
+          lang={lang}
+          t={t}
+          myCode={myCode}
+          handleLeaveShare={handleLeaveShare}
+        />
+      )}
 
       {/* TAB 4: PROFILE & COLLABORATION VIEW */}
       {activeTab === 'profile' && (
@@ -201,6 +207,11 @@ const WorkspaceTabs = ({
           friends={friends}
           handleDisconnect={handleDisconnect}
           permissionStates={permissionStates}
+          handleRequestMicPermission={handleRequestMicPermission}
+          handleRequestStoragePermission={handleRequestStoragePermission}
+          handleRequestAudioPermission={handleRequestAudioPermission}
+          handleRequestLocationPermission={handleRequestLocationPermission}
+          checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
           handleLogout={handleLogout}
           DEFAULT_AVATARS={DEFAULT_AVATARS}
           deletedNotesCount={(notes || []).filter(n => n && n.deletedAt).length}

@@ -104,7 +104,7 @@ const TrashHeaderBar = ({
                         <polyline points="9 11 12 14 22 4" />
                         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                       </svg>
-                      {lang === 'tr' ? 'Notları Seç' : 'Select Notes'}
+                      {t('selectAllNotes')}
                     </button>
 
                     <button
@@ -131,7 +131,7 @@ const TrashHeaderBar = ({
                         <polyline points="3 6 5 6 21 6" />
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                       </svg>
-                      {lang === 'tr' ? 'Hepsini Sil' : 'Delete All'}
+                      {t('deleteAllNotes')}
                     </button>
                   </div>
                 </>
@@ -169,7 +169,7 @@ const TrashHeaderBar = ({
                   cursor: 'pointer'
                 }}
               >
-                {lang === 'tr' ? 'İptal' : 'Cancel'}
+                {t('cancelBtn')}
               </button>
             </>
           )}

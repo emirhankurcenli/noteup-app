@@ -33,10 +33,8 @@ export const EditorLockStatusBadge = ({
       }
     }
 
-    const title = isLocking ? (lang === 'tr' ? 'Notu Kilitle' : 'Lock Note') : (lang === 'tr' ? 'Kilidi Kaldır' : 'Unlock Note');
-    const subtitle = isLocking
-      ? (lang === 'tr' ? 'Notu kilitlemek için parmak izi, yüz tanıma veya telefon şifrenizi girin' : 'Use Face ID, fingerprint or phone password to lock')
-      : (lang === 'tr' ? 'Kilidi kaldırmak için parmak izi, yüz tanıma veya telefon şifrenizi girin' : 'Use Face ID, fingerprint or phone password to unlock');
+    const title = isLocking ? t('lockNoteAuthTitle') : t('unlockNoteAuthTitle');
+    const subtitle = isLocking ? t('lockNoteAuthSub') : t('unlockNoteAuthSub');
 
     const ok = await requestBiometricAuth(title, subtitle);
     if (ok) {
@@ -49,7 +47,7 @@ export const EditorLockStatusBadge = ({
       });
       setToast?.({
         title: isLocking ? '🔒' : '🔓',
-        msg: isLocking ? (lang === 'tr' ? 'Not kilitlendi.' : 'Note locked.') : (lang === 'tr' ? 'Notun kilidi kaldırıldı.' : 'Note unlocked.'),
+        msg: isLocking ? t('noteLockedToast') : t('noteUnlockedToast'),
       });
     } else {
       setToast?.({ title: '⚠️', msg: t('authFailed') });
@@ -89,7 +87,7 @@ export const EditorLockStatusBadge = ({
           )}
         </svg>
       </div>
-      <span>{editingNote.isLocked ? (lang === 'tr' ? 'Kilidi Kaldır' : 'Unlock Note') : (lang === 'tr' ? 'Notu Kilitle' : 'Lock Note')}</span>
+      <span>{editingNote.isLocked ? t('unlockNote') : t('lockNote')}</span>
     </button>
   );
 };

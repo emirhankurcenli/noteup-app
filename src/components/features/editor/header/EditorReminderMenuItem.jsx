@@ -28,7 +28,7 @@ export const EditorReminderMenuItem = ({
             handleCancelReminder(activeRem.id);
             setToast?.({
               title: '🔔',
-              msg: lang === 'tr' ? 'Hatırlatıcı iptal edildi.' : 'Reminder cancelled.',
+              msg: t('reminderCancelledToast'),
             });
           }
           return;
@@ -73,7 +73,7 @@ export const EditorReminderMenuItem = ({
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
       </div>
-      <span>{activeRem ? (lang === 'tr' ? 'Hatırlatıcıyı Kaldır' : 'Remove Reminder') : t('remind')}</span>
+      <span>{activeRem ? t('removeReminder') : t('remind')}</span>
     </button>
   );
 };

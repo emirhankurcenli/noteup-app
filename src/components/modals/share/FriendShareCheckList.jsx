@@ -6,6 +6,7 @@ export const FriendShareCheckList = ({
   handleFriendToggle,
   isLight,
   lang,
+  t,
 }) => {
   if (!friends || friends.length === 0) {
     return (
@@ -24,12 +25,12 @@ export const FriendShareCheckList = ({
       >
         <span style={{ fontSize: '1.8rem' }}>👥</span>
         <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: isLight ? '#1E293B' : '#F1F5F9' }}>
-          {lang === 'tr' ? 'Henüz Arkadaşınız Yok' : 'No Friends Added Yet'}
+          {t ? t('noFriendsShareTitle') : (lang === 'tr' ? 'Henüz Arkadaşınız Yok' : 'No Friends Added Yet')}
         </p>
         <p style={{ margin: 0, fontSize: '0.78rem', color: isLight ? '#64748B' : '#94A3B8', lineHeight: 1.4 }}>
-          {lang === 'tr'
+          {t ? t('noFriendsShareSub') : (lang === 'tr'
             ? 'Notu ortak paylaşabilmek için profil sayfasından arkadaş kodunu kullanarak arkadaş ekleyin.'
-            : 'Add friends using your friend code on the profile page to share notes together.'}
+            : 'Add friends using your friend code on the profile page to share notes together.')}
         </p>
       </div>
     );
@@ -107,7 +108,7 @@ export const FriendShareCheckList = ({
                         border: '1px solid rgba(16, 185, 129, 0.3)',
                       }}
                     >
-                      {lang === 'tr' ? 'Paylaşıldı' : 'Shared'}
+                      {t ? t('sharedBadge') : (lang === 'tr' ? 'Paylaşıldı' : 'Shared')}
                     </span>
                   )}
                 </div>
@@ -137,7 +138,7 @@ export const FriendShareCheckList = ({
                 transition: 'all 0.2s ease',
               }}
             >
-              {isSelected ? (lang === 'tr' ? '🚫 Çıkar' : '🚫 Remove') : (lang === 'tr' ? '➕ Ekle' : '➕ Add')}
+              {isSelected ? (t ? t('removeShareBtn') : (lang === 'tr' ? '🚫 Çıkar' : '🚫 Remove')) : (t ? t('addShareBtn') : (lang === 'tr' ? '➕ Ekle' : '➕ Add'))}
             </button>
           </div>
         );

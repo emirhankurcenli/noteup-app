@@ -99,6 +99,11 @@ export default function AppWorkspaceContainer({
   setActiveShareNoteId,
   setNudgeTargetNote,
   setSelectedFriendCodes,
+  handleLeaveShare,
+  handleRequestMicPermission,
+  handleRequestStoragePermission,
+  handleRequestAudioPermission,
+  handleRequestLocationPermission,
   handleCancelReminder,
   handleBulkRestoreNotes,
   handleBulkPermanentDelete,
@@ -245,6 +250,7 @@ export default function AppWorkspaceContainer({
         activeTab={activeTab}
         getVisibleNotes={getVisibleNotes}
         notes={notes}
+        handleLeaveShare={handleLeaveShare}
         reminders={reminders}
         activeMenuNoteId={activeMenuNoteId}
         setActiveMenuNoteId={setActiveMenuNoteId}
@@ -257,6 +263,10 @@ export default function AppWorkspaceContainer({
         setActiveTab={setActiveTab}
         setSelectedFriendCodes={setSelectedFriendCodes}
         checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
+        handleRequestMicPermission={handleRequestMicPermission}
+        handleRequestStoragePermission={handleRequestStoragePermission}
+        handleRequestAudioPermission={handleRequestAudioPermission}
+        handleRequestLocationPermission={handleRequestLocationPermission}
         setReminderNoteId={setReminderNoteId}
         setShowReminderModal={setShowReminderModal}
         setActiveShareNoteId={setActiveShareNoteId}

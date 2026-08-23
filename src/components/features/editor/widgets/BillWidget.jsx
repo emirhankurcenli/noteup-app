@@ -192,7 +192,7 @@ const BillWidget = ({
                 <line x1="5" y1="3" x2="2" y2="6" />
                 <line x1="19" y1="3" x2="22" y2="6" />
               </svg>
-              {lang === 'tr' ? 'Alarm Kur' : 'Set Alarm'}
+              {t ? t('setReminderBtn') : (lang === 'tr' ? 'Alarm Kur' : 'Set Alarm')}
             </button>
           </div>
         </div>

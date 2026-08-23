@@ -110,6 +110,8 @@ const AppModals = ({
         handleRejectShare={handleRejectShare}
         lang={lang}
         t={t}
+        isLight={theme === 'light'}
+        triggerHaptic={triggerHaptic}
       />
 
       {/* Lightbox Image Preview */}

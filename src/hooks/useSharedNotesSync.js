@@ -1,20 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { playChime } from '../services/soundService';
 
 export const useSharedNotesSync = ({
   myCode,
-  notes,
-  saveNotes,
   setToast,
   setIncomingRequest,
   setFriendRequests,
   setFriends,
 }) => {
+  const processedRequestIdsRef = useRef(new Set());
+
   useEffect(() => {
     if (!myCode) return;
 
-    // Fetch pending incoming note share invitations from Supabase
+    // 1. Fetch pending incoming note share invitations from Supabase
     const fetchIncomingNoteShares = async () => {
       try {
         const { data, error } = await supabase
@@ -25,18 +25,21 @@ export const useSharedNotesSync = ({
           .order('created_at', { ascending: false });
 
         if (!error && data && data.length > 0) {
-          const firstReq = data[0];
-          setIncomingRequest({
-            id: firstReq.id,
-            fromCode: firstReq.from_code,
-            fromName: firstReq.from_name || 'Arkadaş',
-            toCode: firstReq.to_code,
-            noteId: firstReq.note_id,
-            noteTitle: firstReq.note_title,
-            noteBlocks: firstReq.note_blocks,
-            timestamp: new Date(firstReq.created_at).getTime(),
-            processed: false,
-          });
+          const firstUnprocessed = data.find(req => !processedRequestIdsRef.current.has(req.id));
+          if (firstUnprocessed) {
+            processedRequestIdsRef.current.add(firstUnprocessed.id);
+            setIncomingRequest({
+              id: firstUnprocessed.id,
+              fromCode: firstUnprocessed.from_code,
+              fromName: firstUnprocessed.from_name || 'Arkadaş',
+              toCode: firstUnprocessed.to_code,
+              noteId: firstUnprocessed.note_id,
+              noteTitle: firstUnprocessed.note_title,
+              noteBlocks: firstUnprocessed.note_blocks,
+              timestamp: new Date(firstUnprocessed.created_at).getTime(),
+              processed: false,
+            });
+          }
         }
       } catch (err) {
         console.warn('Error fetching note shares from Supabase:', err);
@@ -45,7 +48,7 @@ export const useSharedNotesSync = ({
 
     fetchIncomingNoteShares();
 
-    // Supabase Realtime channel for instant note share alerts
+    // 2. Supabase Realtime channel for instant note share alerts and shared notes sync
     let shareChannel = null;
     try {
       const activeChannels = supabase.getChannels();
@@ -60,6 +63,7 @@ export const useSharedNotesSync = ({
       const shareChannelName = `note_shares_${myCode}_${Date.now()}`;
       shareChannel = supabase.channel(shareChannelName);
 
+      // Listen to note_shares table changes
       shareChannel.on(
         'postgres_changes',
         {
@@ -72,19 +76,27 @@ export const useSharedNotesSync = ({
           const recOld = payload.old;
 
           // 1. Incoming share invitation (INSERT to_code == myCode)
-          if (payload.eventType === 'INSERT' && recNew && recNew.to_code === myCode && recNew.status === 'pending') {
-            setIncomingRequest({
-              id: recNew.id,
-              fromCode: recNew.from_code,
-              fromName: recNew.from_name || 'Arkadaş',
-              toCode: recNew.to_code,
-              noteId: recNew.note_id,
-              noteTitle: recNew.note_title,
-              noteBlocks: recNew.note_blocks,
-              timestamp: new Date(recNew.created_at).getTime(),
-              processed: false,
-            });
-            playChime();
+          if (
+            payload.eventType === 'INSERT' &&
+            recNew &&
+            recNew.to_code === myCode &&
+            recNew.status === 'pending'
+          ) {
+            if (!processedRequestIdsRef.current.has(recNew.id)) {
+              processedRequestIdsRef.current.add(recNew.id);
+              setIncomingRequest({
+                id: recNew.id,
+                fromCode: recNew.from_code,
+                fromName: recNew.from_name || 'Arkadaş',
+                toCode: recNew.to_code,
+                noteId: recNew.note_id,
+                noteTitle: recNew.note_title,
+                noteBlocks: recNew.note_blocks,
+                timestamp: new Date(recNew.created_at).getTime(),
+                processed: false,
+              });
+              playChime();
+            }
           }
 
           // 2. Share response alert (UPDATE from_code == myCode)
@@ -103,19 +115,66 @@ export const useSharedNotesSync = ({
             }
           }
 
-          // 3. Share removal (DELETE to_code == myCode)
+          // 3. Share revoked / terminated by Owner (UPDATE to_code == myCode status == 'revoked')
+          if (
+            payload.eventType === 'UPDATE' &&
+            recNew &&
+            recNew.to_code === myCode &&
+            recNew.status === 'revoked'
+          ) {
+            window.dispatchEvent(
+              new CustomEvent('noteup_shared_note_revoked', {
+                detail: { noteId: recNew.note_id, fromCode: recNew.from_code },
+              })
+            );
+            setToast?.({
+              title: '🔒 Paylaşım Sonlandırıldı',
+              msg: `"${recNew.note_title || 'Not'}" notunun sahibi paylaşımı sonlandırdı.`,
+            });
+          }
+
+          // 4. Share record deleted (DELETE to_code == myCode)
           if (payload.eventType === 'DELETE' && recOld && recOld.to_code === myCode) {
-            if (notes && Array.isArray(notes) && typeof saveNotes === 'function') {
-              const updatedNotes = notes.filter((n) => {
-                if (n.sharedFrom === recOld.from_code && (n.id === recOld.note_id || !recOld.note_id)) {
-                  return false;
-                }
-                return true;
-              });
-              if (updatedNotes.length !== notes.length) {
-                saveNotes(updatedNotes);
-              }
+            window.dispatchEvent(
+              new CustomEvent('noteup_shared_note_removed', {
+                detail: { noteId: recOld.note_id, fromCode: recOld.from_code },
+              })
+            );
+          }
+        }
+      );
+
+      // Listen to notes table changes for live content synchronization
+      shareChannel.on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notes',
+        },
+        (payload) => {
+          const recNew = payload.new;
+          if (recNew && recNew.is_shared) {
+            let parsedBlocks = [];
+            try {
+              if (Array.isArray(recNew.blocks)) parsedBlocks = recNew.blocks;
+              else if (typeof recNew.blocks === 'string') parsedBlocks = JSON.parse(recNew.blocks);
+            } catch (e) {
+              parsedBlocks = [];
             }
+
+            window.dispatchEvent(
+              new CustomEvent('noteup_shared_note_live_update', {
+                detail: {
+                  id: recNew.id,
+                  title: recNew.title || '',
+                  blocks: parsedBlocks,
+                  isShared: recNew.is_shared,
+                  deletedAt: recNew.deleted_at ? Number(recNew.deleted_at) : null,
+                  updatedAt: recNew.updated_at ? new Date(recNew.updated_at).getTime() : Date.now(),
+                },
+              })
+            );
           }
         }
       );
@@ -180,7 +239,7 @@ export const useSharedNotesSync = ({
         } catch (e) {}
       }
     };
-  }, [myCode, notes, saveNotes, setToast, setIncomingRequest, setFriendRequests, setFriends]);
+  }, [myCode, setToast, setIncomingRequest, setFriendRequests, setFriends]);
 };
 
 export default useSharedNotesSync;

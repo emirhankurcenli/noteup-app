@@ -46,10 +46,10 @@ const ThemeSelectionCard = ({ theme, setTheme, triggerHaptic, isLight, lang, t }
         </div>
         <div>
           <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFFFFF', display: 'block' }}>
-            {lang === 'tr' ? 'Tema Modu' : 'Theme Mode'}
+            {t('themeMode')}
           </span>
           <span style={{ fontSize: '0.74rem', color: isLight ? '#475569' : '#CBD5E1', fontWeight: 600 }}>
-            {isLight ? (lang === 'tr' ? 'Açık Mod Aktif' : 'Light Mode Active') : (lang === 'tr' ? 'Karanlık Mod Aktif' : 'Dark Mode Active')}
+            {isLight ? t('lightModeActive') : t('darkModeActive')}
           </span>
         </div>
       </div>
@@ -81,7 +81,7 @@ const ThemeSelectionCard = ({ theme, setTheme, triggerHaptic, isLight, lang, t }
             transition: 'all 0.2s ease'
           }}
         >
-          {lang === 'tr' ? 'Açık' : 'Light'}
+          {t('light')}
         </button>
         <button
           onClick={() => {
@@ -103,7 +103,7 @@ const ThemeSelectionCard = ({ theme, setTheme, triggerHaptic, isLight, lang, t }
             transition: 'all 0.2s ease'
           }}
         >
-          {lang === 'tr' ? 'Koyu' : 'Dark'}
+          {t('dark')}
         </button>
       </div>
     </div>

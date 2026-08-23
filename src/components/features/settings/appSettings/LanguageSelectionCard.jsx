@@ -13,7 +13,7 @@ const LANGUAGES_MAP = {
   zh: '中文 🇨🇳'
 };
 
-const LanguageSelectionCard = ({ lang, setShowLangModal, isLight }) => {
+const LanguageSelectionCard = ({ lang, setShowLangModal, isLight, t }) => {
   return (
     <div 
       onClick={() => setShowLangModal(true)}
@@ -51,7 +51,7 @@ const LanguageSelectionCard = ({ lang, setShowLangModal, isLight }) => {
         </div>
         <div>
           <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFFFFF', display: 'block' }}>
-            {lang === 'tr' ? 'Uygulama Dili' : 'App Language'}
+            {t ? t('appLanguage') : (lang === 'tr' ? 'Uygulama Dili' : 'App Language')}
           </span>
           <span style={{ fontSize: '0.74rem', color: isLight ? '#475569' : '#CBD5E1', fontWeight: 600 }}>
             {LANGUAGES_MAP[lang] || 'Türkçe 🇹🇷'}
@@ -60,7 +60,7 @@ const LanguageSelectionCard = ({ lang, setShowLangModal, isLight }) => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: isLight ? '#3B82F6' : '#60A5FA', fontSize: '0.82rem', fontWeight: 800 }}>
-        <span>{lang === 'tr' ? 'Değiştir' : 'Change'}</span>
+        <span>{t ? t('changeLanguage') : (lang === 'tr' ? 'Değiştir' : 'Change')}</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="9 18 15 12 9 6" />
         </svg>

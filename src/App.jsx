@@ -91,6 +91,7 @@ function App() {
     handleSendShareInvitation,
     handleAcceptShare,
     handleRejectShare,
+    handleLeaveShare,
     handleRewardedShareCallback,
     pendingShareReward,
     setPendingShareReward,
@@ -170,8 +171,11 @@ function App() {
     checkAndRequestNotificationPermission,
     handleRequestMicPermission,
     handleRequestStoragePermission,
+    handleRequestAudioPermission,
+    handleRequestLocationPermission,
     checkAndRequestPermission,
-    showPermissionDialog
+    showPermissionDialog,
+    openSystemSettings
   } = useAppPermissions({ setToast, lang, setConfirmDialog: (dialog) => setConfirmDialogRef.current?.(dialog) });
 
   checkAndRequestNotificationPermissionRef.current = checkAndRequestNotificationPermission;
@@ -523,9 +527,9 @@ function App() {
 
   // --- RENDERS & SCREENS ---
 
-  // Dynamic filter for active tab & selection
+  // Dynamic filter for active tab & selection (personal notes only in main tab)
   const getVisibleNotes = () => {
-    return notes.filter(n => !n.deletedAt); // Exclude deleted
+    return notes.filter(n => !n.deletedAt && !n.sharedFrom); // Exclude deleted and received shared notes
   };
 
   const getDeletedNotes = () => {
@@ -637,6 +641,11 @@ function App() {
         setActiveShareNoteId={setActiveShareNoteId}
         setNudgeTargetNote={setNudgeTargetNote}
         setSelectedFriendCodes={setSelectedFriendCodes}
+        handleLeaveShare={handleLeaveShare}
+        handleRequestMicPermission={handleRequestMicPermission}
+        handleRequestStoragePermission={handleRequestStoragePermission}
+        handleRequestAudioPermission={handleRequestAudioPermission}
+        handleRequestLocationPermission={handleRequestLocationPermission}
         handleCancelReminder={handleCancelReminder}
         handleBulkRestoreNotes={handleBulkRestoreNotes}
         handleBulkPermanentDelete={handleBulkPermanentDelete}

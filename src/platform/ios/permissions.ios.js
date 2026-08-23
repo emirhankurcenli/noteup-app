@@ -1,17 +1,31 @@
+import { App } from '@capacitor/app';
+
 export const openSettings = async () => {
   try {
-    window.location.href = 'app-settings:';
-  } catch (e) {}
+    await App.openUrl({ url: 'app-settings:' });
+  } catch (e) {
+    try {
+      window.location.href = 'app-settings:';
+    } catch (_) {}
+  }
 };
 
 export const getPermissionStatus = async () => {
-  return { microphone: 'prompt', storage: 'granted', audio: 'granted', location: 'prompt' };
+  const micGranted = localStorage.getItem('noteup_ios_mic_granted') === 'true';
+  const locGranted = localStorage.getItem('noteup_ios_location_granted') === 'true';
+  return {
+    microphone: micGranted ? 'granted' : 'prompt',
+    storage: 'granted',
+    audio: 'granted',
+    location: locGranted ? 'granted' : 'prompt'
+  };
 };
 
 export const requestMicrophonePermission = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     stream.getTracks().forEach((track) => track.stop());
+    localStorage.setItem('noteup_ios_mic_granted', 'true');
     return { microphone: 'granted' };
   } catch (e) {
     return { microphone: 'denied' };
@@ -33,9 +47,12 @@ export const requestLocationPermission = async () => {
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      () => resolve({ location: 'granted' }),
+      () => {
+        localStorage.setItem('noteup_ios_location_granted', 'true');
+        resolve({ location: 'granted' });
+      },
       () => resolve({ location: 'denied' }),
-      { timeout: 5000 }
+      { timeout: 8000, enableHighAccuracy: true }
     );
   });
 };

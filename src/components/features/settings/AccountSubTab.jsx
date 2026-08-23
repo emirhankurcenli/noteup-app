@@ -332,7 +332,7 @@ const AccountSubTab = ({
           </div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFFFFF' }}>
-              {lang === 'tr' ? 'Çöp Kutusu' : 'Trash'}
+              {t('trashBin')}
             </span>
           </div>
         </div>
