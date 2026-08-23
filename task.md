@@ -1,7 +1,0 @@
-- [x] Phase 1: Extract Modal Overlays & Celebration Dialogs (ModalOverlays.jsx)
-- [x] Phase 2: Extract Settings & Profile View (ProfileTab.jsx)
-- [x] Phase 3: Extract Folder & Category Sidebar (FolderSidebar.jsx)
-- [x] Phase 4: Extract Notes List Grid (NotesGrid.jsx)
-- [x] Phase 5: Extract Rich Text Note Editor (NoteEditor.jsx)
-- [ ] Phase 6: Extract Reminders Tab (RemindersTab.jsx)
-- [ ] Phase 7: Extract Trash Bin Tab (TrashTab.jsx)
