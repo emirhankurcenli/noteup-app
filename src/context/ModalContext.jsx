@@ -59,7 +59,36 @@ export const ModalProvider = ({ children }) => {
 export const useModals = () => {
   const context = useContext(ModalContext);
   if (!context) {
-    throw new Error('useModals must be used within a ModalProvider');
+    return {
+      showPaywall: false,
+      setShowPaywall: () => {},
+      showReminderModal: false,
+      setShowReminderModal: () => {},
+      showShareModal: false,
+      setShowShareModal: () => {},
+      confirmDialog: null,
+      setConfirmDialog: () => {},
+      showAdModal: false,
+      setShowAdModal: () => {},
+      showRewardedAdModal: false,
+      setShowRewardedAdModal: () => {},
+      showFeedbackModal: false,
+      setShowFeedbackModal: () => {},
+      showAvatarPicker: false,
+      setShowAvatarPicker: () => {},
+      lightboxUrl: null,
+      setLightboxUrl: () => {},
+      previewFileModal: null,
+      setPreviewFileModal: () => {},
+      pendingShareReward: null,
+      setPendingShareReward: () => {},
+      nudgeTargetNote: null,
+      setNudgeTargetNote: () => {},
+      planNotification: null,
+      setPlanNotification: () => {},
+    };
   }
   return context;
 };
+
+export default ModalContext;

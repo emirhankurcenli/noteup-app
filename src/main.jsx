@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 import { supabase } from "./supabaseClient";
+import { LanguageProvider } from "./context/LanguageContext";
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -147,7 +148,9 @@ class ErrorBoundary extends Component {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
     </ErrorBoundary>
   </StrictMode>,
 );

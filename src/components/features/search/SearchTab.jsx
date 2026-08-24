@@ -145,9 +145,9 @@ const SearchTab = ({
   searchQuery = '',
   setSearchQuery,
 }) => {
-  const { t: ctxT, lang: ctxLang } = useLanguage();
-  const t = propT || ctxT;
-  const lang = propLang || ctxLang;
+  const ctx = useLanguage();
+  const t = propT || ctx?.t || ((k) => k);
+  const lang = propLang || ctx?.lang || 'tr';
   const isLight = theme === 'light';
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const debounceRef = useRef(null);

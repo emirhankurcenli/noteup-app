@@ -108,7 +108,7 @@ export function useAudioRecorder({
             : `Failed to start: ${err?.message || err}`,
       });
     }
-  };
+  }, [checkAndRequestPermission, cleanupRecordingTimer, lang, setToast, stopRecording, triggerHaptic]);
 
   const pauseRecording = () => {
     if (!isRecording || isRecordingPaused) return;

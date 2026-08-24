@@ -16,14 +16,17 @@ const TYPE_LABELS = {
   image: { tr: 'Görsel', en: 'Image', color: '#F43F5E' },
 };
 
-export const SearchResultsList = ({ results, openEditingNote, debouncedQuery, isLight }) => {
-  const { t, lang } = useLanguage();
+export const SearchResultsList = ({ results, openEditingNote, debouncedQuery, isLight, t: propT, lang: propLang }) => {
+  const ctx = useLanguage();
+  const t = propT || ctx?.t || ((k) => k);
+  const lang = propLang || ctx?.lang || 'tr';
+
   if (!results || results.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
         <span style={{ fontSize: '2rem' }}>🔍</span>
         <p style={{ marginTop: '8px', fontSize: '0.9rem', fontWeight: 600 }}>
-          {t('noNotesFound')}
+          {t('noNotesFound') || 'Not bulunamadı'}
         </p>
       </div>
     );
@@ -49,7 +52,7 @@ export const SearchResultsList = ({ results, openEditingNote, debouncedQuery, is
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-              {note.title || t('untitledNote')}
+              {note.title || t('untitledNote') || 'Başlıksız Not'}
             </h3>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
               {new Date(note.updatedAt || Date.now()).toLocaleDateString()}
@@ -72,7 +75,7 @@ export const SearchResultsList = ({ results, openEditingNote, debouncedQuery, is
                     fontSize: '0.76rem',
                   }}
                 >
-                  <span style={{ color: meta.color, fontWeight: 800 }}>{meta[lang] || meta.tr}:</span>
+                  <span style={{ color: meta.color, fontWeight: 800 }}>{meta[lang] || meta.tr || meta.en}:</span>
                   <span style={{ color: 'var(--text-secondary)' }}>{match.text}</span>
                 </div>
               );

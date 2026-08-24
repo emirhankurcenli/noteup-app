@@ -15,10 +15,9 @@ export const TextBlock = ({
     saveCurrentSelection(block.id);
   };
 
-  // Ensure legacy bullet blocks are seamlessly converted to native HTML lists
   const getInitialContent = () => {
     let content = block.content || '';
-    if (block.bullet && !content.toLowerCase().includes('<ul') && !content.toLowerCase().includes('<li')) {
+    if (block.bullet && content.trim() && !content.toLowerCase().includes('<ul') && !content.toLowerCase().includes('<li')) {
       return `<ul><li>${content}</li></ul>`;
     }
     return content;
@@ -44,7 +43,7 @@ export const TextBlock = ({
           }
         }
       }}
-      onFocus={(e) => {
+      onFocus={() => {
         handleSaveSelection();
         ensureElementVisible(block.id);
       }}
@@ -53,13 +52,17 @@ export const TextBlock = ({
       onMouseUp={handleSaveSelection}
       onTouchEnd={handleSaveSelection}
       onSelect={handleSaveSelection}
-      onKeyDown={(e) => handleTextareaKeyDown(e, block.id, idx)}
+      onKeyDown={(e) => handleTextareaKeyDown(e, block, idx)}
       onInput={(e) => {
         handleSaveSelection();
-        handleUpdateBlock(block.id, { content: e.currentTarget.innerHTML }, true);
+        const html = e.currentTarget.innerHTML;
+        const hasList = html.toLowerCase().includes('<ul') || html.toLowerCase().includes('<li');
+        handleUpdateBlock(block.id, { content: html, ...(hasList ? {} : { bullet: false }) }, true);
       }}
       onBlur={(e) => {
-        handleUpdateBlock(block.id, { content: e.currentTarget.innerHTML });
+        const html = e.currentTarget.innerHTML;
+        const hasList = html.toLowerCase().includes('<ul') || html.toLowerCase().includes('<li');
+        handleUpdateBlock(block.id, { content: html, ...(hasList ? {} : { bullet: false }) });
       }}
     />
   );

@@ -34,7 +34,9 @@ export const NotesProvider = ({ children }) => {
 export const useNotesContext = () => {
   const context = useContext(NotesContext);
   if (!context) {
-    throw new Error('useNotesContext must be used within a NotesProvider');
+    return {};
   }
   return context;
 };
+
+export default NotesContext;

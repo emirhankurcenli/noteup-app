@@ -1,8 +1,9 @@
 import React from 'react';
 import { useLanguage } from '../../../context/LanguageContext';
 
-export const SearchBarInput = ({ searchQuery, handleQueryChange, clearSearch, isLight }) => {
-  const { t } = useLanguage();
+export const SearchBarInput = ({ searchQuery, handleQueryChange, clearSearch, isLight, t: propT }) => {
+  const ctx = useLanguage();
+  const t = propT || ctx?.t || ((k) => k);
   return (
     <div
       style={{
@@ -25,7 +26,7 @@ export const SearchBarInput = ({ searchQuery, handleQueryChange, clearSearch, is
         type="text"
         value={searchQuery}
         onChange={handleQueryChange}
-        placeholder={t('search') + '...'}
+        placeholder={(t('search') || 'Ara') + '...'}
         style={{
           width: '100%',
           padding: '12px 10px',

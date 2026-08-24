@@ -201,9 +201,10 @@ function DrumSeparator() {
   );
 }
 
-const DrumPicker = ({ value, onChange, lang: propLang, triggerHaptic }) => {
-  const { t, lang: ctxLang } = useLanguage();
-  const lang = propLang || ctxLang || 'tr';
+const DrumPicker = ({ value, onChange, lang: propLang, triggerHaptic, t: propT }) => {
+  const ctx = useLanguage();
+  const t = propT || ctx?.t || ((k) => k);
+  const lang = propLang || ctx?.lang || 'tr';
   const initial = parseDateTimeString(value);
 
   const monthsFromTranslation = t('monthsList');

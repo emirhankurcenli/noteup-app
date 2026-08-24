@@ -27,6 +27,32 @@ export default function useNotes({
   const [activeFormatBlockId, setActiveFormatBlockId] = useState(null);
   const [showFormatToolbar, setShowFormatToolbar] = useState(false);
 
+  // Realtime Live Synchronization for Editing Note
+  useEffect(() => {
+    const handleLiveNoteUpdate = (e) => {
+      const updatedNote = e.detail;
+      if (!updatedNote || !updatedNote.id) return;
+
+      setEditingNote((prev) => {
+        if (prev && prev.id === updatedNote.id) {
+          return {
+            ...prev,
+            title: updatedNote.title !== undefined ? updatedNote.title : prev.title,
+            blocks: updatedNote.blocks || prev.blocks,
+            isShared: updatedNote.isShared !== undefined ? updatedNote.isShared : prev.isShared,
+            updatedAt: updatedNote.updatedAt || Date.now(),
+          };
+        }
+        return prev;
+      });
+    };
+
+    window.addEventListener('noteup_shared_note_live_update', handleLiveNoteUpdate);
+    return () => {
+      window.removeEventListener('noteup_shared_note_live_update', handleLiveNoteUpdate);
+    };
+  }, []);
+
   // --- HELPERS ---
   const enforceTrailingTextBlock = (blocks = []) => {
     if (blocks.length === 0) {
@@ -88,6 +114,22 @@ export default function useNotes({
           }
 
           if (error) console.error("Error upserting notes to Supabase:", error);
+
+          // Update note_shares for any owned notes that are shared
+          for (const on of ownedNotes.filter((n) => n.isShared)) {
+            try {
+              await supabase
+                .from('note_shares')
+                .update({
+                  note_title: on.title || '',
+                  note_blocks: on.blocks || [],
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('note_id', on.id);
+            } catch (shareUpdateErr) {
+              console.warn("Owned shared note remote update error:", shareUpdateErr);
+            }
+          }
         }
 
         // 3. For received shared notes, update title & blocks on notes table and note_shares table

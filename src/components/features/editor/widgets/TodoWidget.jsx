@@ -453,6 +453,12 @@ const TodoWidget = ({
                       value={item.text}
                       placeholder="Alt Başlık..."
                       onChange={(e) => handleHeaderChange(item.id, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Backspace' && (!item.text || item.text.trim() === '')) {
+                          e.preventDefault();
+                          onDeleteItem(e, item.id);
+                        }
+                      }}
                       style={{
                         flex: 1,
                         background: 'transparent',

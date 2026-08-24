@@ -174,12 +174,110 @@ export const handleTextareaKeyDown = (e, block, idx, editingNote, handleUpdateNo
     }
   };
 
+  // Find if cursor is inside a list item <li>
+  const getEnclosingLi = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const range = sel.getRangeAt(0);
+    let node = range.startContainer;
+    while (node && node !== e.target && node !== document.body) {
+      if (node.nodeName === 'LI') return node;
+      node = node.parentNode;
+    }
+    return null;
+  };
+
   if (e.key === 'Enter') {
-    // Allow natural rich text multiline & list flow (HTML ul/li and paragraphs)
+    const liNode = getEnclosingLi();
+    if (liNode) {
+      const liText = (liNode.innerText || liNode.textContent || '').replace(/\u8203/g, '').trim();
+      if (liText === '') {
+        // Pressing Enter on empty bullet exits list mode!
+        e.preventDefault();
+        const ulNode = liNode.closest('ul') || liNode.closest('ol');
+        const allLis = ulNode ? Array.from(ulNode.querySelectorAll('li')) : [];
+
+        if (allLis.length <= 1) {
+          if (ulNode) {
+            const div = document.createElement('div');
+            div.innerHTML = '<br>';
+            ulNode.parentNode.replaceChild(div, ulNode);
+            setCaretAtStart(div);
+          }
+        } else {
+          liNode.remove();
+          const div = document.createElement('div');
+          div.innerHTML = '<br>';
+          if (ulNode.nextSibling) {
+            ulNode.parentNode.insertBefore(div, ulNode.nextSibling);
+          } else {
+            ulNode.parentNode.appendChild(div);
+          }
+          setCaretAtStart(div);
+        }
+
+        const html = e.target.innerHTML;
+        const hasList = html.toLowerCase().includes('<ul') || html.toLowerCase().includes('<li');
+        handleUpdateNote('blocks', (editingNote.blocks || []).map((b, i) => i === idx ? { ...b, content: html, ...(hasList ? {} : { bullet: false }) } : b), true);
+        return;
+      }
+    }
     return;
   }
 
   if (e.key === 'Backspace') {
+    const liNode = getEnclosingLi();
+    if (liNode) {
+      const liText = (liNode.innerText || liNode.textContent || '').replace(/\u8203/g, '').trim();
+      const sel = window.getSelection();
+      const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+      const isAtLiStart = range && range.startOffset === 0;
+
+      if (liText === '' || isAtLiStart) {
+        e.preventDefault();
+        const ulNode = liNode.closest('ul') || liNode.closest('ol');
+        const allLis = ulNode ? Array.from(ulNode.querySelectorAll('li')) : [];
+
+        if (liText === '') {
+          // 1. Delete empty list item / bullet
+          if (allLis.length <= 1) {
+            // Only 1 item in list -> remove entire list container
+            if (ulNode) {
+              const div = document.createElement('div');
+              div.innerHTML = '<br>';
+              ulNode.parentNode.replaceChild(div, ulNode);
+              setCaretAtStart(div);
+            }
+          } else {
+            const liIdx = allLis.indexOf(liNode);
+            const prevLi = liIdx > 0 ? allLis[liIdx - 1] : allLis[1];
+            liNode.remove();
+            if (prevLi) {
+              setCaretAtEnd(prevLi);
+            }
+          }
+        } else {
+          // 2. At start of list item -> convert this line to normal text
+          const div = document.createElement('div');
+          div.innerHTML = liNode.innerHTML;
+          if (ulNode) {
+            if (allLis.length <= 1) {
+              ulNode.parentNode.replaceChild(div, ulNode);
+            } else {
+              ulNode.parentNode.insertBefore(div, ulNode);
+              liNode.remove();
+            }
+          }
+          setCaretAtStart(div);
+        }
+
+        const html = e.target.innerHTML;
+        const hasList = html.toLowerCase().includes('<ul') || html.toLowerCase().includes('<li');
+        handleUpdateNote('blocks', (editingNote.blocks || []).map((b, i) => i === idx ? { ...b, content: html, ...(hasList ? {} : { bullet: false }) } : b), true);
+        return;
+      }
+    }
+
     const { start: selectionStart, end: selectionEnd } = getCaretOffsets(e.target);
     const plainText = (e.target.innerText || e.target.textContent || e.target.value || '').replace(/\u8203/g, '').trim();
     const isEmptyBlock = plainText === '';
@@ -187,8 +285,8 @@ export const handleTextareaKeyDown = (e, block, idx, editingNote, handleUpdateNo
     if (selectionStart === 0 && selectionEnd === 0) {
       const blocks = editingNote.blocks || [];
 
-      // 1. If it's a bullet block and selection is at start, convert it to normal text
-      if (block.bullet) {
+      // 1. If it's a legacy bullet block flag and selection is at start, convert it to normal text
+      if (block?.bullet) {
         e.preventDefault();
         const currentTarget = e.target;
         const updatedBlocks = blocks.map((b, i) => {
@@ -209,15 +307,37 @@ export const handleTextareaKeyDown = (e, block, idx, editingNote, handleUpdateNo
         return;
       }
 
-      // 2. If it's a normal text block and idx > 0 (merge into previous block)
+      // 2. If idx > 0
       if (idx > 0) {
         const prevBlock = blocks[idx - 1];
 
-        if (prevBlock.type === 'text') {
+        if (isEmptyBlock) {
+          // Cleanly delete the empty line / block
+          e.preventDefault();
+          const updatedBlocks = blocks.filter((_, i) => i !== idx);
+          const container = e.target.closest('.editor-body');
+          handleUpdateNote('blocks', updatedBlocks, true);
+
+          const focusPrev = () => {
+            const prevEl = document.querySelector(`[data-block-id="${prevBlock.id}"]`);
+            if (prevEl) {
+              setCaretAtEnd(prevEl);
+              ensureElementVisible(prevEl, container);
+            }
+          };
+
+          focusPrev();
+          queueMicrotask(focusPrev);
+          setTimeout(focusPrev, 0);
+          setTimeout(focusPrev, 25);
+          return;
+        }
+
+        if (prevBlock && prevBlock.type === 'text') {
           e.preventDefault();
           const prevContent = prevBlock.content || '';
-          const currentContent = (e.target && e.target.innerHTML) ? e.target.innerHTML : (block.content || '');
-          const mergedContent = prevContent + (prevContent && currentContent ? '<br>' : '') + currentContent;
+          const currentContent = (e.target && e.target.innerHTML) ? e.target.innerHTML : (block?.content || '');
+          const mergedContent = prevContent + currentContent;
 
           const updatedBlocks = blocks.map((b, i) => {
             if (i === idx - 1) return { ...b, content: mergedContent };
@@ -242,32 +362,29 @@ export const handleTextareaKeyDown = (e, block, idx, editingNote, handleUpdateNo
           setTimeout(focusPrev, 25);
         } else {
           // Previous block is a WIDGET
-          if (isEmptyBlock) {
-            e.preventDefault();
-            const updatedBlocks = blocks.filter((_, i) => i !== idx);
-            handleUpdateNote('blocks', updatedBlocks, true);
+          e.preventDefault();
+          const updatedBlocks = blocks.filter((_, i) => i !== idx);
+          handleUpdateNote('blocks', updatedBlocks, true);
 
-            setTimeout(() => {
-              const currentPrevEl = document.querySelector(`.blocks-container .block-wrapper:nth-child(${idx})`);
-              if (currentPrevEl) {
-                const input = currentPrevEl.querySelector('input, textarea, button, [contenteditable="true"]');
-                if (input) {
-                  setCaretAtEnd(input);
-                }
+          setTimeout(() => {
+            const currentPrevEl = document.querySelector(`.blocks-container .block-wrapper:nth-child(${idx})`);
+            if (currentPrevEl) {
+              const input = currentPrevEl.querySelector('input, textarea, button, [contenteditable="true"]');
+              if (input) {
+                setCaretAtEnd(input);
               }
-            }, 10);
-          }
+            }
+          }, 10);
         }
         return;
       }
 
       // 3. If idx === 0 (the first block in the note body) and at start
       if (idx === 0) {
-        e.preventDefault(); // CRITICAL: Stop browser native contentEditable deletion from destroying block text!
+        e.preventDefault();
         const titleEl = document.querySelector('.editor-title-input');
 
         if (isEmptyBlock && blocks.length > 1) {
-          // If block 0 is empty and there are other blocks, delete empty block 0
           const updatedBlocks = blocks.filter((_, i) => i !== 0);
           handleUpdateNote('blocks', updatedBlocks, true);
         }

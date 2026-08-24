@@ -10,6 +10,7 @@ export const useSharedNotesSync = ({
   setFriends,
 }) => {
   const processedRequestIdsRef = useRef(new Set());
+  const notifiedAcceptedSharesRef = useRef(new Set());
 
   useEffect(() => {
     if (!myCode) return;
@@ -99,15 +100,17 @@ export const useSharedNotesSync = ({
             }
           }
 
-          // 2. Share response alert (UPDATE from_code == myCode)
+          // 2. Share response alert (UPDATE from_code == myCode) - Only fire ONCE per acceptance
           if (payload.eventType === 'UPDATE' && recNew && recNew.from_code === myCode) {
-            if (recNew.status === 'accepted') {
+            const isFreshAccept = (recOld?.status === 'pending' || !notifiedAcceptedSharesRef.current.has(recNew.id)) && recNew.status === 'accepted';
+            if (isFreshAccept) {
+              notifiedAcceptedSharesRef.current.add(recNew.id);
               setToast?.({
                 title: '🎉 Davet Kabul Edildi!',
                 msg: `Arkadaşınız "${recNew.note_title || 'Not'}" paylaşım davetinizi kabul etti.`,
               });
               playChime();
-            } else if (recNew.status === 'rejected') {
+            } else if (recOld?.status === 'pending' && recNew.status === 'rejected') {
               setToast?.({
                 title: '❌ Davet Reddedildi',
                 msg: `Arkadaşınız "${recNew.note_title || 'Not'}" paylaşım davetinizi reddetti.`,
@@ -115,7 +118,35 @@ export const useSharedNotesSync = ({
             }
           }
 
-          // 3. Share revoked / terminated by Owner (UPDATE to_code == myCode status == 'revoked')
+          // 3. Live content update from note_shares (when either party updates note_blocks)
+          if (
+            payload.eventType === 'UPDATE' &&
+            recNew &&
+            recNew.status === 'accepted' &&
+            (recNew.to_code === myCode || recNew.from_code === myCode)
+          ) {
+            let parsedBlocks = [];
+            try {
+              if (Array.isArray(recNew.note_blocks)) parsedBlocks = recNew.note_blocks;
+              else if (typeof recNew.note_blocks === 'string') parsedBlocks = JSON.parse(recNew.note_blocks);
+            } catch (_) {
+              parsedBlocks = [];
+            }
+
+            window.dispatchEvent(
+              new CustomEvent('noteup_shared_note_live_update', {
+                detail: {
+                  id: recNew.note_id,
+                  title: recNew.note_title || '',
+                  blocks: parsedBlocks,
+                  isShared: true,
+                  updatedAt: recNew.updated_at ? new Date(recNew.updated_at).getTime() : Date.now(),
+                },
+              })
+            );
+          }
+
+          // 4. Share revoked / terminated by Owner (UPDATE to_code == myCode status == 'revoked')
           if (
             payload.eventType === 'UPDATE' &&
             recNew &&
@@ -133,7 +164,7 @@ export const useSharedNotesSync = ({
             });
           }
 
-          // 4. Share record deleted (DELETE to_code == myCode)
+          // 5. Share record deleted (DELETE to_code == myCode)
           if (payload.eventType === 'DELETE' && recOld && recOld.to_code === myCode) {
             window.dispatchEvent(
               new CustomEvent('noteup_shared_note_removed', {

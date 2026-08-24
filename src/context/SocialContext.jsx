@@ -34,7 +34,9 @@ export const SocialProvider = ({ children }) => {
 export const useSocialContext = () => {
   const context = useContext(SocialContext);
   if (!context) {
-    throw new Error('useSocialContext must be used within a SocialProvider');
+    return {};
   }
   return context;
 };
+
+export default SocialContext;

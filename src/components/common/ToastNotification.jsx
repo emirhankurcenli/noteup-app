@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Icons from './Icons';
 
 const stripEmojis = (str = '') => {
@@ -9,6 +9,18 @@ const stripEmojis = (str = '') => {
 };
 
 const ToastNotification = ({ toast, setToast }) => {
+  useEffect(() => {
+    if (!toast) return;
+    const duration = toast.duration || 3500;
+    const timer = setTimeout(() => {
+      if (typeof setToast === 'function') {
+        setToast(null);
+      }
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }, [toast, setToast]);
+
   if (!toast) return null;
 
   const rawTitle = toast.title || '';

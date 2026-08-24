@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../../../context/LanguageContext';
 
-const LogoutActionCard = ({ handleLogout, triggerHaptic, isLight }) => {
-  const { t, lang } = useLanguage();
+const LogoutActionCard = ({ handleLogout, triggerHaptic, isLight, t: propT, lang: propLang }) => {
+  const ctx = useLanguage();
+  const t = propT || ctx?.t || ((k) => k);
+  const lang = propLang || ctx?.lang || 'tr';
   const [showConfirm, setShowConfirm] = useState(false);
 
   return (
