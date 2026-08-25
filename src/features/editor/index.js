@@ -1,0 +1,10 @@
+export { default as NoteEditor } from '../../components/features/notes/NoteEditor';
+export { default as NoteEditorHeader } from '../../components/features/editor/NoteEditorHeader';
+export { EditorContext, EditorProvider, useEditorContext } from '../../context/EditorContext';
+export { default as useEditorLifecycle } from '../../hooks/useEditorLifecycle';
+export { default as useAppEditorHandlers } from '../../hooks/useAppEditorHandlers';
+export { default as useBlockHandlers } from '../../hooks/useBlockHandlers';
+export { default as useAudioRecorder } from '../../hooks/useAudioRecorder';
+export { default as useSpeechTranscription } from '../../hooks/useSpeechTranscription';
+export * from '../../utils/editorKeyboardUtils';
+export * from '../../utils/selectionUtils';

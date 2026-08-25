@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { getUserScopedKey as coreGetUserScopedKey, getScopedStorageItem as coreGetScopedStorageItem } from '../core/storage/storageKeys';
 
 const useSupabaseSync = ({
   user,
@@ -6,33 +7,11 @@ const useSupabaseSync = ({
   setReminders,
 }) => {
   const getUserScopedKey = (baseKey, uidOverride) => {
-    let targetUid = uidOverride;
-    if (!targetUid) {
-      if (user && user.uid) {
-        targetUid = user.uid;
-      } else {
-        try {
-          const localUser = localStorage.getItem('s23_user');
-          targetUid = localUser ? JSON.parse(localUser)?.uid : 'guest';
-        } catch (e) {
-          targetUid = 'guest';
-        }
-      }
-    }
-    return `${baseKey}_${targetUid || 'guest'}`;
+    return coreGetUserScopedKey(baseKey, uidOverride || (user && user.uid));
   };
 
   const getScopedStorageItem = (baseKey, uidOverride) => {
-    const scopedKey = getUserScopedKey(baseKey, uidOverride);
-    const scopedData = localStorage.getItem(scopedKey);
-    if (scopedData !== null) return scopedData;
-    const legacyData = localStorage.getItem(baseKey);
-    if (legacyData !== null) {
-      localStorage.setItem(scopedKey, legacyData);
-      localStorage.removeItem(baseKey);
-      return legacyData;
-    }
-    return null;
+    return coreGetScopedStorageItem(baseKey, uidOverride || (user && user.uid));
   };
 
   const syncDataFromSupabase = async (userId) => {
