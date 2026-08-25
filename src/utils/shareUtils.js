@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { sanitizeNoteContent } from './securityUtils';
 
 
 export const shareNoteImage = async (note, setToast) => {
@@ -121,8 +122,9 @@ export const shareNoteImage = async (note, setToast) => {
 
   const stripHtmlToLines = (htmlStr) => {
     if (!htmlStr) return [];
+    const cleanHtml = sanitizeNoteContent(htmlStr);
     const temp = document.createElement('div');
-    temp.innerHTML = htmlStr.replace(/<br\s*[\/]?>/gi, '\n').replace(/<\/p>/gi, '\n');
+    temp.innerHTML = cleanHtml.replace(/<br\s*[\/]?>/gi, '\n').replace(/<\/(p|div|li)>/gi, '\n');
     const clean = temp.innerText || temp.textContent || '';
     return clean.split('\n');
   };

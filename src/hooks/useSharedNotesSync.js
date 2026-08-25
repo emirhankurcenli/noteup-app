@@ -45,9 +45,30 @@ export const useSharedNotesSync = ({
       }
     };
 
-    fetchIncomingNoteShares();
+    // 2. Fetch outgoing note share statuses from Supabase (to sync pending vs accepted)
+    const fetchOutgoingNoteShares = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('note_shares')
+          .select('*')
+          .eq('from_code', myCode);
 
-    // 2. Supabase Realtime channel for instant note share alerts and shared notes sync
+        if (!error && data && Array.isArray(data)) {
+          window.dispatchEvent(
+            new CustomEvent('noteup_outgoing_shares_synced', {
+              detail: { shares: data },
+            })
+          );
+        }
+      } catch (err) {
+        console.warn('Error fetching outgoing note shares from Supabase:', err);
+      }
+    };
+
+    fetchIncomingNoteShares();
+    fetchOutgoingNoteShares();
+
+    // 3. Supabase Realtime channel for instant note share alerts and shared notes sync
     let shareChannel = null;
     try {
       const activeChannels = supabase.getChannels();
@@ -74,7 +95,7 @@ export const useSharedNotesSync = ({
           const recNew = payload.new;
           const recOld = payload.old;
 
-          // 1. Incoming share invitation (INSERT to_code == myCode)
+          // A. Incoming share invitation (INSERT to_code == myCode)
           if (
             payload.eventType === 'INSERT' &&
             recNew &&
@@ -109,25 +130,45 @@ export const useSharedNotesSync = ({
             }
           }
 
-          // 2. Share response alert (UPDATE from_code == myCode) - Only fire ONCE per acceptance
+          // B. Share response alert (UPDATE from_code == myCode) - Realtime status transitions
           if (payload.eventType === 'UPDATE' && recNew && recNew.from_code === myCode) {
             const isFreshAccept = (recOld?.status === 'pending' || !notifiedAcceptedSharesRef.current.has(recNew.id)) && recNew.status === 'accepted';
             if (isFreshAccept) {
               notifiedAcceptedSharesRef.current.add(recNew.id);
+              window.dispatchEvent(
+                new CustomEvent('noteup_shared_invite_accepted', {
+                  detail: {
+                    noteId: recNew.note_id,
+                    collaboratorCode: recNew.to_code,
+                    shareId: recNew.id,
+                  },
+                })
+              );
               setToast?.({
                 title: '🎉 Davet Kabul Edildi!',
                 msg: `Arkadaşınız "${recNew.note_title || 'Not'}" paylaşım davetinizi kabul etti.`,
               });
               playChime();
-            } else if (recOld?.status === 'pending' && recNew.status === 'rejected') {
-              setToast?.({
-                title: '❌ Davet Reddedildi',
-                msg: `Arkadaşınız "${recNew.note_title || 'Not'}" paylaşım davetinizi reddetti.`,
-              });
+            } else if (recNew.status === 'rejected') {
+              window.dispatchEvent(
+                new CustomEvent('noteup_shared_invite_rejected', {
+                  detail: {
+                    noteId: recNew.note_id,
+                    collaboratorCode: recNew.to_code,
+                    shareId: recNew.id,
+                  },
+                })
+              );
+              if (recOld?.status === 'pending') {
+                setToast?.({
+                  title: '❌ Davet Reddedildi',
+                  msg: `Arkadaşınız "${recNew.note_title || 'Not'}" paylaşım davetinizi reddetti.`,
+                });
+              }
             }
           }
 
-          // 3. Live content update from note_shares (when either party updates note_blocks)
+          // C. Live content update from note_shares (when either party updates note_blocks)
           if (
             payload.eventType === 'UPDATE' &&
             recNew &&
@@ -155,7 +196,7 @@ export const useSharedNotesSync = ({
             );
           }
 
-          // 4. Share revoked / terminated by Owner
+          // D. Share revoked / terminated by Owner
           if (
             payload.eventType === 'UPDATE' &&
             recNew &&
@@ -175,14 +216,22 @@ export const useSharedNotesSync = ({
             }
           }
 
-          // 5. Share record deleted
+          // E. Share record deleted
           if (payload.eventType === 'DELETE') {
             const deletedNoteId = recOld?.note_id || payload.old?.note_id;
             const deletedId = recOld?.id || payload.old?.id;
+            const toCode = recOld?.to_code || payload.old?.to_code;
             if (deletedId || deletedNoteId) {
               setPendingShareRequests((prev) => prev.filter((r) => r.id !== deletedId && r.noteId !== deletedNoteId));
             }
             if (deletedNoteId) {
+              if (recOld?.from_code === myCode && toCode) {
+                window.dispatchEvent(
+                  new CustomEvent('noteup_shared_invite_rejected', {
+                    detail: { noteId: deletedNoteId, collaboratorCode: toCode, shareId: deletedId },
+                  })
+                );
+              }
               window.dispatchEvent(
                 new CustomEvent('noteup_shared_note_removed', {
                   detail: { noteId: deletedNoteId },
@@ -262,7 +311,7 @@ export const useSharedNotesSync = ({
       console.warn('[Realtime] Failed to initialize note_shares channel:', e);
     }
 
-    // 3. Supabase Realtime for Friend Requests
+    // 4. Supabase Realtime for Friend Requests
     let friendsChannel = null;
     try {
       const activeChannels = supabase.getChannels();

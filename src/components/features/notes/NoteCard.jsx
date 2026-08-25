@@ -12,6 +12,29 @@ const LockIcon = () => (
   </svg>
 );
 
+const OwnerIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: '4px' }}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const CollabIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: '4px' }}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+const PendingShareIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: '4px' }}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
 const SnippetIcon = ({ type }) => {
   const style = { flexShrink: 0, marginRight: '6px', verticalAlign: '-2px' };
   switch (type) {
@@ -206,6 +229,41 @@ const NoteCard = ({
       }}>
         {snippet}
       </p>
+
+      {/* Share / Collab Status Badge */}
+      {note.hasPendingShare && !note.isShared && !note.sharedFrom ? (
+        <div style={{ display: 'flex', alignItems: 'center', marginTop: '2px' }}>
+          <span style={{
+            fontSize: '0.68rem',
+            fontWeight: 800,
+            color: isLight ? '#B45309' : '#FCD34D',
+            background: isLight ? '#FEF3C7' : 'rgba(245, 158, 11, 0.15)',
+            padding: '2px 8px',
+            borderRadius: '6px',
+            border: isLight ? '1px solid #FDE68A' : '1px solid rgba(245, 158, 11, 0.3)',
+            display: 'inline-flex',
+            alignItems: 'center',
+          }}>
+            <PendingShareIcon /> {t ? (t('pendingApproval') || 'Onay Bekleniyor') : 'Onay Bekleniyor'}
+          </span>
+        </div>
+      ) : (note.isShared || Boolean(note.sharedFrom)) ? (
+        <div style={{ display: 'flex', alignItems: 'center', marginTop: '2px' }}>
+          <span style={{
+            fontSize: '0.68rem',
+            fontWeight: 800,
+            color: isLight ? '#047857' : '#6EE7B7',
+            background: isLight ? '#ECFDF5' : 'rgba(16, 185, 129, 0.15)',
+            padding: '2px 8px',
+            borderRadius: '6px',
+            border: isLight ? '1px solid #A7F3D0' : '1px solid rgba(16, 185, 129, 0.3)',
+            display: 'inline-flex',
+            alignItems: 'center',
+          }}>
+            <CollabIcon /> {note.sharedFrom ? (cleanText(t('sharedWithMe') || 'Gelen Not')) : (cleanText(t('ownerBadge') || 'Not Sahibi'))}
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 };

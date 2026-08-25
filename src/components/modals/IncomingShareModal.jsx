@@ -1,4 +1,5 @@
 import React from 'react';
+import { sanitizeText } from '../../utils/securityUtils';
 
 const IncomingShareModal = ({
   incomingRequest,
@@ -24,27 +25,25 @@ const IncomingShareModal = ({
       for (const b of blocks) {
         if (!b) continue;
         if (b.type === 'text' && typeof b.content === 'string') {
-          const plain = b.content
-            .replace(/<[^>]*>/g, '')
+          const plain = sanitizeText(b.content)
             .replace(/&nbsp;/gi, ' ')
             .replace(/[\u200B\u8203\r\n]/g, ' ')
             .trim();
           if (plain) return plain;
         } else if (b.type === 'todo' && Array.isArray(b.items) && b.items.length > 0) {
           const first = b.items.find(i => i && i.text && i.text.trim());
-          if (first) return `☑ ${first.text.trim()}`;
+          if (first) return `☑ ${sanitizeText(first.text).trim()}`;
         } else if (b.type === 'bill' && b.name) {
-          return `💳 ${b.name}: ${b.amount || ''}₺`;
+          return `💳 ${sanitizeText(b.name)}: ${b.amount || ''}₺`;
         } else if (b.type === 'debt' && Array.isArray(b.items) && b.items.length > 0) {
           const first = b.items.find(d => d && d.name);
-          if (first) return `💰 ${first.name}: ${first.amount || ''}₺`;
+          if (first) return `💰 ${sanitizeText(first.name)}: ${first.amount || ''}₺`;
         }
       }
     }
 
     if (typeof incomingRequest.noteContent === 'string' && incomingRequest.noteContent.trim()) {
-      const clean = incomingRequest.noteContent
-        .replace(/<[^>]*>/g, '')
+      const clean = sanitizeText(incomingRequest.noteContent)
         .replace(/&nbsp;/gi, ' ')
         .replace(/[\u200B\u8203\r\n]/g, ' ')
         .trim();

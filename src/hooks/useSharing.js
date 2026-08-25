@@ -213,17 +213,35 @@ export default function useSharing({
       }
     }
 
+    // Compute accepted vs pending codes
+    const previousSharedWith = noteToShare.sharedWith || [];
+    const previousPending = noteToShare.pendingShares || [];
+    const selectedCodes = friendMgr.selectedFriendCodes || [];
+
+    const removedCodes = [...previousSharedWith, ...previousPending].filter(code => !selectedCodes.includes(code));
+    const newlyAddedCodes = selectedCodes.filter(code => !previousSharedWith.includes(code) && !previousPending.includes(code));
+    const activeSharedWith = previousSharedWith.filter(code => selectedCodes.includes(code));
+    const activePendingShares = [...previousPending.filter(code => selectedCodes.includes(code)), ...newlyAddedCodes];
+
+    const isActivelyShared = activeSharedWith.length > 0;
+    const hasPendingShare = activePendingShares.length > 0;
+
     // Update note locally
     const updatedNotes = notes.map(n => 
       n.id === activeShareNoteId 
-        ? { ...n, isShared: isShared, sharedWith: friendMgr.selectedFriendCodes, updatedAt: Date.now() } 
+        ? {
+            ...n,
+            isShared: isActivelyShared,
+            sharedWith: activeSharedWith,
+            pendingShares: activePendingShares,
+            hasPendingShare: hasPendingShare,
+            updatedAt: Date.now()
+          } 
         : n
     );
     saveNotes(updatedNotes);
 
-    // 1. Delete share invitations/connections for friends that were removed
-    const previousSharedWith = noteToShare.sharedWith || [];
-    const removedCodes = previousSharedWith.filter(code => !friendMgr.selectedFriendCodes.includes(code));
+    // 1. Delete share invitations/connections for friends that were unselected
     removedCodes.forEach(async (code) => {
       try {
         await supabase.from('note_shares').delete()
@@ -236,7 +254,6 @@ export default function useSharing({
     });
 
     // 2. Send invitations to newly checked friends via Supabase
-    const newlyAddedCodes = friendMgr.selectedFriendCodes.filter(code => !previousSharedWith.includes(code));
     newlyAddedCodes.forEach(async (code) => {
       try {
         await supabase.from('note_shares').insert([{
@@ -255,8 +272,10 @@ export default function useSharing({
 
     friendMgr.setSelectedFriendCodes([]);
     setToast({
-      title: isShared ? "📩 Paylaşım Güncellendi" : "🔒 Not Özel Yapıldı",
-      msg: isShared ? "Not paylaşım ayarları kaydedildi." : "Not paylaşımı kapatıldı."
+      title: (isActivelyShared || hasPendingShare) ? "📩 Davet Gönderildi" : "🔒 Not Özel Yapıldı",
+      msg: hasPendingShare
+        ? "Paylaşım daveti gönderildi, arkadaşınızın onayı bekleniyor."
+        : (isActivelyShared ? "Not paylaşım ayarları güncellendi." : "Not paylaşımı kapatıldı.")
     });
   };
 

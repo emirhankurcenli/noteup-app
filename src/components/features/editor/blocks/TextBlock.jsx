@@ -1,5 +1,6 @@
 import React from 'react';
 import { saveCurrentSelection } from '../../../../utils/selectionUtils';
+import { sanitizeNoteContent } from '../../../../utils/securityUtils';
 
 export const TextBlock = ({
   block,
@@ -16,7 +17,7 @@ export const TextBlock = ({
   };
 
   const getInitialContent = () => {
-    let content = block.content || '';
+    let content = sanitizeNoteContent(block.content || '');
     if (block.bullet && content.trim() && !content.toLowerCase().includes('<ul') && !content.toLowerCase().includes('<li')) {
       return `<ul><li>${content}</li></ul>`;
     }

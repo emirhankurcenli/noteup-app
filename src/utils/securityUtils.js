@@ -1,5 +1,6 @@
 /**
- * securityUtils.js - Input Validation, XSS Prevention & Sanitization Helpers
+ * securityUtils.js - Input Validation, XSS Prevention, Output Escaping & Sanitization Helpers
+ * Ensures all user-supplied and remote data is safely rendered as plain text or safe formatted content without script execution.
  */
 
 /**
@@ -8,25 +9,27 @@
  * @returns {string} Safe escaped string
  */
 export const escapeHtml = (str) => {
-  if (typeof str !== 'string') return str;
+  if (typeof str !== 'string') return str == null ? '' : String(str);
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/'/g, '&#039;')
+    .replace(/`/g, '&#x60;')
+    .replace(/\//g, '&#x2F;');
 };
 
 /**
- * Strips dangerous HTML tags (<script>, <iframe>, <embed>, <object>, etc.) and event handlers (onerror=, onload=, javascript:)
+ * Strips dangerous HTML tags and event handlers, leaving pure plain text.
  * @param {string} input - Input text
- * @returns {string} Sanitized string
+ * @returns {string} Clean, plain text string
  */
 export const sanitizeText = (input) => {
-  if (typeof input !== 'string') return input || '';
+  if (typeof input !== 'string') return input == null ? '' : String(input);
   
-  // 1. Remove script / style / iframe / object / embed tags and their contents
-  let clean = input.replace(/<(script|style|iframe|object|embed|applet)[\s\S]*?<\/\1>/gi, '');
+  // 1. Remove script / style / iframe / object / embed / svg / math tags and their contents
+  let clean = input.replace(/<(script|style|iframe|object|embed|applet|svg|math|template|noscript|canvas)[\s\S]*?<\/\1>/gi, '');
   
   // 2. Remove any remaining raw HTML tags
   clean = clean.replace(/<[^>]*>?/gm, '');
@@ -45,53 +48,80 @@ export const sanitizeText = (input) => {
 /**
  * Sanitizes and truncates single-line text inputs (Titles, Folder names, Usernames, etc.)
  * @param {string} input - Raw input string
- * @param {number} maxLength - Maximum allowed character length (default: 100)
- * @returns {string} Clean, safe, trimmed string
+ * @param {number} maxLength - Maximum allowed character length (default: 150)
+ * @returns {string} Clean, safe, trimmed single-line string
  */
-export const sanitizeSingleLine = (input, maxLength = 100) => {
+export const sanitizeSingleLine = (input, maxLength = 150) => {
   if (typeof input !== 'string') return '';
-  const clean = sanitizeText(input).replace(/[\r\n]+/g, ' ');
+  const clean = sanitizeText(input).replace(/[\r\n\t]+/g, ' ').trim();
   return clean.substring(0, maxLength);
 };
 
 /**
- * Sanitizes multi-line text block contents for Note Editor.
- * Preserves line breaks while stripping XSS vectors.
+ * Sanitizes multi-line rich text block contents for Note Editor.
+ * Preserves safe formatting tags (<b>, <i>, <u>, <s>, <ul>, <ol>, <li>, <p>, <div>, <br>, <span>, <font>)
+ * while strictly stripping all executable tags, event handlers, and malicious URIs.
  * @param {string} content - Raw block content
- * @param {number} maxLength - Maximum allowed length (default: 20000)
- * @returns {string} Sanitized multi-line text
+ * @param {number} maxLength - Maximum allowed length (default: 50000)
+ * @returns {string} Sanitized safe multi-line text
  */
-export const sanitizeNoteContent = (content, maxLength = 20000) => {
+export const sanitizeNoteContent = (content, maxLength = 50000) => {
   if (typeof content !== 'string') return '';
   if (!content) return '';
   
-  // 1. Initial cleanup for dangerous executable tags & protocols
+  // 1. Pre-filter dangerous executable tags and schemes
   let clean = content
-    .replace(/<(script|style|iframe|object|embed|applet)[\s\S]*?<\/\1>/gi, '')
+    .replace(/<(script|style|iframe|object|embed|applet|meta|link|base|form|svg|math|template|portal|canvas|noscript)[\s\S]*?<\/\1>/gi, '')
     .replace(/javascript\s*:/gi, '')
     .replace(/vbscript\s*:/gi, '')
     .replace(/data\s*:\s*text\/html/gi, '');
 
-  // 2. DOMParser sanitization to safely strip inline event handlers (onerror=, onload=) & dangerous attributes
+  // 2. Comprehensive DOMParser sanitization to strip inline handlers, malicious attributes, and disallowed tags
   try {
     if (typeof window !== 'undefined' && window.DOMParser) {
       const parser = new DOMParser();
       const doc = parser.parseFromString(clean, 'text/html');
 
-      const DANGEROUS_TAGS = ['script', 'iframe', 'object', 'embed', 'applet', 'link', 'meta', 'base', 'form', 'input', 'button'];
-      DANGEROUS_TAGS.forEach(tag => {
+      // Disallowed dangerous elements
+      const DANGEROUS_TAGS = [
+        'script', 'style', 'iframe', 'object', 'embed', 'applet', 'link',
+        'meta', 'base', 'form', 'input', 'button', 'svg', 'math', 'frame',
+        'frameset', 'template', 'marquee', 'video', 'audio', 'source',
+        'canvas', 'portal', 'keygen', 'textarea', 'select', 'option'
+      ];
+      
+      DANGEROUS_TAGS.forEach((tag) => {
         const elements = doc.querySelectorAll(tag);
-        elements.forEach(el => el.remove());
+        elements.forEach((el) => el.remove());
       });
 
+      // Disallowed attributes & event handlers
       const allElements = doc.body.querySelectorAll('*');
-      allElements.forEach(el => {
-        Array.from(el.attributes).forEach(attr => {
-          if (attr.name.toLowerCase().startsWith('on')) {
+      allElements.forEach((el) => {
+        Array.from(el.attributes).forEach((attr) => {
+          const attrName = attr.name.toLowerCase();
+          const attrVal = (attr.value || '').toLowerCase();
+
+          // Strip any event handler (onerror, onload, onclick, onfocus, etc.)
+          if (attrName.startsWith('on')) {
             el.removeAttribute(attr.name);
           }
-          if ((attr.name === 'href' || attr.name === 'src' || attr.name === 'action') && 
-              /^(javascript|vbscript|data\s*:\s*text\/html)/i.test(attr.value)) {
+
+          // Strip dangerous protocols in links or sources
+          if (
+            (attrName === 'href' || attrName === 'src' || attrName === 'action' || attrName === 'formaction' || attrName === 'xlink:href') &&
+            /^(javascript|vbscript|data\s*:|blob\s*:)/i.test(attrVal)
+          ) {
+            el.removeAttribute(attr.name);
+          }
+
+          // Strip nested contenteditable to prevent hijacking
+          if (attrName === 'contenteditable' || attrName === 'autofocus') {
+            el.removeAttribute(attr.name);
+          }
+
+          // Strip dangerous style properties (expression, -moz-binding, behavior)
+          if (attrName === 'style' && /(expression|behavior|-moz-binding)/i.test(attrVal)) {
             el.removeAttribute(attr.name);
           }
         });

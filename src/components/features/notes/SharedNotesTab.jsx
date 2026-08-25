@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import NotesGrid from './NotesGrid';
+import { sanitizeText } from '../../../utils/securityUtils';
 
 const SharedNotesTab = ({
   notes = [],
@@ -30,9 +31,14 @@ const SharedNotesTab = ({
 }) => {
   const isLight = theme === 'light';
 
-  // All active shared notes
+  // All active and pending shared notes
   const allSharedNotes = useMemo(() => {
-    return (notes || []).filter(n => n && !n.deletedAt && (n.isShared || Boolean(n.sharedFrom) || (n.sharedWith && n.sharedWith.length > 0)));
+    return (notes || []).filter(n => n && !n.deletedAt && (
+      n.isShared ||
+      Boolean(n.sharedFrom) ||
+      (Array.isArray(n.sharedWith) && n.sharedWith.length > 0) ||
+      (Array.isArray(n.pendingShares) && n.pendingShares.length > 0)
+    ));
   }, [notes]);
 
   const getFirstLinePreview = (req) => {
@@ -49,27 +55,25 @@ const SharedNotesTab = ({
       for (const b of blocks) {
         if (!b) continue;
         if (b.type === 'text' && typeof b.content === 'string') {
-          const plain = b.content
-            .replace(/<[^>]*>/g, '')
+          const plain = sanitizeText(b.content)
             .replace(/&nbsp;/gi, ' ')
             .replace(/[\u200B\u8203\r\n]/g, ' ')
             .trim();
           if (plain) return plain;
         } else if (b.type === 'todo' && Array.isArray(b.items) && b.items.length > 0) {
           const first = b.items.find(i => i && i.text && i.text.trim());
-          if (first) return `☑ ${first.text.trim()}`;
+          if (first) return `☑ ${sanitizeText(first.text).trim()}`;
         } else if (b.type === 'bill' && b.name) {
-          return `💳 ${b.name}: ${b.amount || ''}₺`;
+          return `💳 ${sanitizeText(b.name)}: ${b.amount || ''}₺`;
         } else if (b.type === 'debt' && Array.isArray(b.items) && b.items.length > 0) {
           const first = b.items.find(d => d && d.name);
-          if (first) return `💰 ${first.name}: ${first.amount || ''}₺`;
+          if (first) return `💰 ${sanitizeText(first.name)}: ${first.amount || ''}₺`;
         }
       }
     }
 
     if (typeof req.noteContent === 'string' && req.noteContent.trim()) {
-      const clean = req.noteContent
-        .replace(/<[^>]*>/g, '')
+      const clean = sanitizeText(req.noteContent)
         .replace(/&nbsp;/gi, ' ')
         .replace(/[\u200B\u8203\r\n]/g, ' ')
         .trim();

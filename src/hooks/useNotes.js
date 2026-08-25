@@ -27,7 +27,7 @@ export default function useNotes({
   const [activeFormatBlockId, setActiveFormatBlockId] = useState(null);
   const [showFormatToolbar, setShowFormatToolbar] = useState(false);
 
-  // Realtime Live Synchronization for Editing Note
+  // Realtime Live Synchronization for Editing Note and Share Statuses
   useEffect(() => {
     const handleLiveNoteUpdate = (e) => {
       const updatedNote = e.detail;
@@ -61,13 +61,156 @@ export default function useNotes({
       setNotes((prevNotes) => prevNotes.filter((n) => n.id !== noteId));
     };
 
+    const handleInviteAccepted = (e) => {
+      const { noteId, collaboratorCode } = e.detail || {};
+      if (!noteId || !collaboratorCode) return;
+
+      setNotes((prevNotes) => {
+        const updated = prevNotes.map((n) => {
+          if (n.id === noteId) {
+            const prevShared = Array.isArray(n.sharedWith) ? n.sharedWith : [];
+            const prevPending = Array.isArray(n.pendingShares) ? n.pendingShares : [];
+            const nextShared = prevShared.includes(collaboratorCode) ? prevShared : [...prevShared, collaboratorCode];
+            const nextPending = prevPending.filter((c) => c !== collaboratorCode);
+            return {
+              ...n,
+              isShared: true,
+              sharedWith: nextShared,
+              pendingShares: nextPending,
+              hasPendingShare: nextPending.length > 0,
+              updatedAt: Date.now(),
+            };
+          }
+          return n;
+        });
+        persistNotes(updated);
+        return updated;
+      });
+
+      setEditingNote((prev) => {
+        if (prev && prev.id === noteId) {
+          const prevShared = Array.isArray(prev.sharedWith) ? prev.sharedWith : [];
+          const prevPending = Array.isArray(prev.pendingShares) ? prev.pendingShares : [];
+          const nextShared = prevShared.includes(collaboratorCode) ? prevShared : [...prevShared, collaboratorCode];
+          const nextPending = prevPending.filter((c) => c !== collaboratorCode);
+          return {
+            ...prev,
+            isShared: true,
+            sharedWith: nextShared,
+            pendingShares: nextPending,
+            hasPendingShare: nextPending.length > 0,
+            updatedAt: Date.now(),
+          };
+        }
+        return prev;
+      });
+    };
+
+    const handleInviteRejected = (e) => {
+      const { noteId, collaboratorCode } = e.detail || {};
+      if (!noteId || !collaboratorCode) return;
+
+      setNotes((prevNotes) => {
+        const updated = prevNotes.map((n) => {
+          if (n.id === noteId) {
+            const prevShared = Array.isArray(n.sharedWith) ? n.sharedWith : [];
+            const prevPending = Array.isArray(n.pendingShares) ? n.pendingShares : [];
+            const nextShared = prevShared.filter((c) => c !== collaboratorCode);
+            const nextPending = prevPending.filter((c) => c !== collaboratorCode);
+            const isStillShared = nextShared.length > 0;
+            return {
+              ...n,
+              isShared: isStillShared,
+              sharedWith: nextShared,
+              pendingShares: nextPending,
+              hasPendingShare: nextPending.length > 0,
+              updatedAt: Date.now(),
+            };
+          }
+          return n;
+        });
+        persistNotes(updated);
+        return updated;
+      });
+
+      setEditingNote((prev) => {
+        if (prev && prev.id === noteId) {
+          const prevShared = Array.isArray(prev.sharedWith) ? prev.sharedWith : [];
+          const prevPending = Array.isArray(prev.pendingShares) ? prev.pendingShares : [];
+          const nextShared = prevShared.filter((c) => c !== collaboratorCode);
+          const nextPending = prevPending.filter((c) => c !== collaboratorCode);
+          return {
+            ...prev,
+            isShared: nextShared.length > 0,
+            sharedWith: nextShared,
+            pendingShares: nextPending,
+            hasPendingShare: nextPending.length > 0,
+            updatedAt: Date.now(),
+          };
+        }
+        return prev;
+      });
+    };
+
+    const handleOutgoingSharesSynced = (e) => {
+      const { shares } = e.detail || {};
+      if (!Array.isArray(shares)) return;
+
+      setNotes((prevNotes) => {
+        let changed = false;
+        const updated = prevNotes.map((n) => {
+          if (n.sharedFrom) return n; // Skip notes owned by others
+
+          const noteShares = shares.filter((s) => s.note_id === n.id);
+          if (noteShares.length === 0 && !n.isShared && (!n.sharedWith || n.sharedWith.length === 0) && (!n.pendingShares || n.pendingShares.length === 0)) {
+            return n;
+          }
+
+          const acceptedCodes = noteShares.filter((s) => s.status === 'accepted').map((s) => s.to_code);
+          const pendingCodes = noteShares.filter((s) => s.status === 'pending').map((s) => s.to_code);
+          const isShared = acceptedCodes.length > 0;
+          const hasPendingShare = pendingCodes.length > 0;
+
+          const isDiff =
+            n.isShared !== isShared ||
+            JSON.stringify(n.sharedWith || []) !== JSON.stringify(acceptedCodes) ||
+            JSON.stringify(n.pendingShares || []) !== JSON.stringify(pendingCodes);
+
+          if (isDiff) {
+            changed = true;
+            return {
+              ...n,
+              isShared,
+              sharedWith: acceptedCodes,
+              pendingShares: pendingCodes,
+              hasPendingShare,
+            };
+          }
+          return n;
+        });
+
+        if (changed) {
+          persistNotes(updated);
+          return updated;
+        }
+        return prevNotes;
+      });
+    };
+
     window.addEventListener('noteup_shared_note_live_update', handleLiveNoteUpdate);
     window.addEventListener('noteup_shared_note_revoked', handleRevokedOrRemoved);
     window.addEventListener('noteup_shared_note_removed', handleRevokedOrRemoved);
+    window.addEventListener('noteup_shared_invite_accepted', handleInviteAccepted);
+    window.addEventListener('noteup_shared_invite_rejected', handleInviteRejected);
+    window.addEventListener('noteup_outgoing_shares_synced', handleOutgoingSharesSynced);
+
     return () => {
       window.removeEventListener('noteup_shared_note_live_update', handleLiveNoteUpdate);
       window.removeEventListener('noteup_shared_note_revoked', handleRevokedOrRemoved);
       window.removeEventListener('noteup_shared_note_removed', handleRevokedOrRemoved);
+      window.removeEventListener('noteup_shared_invite_accepted', handleInviteAccepted);
+      window.removeEventListener('noteup_shared_invite_rejected', handleInviteRejected);
+      window.removeEventListener('noteup_outgoing_shares_synced', handleOutgoingSharesSynced);
     };
   }, []);
 

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import FriendShareCheckRow from './share/FriendShareCheckRow';
 import { FriendShareCheckList } from './share/FriendShareCheckList';
 
 const cleanText = (str) => {
@@ -27,17 +26,20 @@ const SelectFriendsShareModal = ({
 }) => {
   const [bonusSlots, setBonusSlots] = useState(0);
 
+  const targetNote = Array.isArray(notes) ? notes.find(n => n.id === activeShareNoteId) : null;
+
   useEffect(() => {
     if (activeShareNoteId) {
       setBonusSlots(0);
-      if (Array.isArray(notes)) {
-        const targetNote = notes.find(n => n.id === activeShareNoteId);
-        if (targetNote && Array.isArray(targetNote.sharedWith)) {
-          setSelectedFriendCodes(targetNote.sharedWith);
-        }
+      if (targetNote) {
+        const selected = [
+          ...(Array.isArray(targetNote.sharedWith) ? targetNote.sharedWith : []),
+          ...(Array.isArray(targetNote.pendingShares) ? targetNote.pendingShares : []),
+        ];
+        setSelectedFriendCodes(selected);
       }
     }
-  }, [activeShareNoteId, notes]);
+  }, [activeShareNoteId, targetNote]);
 
   if (!activeShareNoteId) return null;
 
@@ -200,6 +202,7 @@ const SelectFriendsShareModal = ({
           isLight={isLight}
           lang={lang}
           t={t}
+          targetNote={targetNote}
         />
 
         {/* Footer Actions */}

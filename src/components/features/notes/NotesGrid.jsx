@@ -46,6 +46,29 @@ const WalletIcon = () => (
   </svg>
 );
 
+const OwnerIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: '4px' }}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const SharedWithMeIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: '4px' }}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+const PendingShareIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: '4px' }}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
 const SnippetIcon = ({ type }) => {
   const style = { flexShrink: 0, marginRight: '6px', verticalAlign: '-2px' };
   switch (type) {
@@ -261,14 +284,19 @@ const NotesGrid = ({
                           <LockIcon /> {cleanText(t('locked'))}
                         </span>
                       )}
+                      {note.hasPendingShare && !note.isShared && !note.sharedFrom && (
+                        <span className="badge badge-reminder" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', display: 'inline-flex', alignItems: 'center' }}>
+                          <PendingShareIcon /> {cleanText(t('pendingApproval') || 'Onay Bekleniyor')}
+                        </span>
+                      )}
                       {note.isShared && (
                         note.sharedFrom ? (
-                          <span className="badge badge-shared" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8B5CF6' }}>
-                            📥 {note.sharedFromName || note.sharedFrom || cleanText(t('sharedWithMe') || 'Gelen')}
+                          <span className="badge badge-shared" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8B5CF6', display: 'inline-flex', alignItems: 'center' }}>
+                            <SharedWithMeIcon /> {note.sharedFromName || note.sharedFrom || cleanText(t('sharedWithMe') || 'Gelen')}
                           </span>
                         ) : (
-                          <span className="badge badge-shared" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981' }}>
-                            📤 {cleanText(t('ownerBadge') || 'Sahip')}
+                          <span className="badge badge-shared" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', display: 'inline-flex', alignItems: 'center' }}>
+                            <OwnerIcon /> {cleanText(t('ownerBadge') || 'Not Sahibi')}
                           </span>
                         )
                       )}

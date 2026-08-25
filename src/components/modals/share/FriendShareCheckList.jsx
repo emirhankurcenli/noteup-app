@@ -7,6 +7,7 @@ export const FriendShareCheckList = ({
   isLight,
   lang,
   t,
+  targetNote,
 }) => {
   if (!friends || friends.length === 0) {
     return (
@@ -40,6 +41,9 @@ export const FriendShareCheckList = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '240px', overflowY: 'auto', paddingRight: '2px' }}>
       {friends.map((f) => {
         const isSelected = selectedFriendCodes.includes(f.code);
+        const isAcceptedCollab = (targetNote?.sharedWith || []).includes(f.code);
+        const isPendingCollab = (targetNote?.pendingShares || []).includes(f.code);
+
         return (
           <div
             key={f.code}
@@ -97,19 +101,49 @@ export const FriendShareCheckList = ({
                     {f.name}
                   </span>
                   {isSelected && (
-                    <span
-                      style={{
-                        fontSize: '0.65rem',
-                        fontWeight: 800,
-                        padding: '2px 6px',
-                        borderRadius: '6px',
-                        background: 'rgba(16, 185, 129, 0.15)',
-                        color: '#10B981',
-                        border: '1px solid rgba(16, 185, 129, 0.3)',
-                      }}
-                    >
-                      {t ? t('sharedBadge') : (lang === 'tr' ? 'Paylaşıldı' : 'Shared')}
-                    </span>
+                    isAcceptedCollab ? (
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          background: 'rgba(16, 185, 129, 0.15)',
+                          color: '#10B981',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                        }}
+                      >
+                        ● {t ? t('sharedBadge') : (lang === 'tr' ? 'Ortak' : 'Shared')}
+                      </span>
+                    ) : isPendingCollab ? (
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          background: 'rgba(245, 158, 11, 0.15)',
+                          color: '#F59E0B',
+                          border: '1px solid rgba(245, 158, 11, 0.3)',
+                        }}
+                      >
+                        ⏳ {t ? (t('pendingApproval') || 'Onay Bekliyor') : 'Onay Bekliyor'}
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          background: 'rgba(59, 130, 246, 0.15)',
+                          color: '#3B82F6',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                        }}
+                      >
+                        + {t ? t('newInvite') : (lang === 'tr' ? 'Yeni Davet' : 'New Invite')}
+                      </span>
+                    )
                   )}
                 </div>
                 <span style={{ fontSize: '0.72rem', color: isLight ? '#64748B' : '#94A3B8' }}>
