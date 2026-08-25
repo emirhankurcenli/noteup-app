@@ -180,10 +180,74 @@ const useSupabaseSync = ({
     }
   };
 
+  const syncDeltaSharedNotes = async (userId) => {
+    if (!userId) return;
+    try {
+      let myFriendCode = null;
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('friend_code, my_code')
+          .eq('id', userId)
+          .maybeSingle();
+        myFriendCode = profile?.friend_code || profile?.my_code;
+      } catch (_) {}
+
+      if (!myFriendCode) {
+        try {
+          const localUser = localStorage.getItem('s23_user');
+          myFriendCode = localUser ? JSON.parse(localUser)?.myCode : null;
+        } catch (_) {}
+      }
+
+      if (!myFriendCode) return;
+
+      const { data: shares } = await supabase
+        .from('note_shares')
+        .select('note_id, from_code, from_name')
+        .eq('to_code', myFriendCode)
+        .eq('status', 'accepted');
+
+      if (shares && shares.length > 0) {
+        const sharedNoteIds = shares.map((s) => s.note_id).filter(Boolean);
+        const { data: notesData } = await supabase
+          .from('notes')
+          .select('*')
+          .in('id', sharedNoteIds);
+
+        if (notesData && notesData.length > 0) {
+          notesData.forEach((remoteNote) => {
+            let parsedBlocks = [];
+            try {
+              if (Array.isArray(remoteNote.blocks)) parsedBlocks = remoteNote.blocks;
+              else if (typeof remoteNote.blocks === 'string') parsedBlocks = JSON.parse(remoteNote.blocks);
+            } catch (_) {}
+
+            window.dispatchEvent(
+              new CustomEvent('noteup_shared_note_live_update', {
+                detail: {
+                  id: remoteNote.id,
+                  title: remoteNote.title || '',
+                  blocks: parsedBlocks,
+                  isShared: remoteNote.is_shared,
+                  deletedAt: remoteNote.deleted_at ? Number(remoteNote.deleted_at) : null,
+                  updatedAt: remoteNote.updated_at ? new Date(remoteNote.updated_at).getTime() : Date.now(),
+                },
+              })
+            );
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Delta sync failed:', err);
+    }
+  };
+
   return {
     getUserScopedKey,
     getScopedStorageItem,
     syncDataFromSupabase,
+    syncDeltaSharedNotes,
   };
 };
 

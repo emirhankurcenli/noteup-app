@@ -4,6 +4,7 @@ import { cancelLocalNotification } from '../services/notificationService';
 import { registerPlugin } from '@capacitor/core';
 import useNoteUndoRedo from './useNoteUndoRedo';
 import { sanitizeNoteContent, sanitizeSingleLine } from '../utils/securityUtils';
+import { mergeNoteBlocks, ensureBlockTimestamps } from '../features/notes/utils/blockMergeUtils';
 
 export default function useNotes({
   user,
@@ -27,7 +28,7 @@ export default function useNotes({
   const [activeFormatBlockId, setActiveFormatBlockId] = useState(null);
   const [showFormatToolbar, setShowFormatToolbar] = useState(false);
 
-  // Realtime Live Synchronization for Editing Note and Share Statuses
+  // Realtime Live Synchronization for Editing Note and Share Statuses (Block-Level Merging)
   useEffect(() => {
     const handleLiveNoteUpdate = (e) => {
       const updatedNote = e.detail;
@@ -51,10 +52,11 @@ export default function useNotes({
           if (prev.updatedAt && updatedNote.updatedAt && prev.updatedAt > updatedNote.updatedAt) {
             return prev;
           }
+          const mergedBlocks = mergeNoteBlocks(prev.blocks, updatedNote.blocks);
           return {
             ...prev,
             title: updatedNote.title !== undefined ? updatedNote.title : prev.title,
-            blocks: updatedNote.blocks || prev.blocks,
+            blocks: mergedBlocks,
             isShared: updatedNote.isShared !== undefined ? updatedNote.isShared : prev.isShared,
             updatedAt: updatedNote.updatedAt || Date.now(),
           };
@@ -73,11 +75,12 @@ export default function useNotes({
           return prevNotes;
         }
 
+        const mergedBlocks = mergeNoteBlocks(existing.blocks, updatedNote.blocks);
         const updated = [...prevNotes];
         updated[index] = {
           ...existing,
           title: updatedNote.title !== undefined ? updatedNote.title : existing.title,
-          blocks: updatedNote.blocks || existing.blocks,
+          blocks: mergedBlocks,
           isShared: updatedNote.isShared !== undefined ? updatedNote.isShared : existing.isShared,
           updatedAt: updatedNote.updatedAt || Date.now(),
         };
@@ -295,13 +298,13 @@ export default function useNotes({
         const ownedNotes = cleanNotes.filter(n => !n.sharedFrom);
         const receivedNotes = cleanNotes.filter(n => Boolean(n.sharedFrom));
 
-        // 2. Upsert owned notes to Supabase notes table
+        // 2. Upsert owned notes to Supabase notes table (Single Source of Truth)
         if (ownedNotes.length > 0) {
           const notesToUpsert = ownedNotes.map(n => ({
             id: n.id,
             user_id: user.uid,
             title: n.title || '',
-            blocks: n.blocks || [],
+            blocks: ensureBlockTimestamps(n.blocks || []),
             is_shared: n.isShared || false,
             is_locked: n.isLocked || false,
             is_pinned: Boolean(n.isPinned),
@@ -320,44 +323,19 @@ export default function useNotes({
           }
 
           if (error) console.error("Error upserting notes to Supabase:", error);
-
-          // Update note_shares for any owned notes that are shared
-          for (const on of ownedNotes.filter((n) => n.isShared)) {
-            try {
-              await supabase
-                .from('note_shares')
-                .update({
-                  note_title: on.title || '',
-                  note_blocks: on.blocks || [],
-                  updated_at: new Date().toISOString(),
-                })
-                .eq('note_id', on.id);
-            } catch (shareUpdateErr) {
-              console.warn("Owned shared note remote update error:", shareUpdateErr);
-            }
-          }
         }
 
-        // 3. For received shared notes, update title & blocks on notes table and note_shares table
+        // 3. For received shared notes, update title & blocks on notes table (Single Source of Truth)
         for (const rn of receivedNotes) {
           try {
             await supabase
               .from('notes')
               .update({
                 title: rn.title || '',
-                blocks: rn.blocks || [],
+                blocks: ensureBlockTimestamps(rn.blocks || []),
                 updated_at: new Date().toISOString()
               })
               .eq('id', rn.id);
-
-            await supabase
-              .from('note_shares')
-              .update({
-                note_title: rn.title || '',
-                note_blocks: rn.blocks || [],
-                updated_at: new Date().toISOString()
-              })
-              .eq('note_id', rn.id);
           } catch (updateErr) {
             console.warn("Shared note remote update error:", updateErr);
           }

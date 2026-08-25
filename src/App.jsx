@@ -70,6 +70,7 @@ function App() {
     handleSelectAvatar,
     handleUpdateProfileName,
     syncDataFromSupabase,
+    syncDeltaSharedNotes,
     // Sharing
     partnerCodeInput,
     setPartnerCodeInput,
@@ -384,7 +385,9 @@ function App() {
     setPendingOpenNoteId,
     updatePermissionStates,
     syncDismissedAlarms,
-    setEditingNote
+    setEditingNote,
+    syncDeltaSharedNotes,
+    user
   });
 
 

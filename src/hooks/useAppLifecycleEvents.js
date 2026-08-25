@@ -44,9 +44,11 @@ export default function useAppLifecycleEvents({
   setPendingOpenNoteId,
   updatePermissionStates,
   syncDismissedAlarms,
-  setEditingNote
+  setEditingNote,
+  syncDeltaSharedNotes,
+  user,
 }) {
-  // 1. Initial notification channels & foreground listener
+  // 1. Initial notification channels & foreground listener + Foreground Delta Re-Sync
   useEffect(() => {
     createNotificationChannels();
 
@@ -60,17 +62,41 @@ export default function useAppLifecycleEvents({
     const handleFocusOrResume = () => {
       if (updatePermissionStates) updatePermissionStates();
       if (syncDismissedAlarms) syncDismissedAlarms();
+      touchLastSeenAt();
+
+      // Trigger instantaneous Foreground Delta Re-Sync for iOS and Android
+      if (typeof syncDeltaSharedNotes === 'function') {
+        const uid = user?.uid || user?.id;
+        if (uid) {
+          syncDeltaSharedNotes(uid);
+        }
+      }
     };
 
     window.addEventListener('focus', handleFocusOrResume);
-    document.addEventListener('visibilitychange', handleFocusOrResume);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        handleFocusOrResume();
+      }
+    });
+
+    let appStateSub = null;
+    try {
+      appStateSub = CapApp.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) {
+          handleFocusOrResume();
+        }
+      });
+    } catch (_) {}
 
     return () => {
       foregroundListener.then(l => l.remove()).catch(() => {});
       window.removeEventListener('focus', handleFocusOrResume);
-      document.removeEventListener('visibilitychange', handleFocusOrResume);
+      if (appStateSub && typeof appStateSub.then === 'function') {
+        appStateSub.then(s => s.remove?.()).catch(() => {});
+      }
     };
-  }, []);
+  }, [user, syncDeltaSharedNotes]);
 
   // 2. Notification action listener (tapping local notification)
   useEffect(() => {

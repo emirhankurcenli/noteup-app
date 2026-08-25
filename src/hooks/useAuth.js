@@ -537,6 +537,7 @@ export default function useAuth() {
     handleLogout,
     handleSelectAvatar,
     handleUpdateProfileName,
-    syncDataFromSupabase: sync.syncDataFromSupabase
+    syncDataFromSupabase: sync.syncDataFromSupabase,
+    syncDeltaSharedNotes: sync.syncDeltaSharedNotes
   };
 }

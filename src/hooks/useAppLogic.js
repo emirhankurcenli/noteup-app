@@ -131,6 +131,7 @@ export default function useAppLogic(options = {}) {
     handleSelectAvatar: auth.handleSelectAvatar,
     handleUpdateProfileName: auth.handleUpdateProfileName,
     syncDataFromSupabase: auth.syncDataFromSupabase,
+    syncDeltaSharedNotes: auth.syncDeltaSharedNotes,
 
     // Sharing State & Handlers
     partnerCodeInput: sharing.partnerCodeInput,
