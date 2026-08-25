@@ -32,12 +32,12 @@ const IncomingShareModal = ({
           if (plain) return plain;
         } else if (b.type === 'todo' && Array.isArray(b.items) && b.items.length > 0) {
           const first = b.items.find(i => i && i.text && i.text.trim());
-          if (first) return `☑ ${sanitizeText(first.text).trim()}`;
+          if (first) return `${sanitizeText(first.text).trim()}`;
         } else if (b.type === 'bill' && b.name) {
-          return `💳 ${sanitizeText(b.name)}: ${b.amount || ''}₺`;
+          return `${sanitizeText(b.name)}: ${b.amount || ''}₺`;
         } else if (b.type === 'debt' && Array.isArray(b.items) && b.items.length > 0) {
           const first = b.items.find(d => d && d.name);
-          if (first) return `💰 ${sanitizeText(first.name)}: ${first.amount || ''}₺`;
+          if (first) return `${sanitizeText(first.name)}: ${first.amount || ''}₺`;
         }
       }
     }

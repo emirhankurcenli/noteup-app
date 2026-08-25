@@ -1,5 +1,33 @@
 import React from 'react';
 
+const cleanText = (str) => {
+  if (!str) return '';
+  return str.replace(/^[\s\p{Extended_Pictographic}\u2300-\u23FF\u2600-\u27BF]+/gu, '').trim();
+};
+
+const UsersIcon = () => (
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
 export const FriendShareCheckList = ({
   friends = [],
   selectedFriendCodes = [],
@@ -22,14 +50,15 @@ export const FriendShareCheckList = ({
           flexDirection: 'column',
           alignItems: 'center',
           gap: '8px',
+          color: isLight ? '#64748B' : '#94A3B8'
         }}
       >
-        <span style={{ fontSize: '1.8rem' }}>👥</span>
+        <UsersIcon />
         <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: isLight ? '#1E293B' : '#F1F5F9' }}>
-          {t ? t('noFriendsShareTitle') : (lang === 'tr' ? 'Henüz Arkadaşınız Yok' : 'No Friends Added Yet')}
+          {t ? cleanText(t('noFriendsShareTitle')) : (lang === 'tr' ? 'Henüz Arkadaşınız Yok' : 'No Friends Added Yet')}
         </p>
         <p style={{ margin: 0, fontSize: '0.78rem', color: isLight ? '#64748B' : '#94A3B8', lineHeight: 1.4 }}>
-          {t ? t('noFriendsShareSub') : (lang === 'tr'
+          {t ? cleanText(t('noFriendsShareSub')) : (lang === 'tr'
             ? 'Notu ortak paylaşabilmek için profil sayfasından arkadaş kodunu kullanarak arkadaş ekleyin.'
             : 'Add friends using your friend code on the profile page to share notes together.')}
         </p>
@@ -113,7 +142,7 @@ export const FriendShareCheckList = ({
                           border: '1px solid rgba(16, 185, 129, 0.3)',
                         }}
                       >
-                        ● {t ? t('sharedBadge') : (lang === 'tr' ? 'Ortak' : 'Shared')}
+                        ● {t ? cleanText(t('sharedBadge')) : (lang === 'tr' ? 'Ortak' : 'Shared')}
                       </span>
                     ) : isPendingCollab ? (
                       <span
@@ -127,7 +156,7 @@ export const FriendShareCheckList = ({
                           border: '1px solid rgba(245, 158, 11, 0.3)',
                         }}
                       >
-                        ⏳ {t ? (t('pendingApproval') || 'Onay Bekliyor') : 'Onay Bekliyor'}
+                        ⏳ {t ? (cleanText(t('pendingApproval')) || 'Onay Bekliyor') : 'Onay Bekliyor'}
                       </span>
                     ) : (
                       <span
@@ -141,7 +170,7 @@ export const FriendShareCheckList = ({
                           border: '1px solid rgba(59, 130, 246, 0.3)',
                         }}
                       >
-                        + {t ? t('newInvite') : (lang === 'tr' ? 'Yeni Davet' : 'New Invite')}
+                        + {t ? cleanText(t('newInvite')) : (lang === 'tr' ? 'Yeni Davet' : 'New Invite')}
                       </span>
                     )
                   )}
@@ -167,12 +196,15 @@ export const FriendShareCheckList = ({
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '5px',
                 boxShadow: isSelected ? 'none' : '0 2px 8px rgba(59, 130, 246, 0.3)',
                 transition: 'all 0.2s ease',
               }}
             >
-              {isSelected ? (t ? t('removeShareBtn') : (lang === 'tr' ? '🚫 Çıkar' : '🚫 Remove')) : (t ? t('addShareBtn') : (lang === 'tr' ? '➕ Ekle' : '➕ Add'))}
+              {isSelected ? <TrashIcon /> : <PlusIcon />}
+              {isSelected 
+                ? (t ? cleanText(t('removeShareBtn')) : (lang === 'tr' ? 'Çıkar' : 'Remove')) 
+                : (t ? cleanText(t('addShareBtn')) : (lang === 'tr' ? 'Ekle' : 'Add'))}
             </button>
           </div>
         );

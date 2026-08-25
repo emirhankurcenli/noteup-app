@@ -44,7 +44,7 @@ const OutgoingRequestsList = ({
               cursor: 'pointer'
             }}
           >
-            {lang === 'tr' ? '🚫 İptal Et' : '🚫 Cancel'}
+            {lang === 'tr' ? 'İptal Et' : 'Cancel'}
           </button>
         </div>
       ))}

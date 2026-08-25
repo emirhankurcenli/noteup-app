@@ -1,6 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabaseClient';
 
+const RefreshIcon = ({ spin = false }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: spin ? 'spin 1s linear infinite' : 'none' }}>
+    <polyline points="23 4 23 10 17 10" />
+    <polyline points="1 20 1 14 7 14" />
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+  </svg>
+);
+
+const InboxIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3B82F6' }}>
+    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+    <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+  </svg>
+);
+
+const UserIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: '-1px' }}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const PinIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: '-1px' }}>
+    <line x1="12" y1="17" x2="12" y2="22" />
+    <path d="M5 17h14l-1.5-6H6.5L5 17z" />
+    <path d="M9 11V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v7" />
+  </svg>
+);
+
 const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,15 +97,15 @@ const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
     switch (cat) {
       case 'hata':
       case 'bug':
-        return { label: '🐞 Hata Bildirimi', bg: '#FEF2F2', color: '#EF4444', border: '#FCA5A5' };
+        return { label: 'Hata Bildirimi', bg: '#FEF2F2', color: '#EF4444', border: '#FCA5A5' };
       case 'gorus':
       case 'general':
-        return { label: '💬 Genel Görüş', bg: '#EFF6FF', color: '#3B82F6', border: '#93C5FD' };
+        return { label: 'Genel Görüş', bg: '#EFF6FF', color: '#3B82F6', border: '#93C5FD' };
       case 'hesap_silme':
       case 'delete_account':
-        return { label: '🗑️ Hesap Silme Talebi', bg: '#FEE2E2', color: '#B91C1C', border: '#F87171' };
+        return { label: 'Hesap Silme Talebi', bg: '#FEE2E2', color: '#B91C1C', border: '#F87171' };
       default:
-        return { label: '💡 İstek & Öneri', bg: '#FEF3C7', color: '#D97706', border: '#FCD34D' };
+        return { label: 'İstek & Öneri', bg: '#FEF3C7', color: '#D97706', border: '#FCD34D' };
     }
   };
 
@@ -96,7 +126,7 @@ const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
         border: cardBorder,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '1.4rem' }}>📥</span>
+          <InboxIcon />
           <div>
             <h4 style={{ margin: 0, fontWeight: 800, fontSize: '0.95rem', color: textPrimary }}>
               {lang === 'tr' ? 'Gelen İstek & Öneriler' : 'Incoming Feedback'}
@@ -118,7 +148,8 @@ const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
           }}
         >
-          🔄 {refreshing ? (lang === 'tr' ? 'Yükleniyor...' : 'Syncing...') : (lang === 'tr' ? 'Yenile' : 'Refresh')}
+          <RefreshIcon spin={refreshing} />
+          {refreshing ? (lang === 'tr' ? 'Yükleniyor...' : 'Syncing...') : (lang === 'tr' ? 'Yenile' : 'Refresh')}
         </button>
       </div>
 
@@ -126,10 +157,10 @@ const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
         {[
           { id: 'all', label: `Tümü (${feedbacks.length})` },
-          { id: 'istek', label: '💡 İstekler' },
-          { id: 'hata', label: '🐞 Hatalar' },
-          { id: 'gorus', label: '💬 Görüşler' },
-          { id: 'hesap_silme', label: '🗑️ Hesap Silme' },
+          { id: 'istek', label: 'İstekler' },
+          { id: 'hata', label: 'Hatalar' },
+          { id: 'gorus', label: 'Görüşler' },
+          { id: 'hesap_silme', label: 'Hesap Silme' },
         ].map(tab => (
           <button
             key={tab.id}
@@ -138,10 +169,13 @@ const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
               padding: '6px 12px', borderRadius: '10px',
               border: filterCategory === tab.id ? '1.5px solid #3B82F6' : cardBorder,
               background: filterCategory === tab.id
-                ? (isLight ? '#EFF6FF' : 'rgba(59, 130, 246, 0.2)')
-                : cardBg,
-              color: filterCategory === tab.id ? '#3B82F6' : textSecondary,
-              fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer',
+                ? (isLight ? '#EFF6FF' : 'rgba(59, 130, 246, 0.15)')
+                : (isLight ? '#F8FAFC' : 'rgba(255, 255, 255, 0.03)'),
+              color: filterCategory === tab.id
+                ? '#3B82F6'
+                : textSecondary,
+              fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
           >
             {tab.label}
@@ -152,14 +186,13 @@ const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
       {/* List */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '30px', color: textSecondary, fontSize: '0.85rem' }}>
-          ⏳ {lang === 'tr' ? 'Mesajlar yükleniyor...' : 'Loading messages...'}
+          {lang === 'tr' ? 'Mesajlar yükleniyor...' : 'Loading messages...'}
         </div>
       ) : filteredFeedbacks.length === 0 ? (
         <div style={{
           textAlign: 'center', padding: '36px 20px', borderRadius: '16px',
           background: cardBg, border: cardBorder, color: textSecondary,
         }}>
-          <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>📭</span>
           <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: textPrimary }}>
             {lang === 'tr' ? 'Henüz bildirim bulunmuyor' : 'No feedback submissions yet'}
           </p>
@@ -201,14 +234,14 @@ const FeedbackAdminSubTab = ({ theme, lang, setToast }) => {
                 </div>
 
                 {/* Sender info */}
-                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: textPrimary }}>
-                  👤 {fb.user_name || 'Bilinmiyor'} <span style={{ fontWeight: 400, color: textSecondary, fontSize: '0.75rem' }}>({fb.user_code})</span>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: textPrimary, display: 'flex', alignItems: 'center' }}>
+                  <UserIcon /> {fb.user_name || 'Bilinmiyor'} <span style={{ fontWeight: 400, color: textSecondary, fontSize: '0.75rem', marginLeft: '4px' }}>({fb.user_code})</span>
                 </div>
 
                 {/* Subject */}
                 {fb.subject && (
-                  <div style={{ fontSize: '0.86rem', fontWeight: 800, color: textPrimary }}>
-                    📌 {fb.subject}
+                  <div style={{ fontSize: '0.86rem', fontWeight: 800, color: textPrimary, display: 'flex', alignItems: 'center' }}>
+                    <PinIcon /> {fb.subject}
                   </div>
                 )}
 

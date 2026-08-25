@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { formatTurkishMoneyDisplay } from '../../utils/money';
 
 const formatDateTime = (timestamp) => {
@@ -331,7 +331,12 @@ export const BillDetailModal = ({
                   gap: '6px'
                 }}
               >
-                <span style={{ fontSize: '1.4rem' }}>🧾</span>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)' }}>
+                  <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z" />
+                  <line x1="8" y1="6" x2="16" y2="6" />
+                  <line x1="8" y1="10" x2="16" y2="10" />
+                  <line x1="8" y1="14" x2="12" y2="14" />
+                </svg>
                 <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                   {searchTerm ? (t('noResultsFound') || 'Sonuç bulunamadı.') : (t('billNoPaymentHistory') || 'Henüz ödeme kaydı bulunmuyor.')}
                 </span>

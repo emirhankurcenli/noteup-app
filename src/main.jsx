@@ -68,7 +68,13 @@ class ErrorBoundary extends Component {
             fontFamily: "system-ui, -apple-system, sans-serif",
           }}
         >
-          <div style={{ fontSize: "3.5rem", marginBottom: "16px" }}>⚠️</div>
+          <div style={{ marginBottom: "16px", display: "flex", justifyContent: "center" }}>
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
           <h2
             style={{
               fontSize: "1.4rem",
@@ -134,9 +140,14 @@ class ErrorBoundary extends Component {
               opacity: this.state.isReporting ? 0.7 : 1
             }}
           >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
             {this.state.isReporting
               ? "Hata Logu Gönderiliyor..."
-              : "Yeniden Başlat ve Hata Logunu Gönder 🔄"}
+              : "Yeniden Başlat ve Hata Logunu Gönder"}
           </button>
         </div>
       );

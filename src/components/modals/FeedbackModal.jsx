@@ -3,6 +3,42 @@ import { supabase } from '../../supabaseClient';
 import { sanitizeSingleLine, sanitizeText } from '../../utils/securityUtils';
 import FeedbackTypeTabs from './feedback/FeedbackTypeTabs';
 
+const CategoryIcon = ({ id, style = {} }) => {
+  const iconStyle = { flexShrink: 0, ...style };
+  switch (id) {
+    case 'istek':
+      return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
+          <line x1="9" y1="18" x2="15" y2="18" />
+          <line x1="10" y1="22" x2="14" y2="22" />
+          <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+        </svg>
+      );
+    case 'hata':
+      return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+          <path d="M12 6v4M4 14h16M4 20h16M4 8l4 4M20 8l-4 4" />
+        </svg>
+      );
+    case 'gorus':
+      return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      );
+    case 'hesap_silme':
+      return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={iconStyle}>
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
 const FeedbackModal = ({
   show,
   onClose,
@@ -26,10 +62,10 @@ const FeedbackModal = ({
   const isLight = theme === 'light';
 
   const categories = [
-    { id: 'istek', label: t('catFeature') || 'Özellik İsteği', icon: '💡' },
-    { id: 'hata', label: t('catBug') || 'Hata Bildirimi', icon: '🐞' },
-    { id: 'gorus', label: t('catDesign') || 'Tasarım / Arayüz', icon: '💬' },
-    { id: 'hesap_silme', label: t('catDeleteAccount') || 'Hesap & Veri Silme Talebi', icon: '🗑️' },
+    { id: 'istek', label: t('catFeature') || 'Özellik İsteği' },
+    { id: 'hata', label: t('catBug') || 'Hata Bildirimi' },
+    { id: 'gorus', label: t('catDesign') || 'Tasarım / Arayüz' },
+    { id: 'hesap_silme', label: t('catDeleteAccount') || 'Hesap & Veri Silme Talebi' },
   ];
 
   const selectedCategoryObj = categories.find(c => c.id === category) || categories[0];
@@ -199,8 +235,8 @@ const FeedbackModal = ({
                 boxShadow: isLight ? '0 2px 6px rgba(0,0,0,0.03)' : '0 2px 6px rgba(0,0,0,0.2)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.1rem' }}>{selectedCategoryObj.icon}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CategoryIcon id={selectedCategoryObj.id} />
                 <span>{selectedCategoryObj.label}</span>
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: textLabel }}>
@@ -392,7 +428,7 @@ const FeedbackModal = ({
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '1.25rem' }}>{cat.icon}</span>
+                      <CategoryIcon id={cat.id} />
                       <span>{cat.label}</span>
                     </div>
 

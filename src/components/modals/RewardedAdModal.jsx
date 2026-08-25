@@ -1,6 +1,55 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const AD_DURATION = 5;
+
+const GiftIcon = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#FFFFFF' }}>
+    <polyline points="20 12 20 22 4 22 4 12" />
+    <rect x="2" y="7" width="20" height="5" />
+    <line x1="12" y1="22" x2="12" y2="7" />
+    <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+  </svg>
+);
+
+const VideoIcon = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#FFFFFF' }}>
+    <polygon points="23 7 16 12 23 17 23 7" />
+    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#FFFFFF' }}>
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const PhoneIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#FFFFFF' }}>
+    <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+    <line x1="12" y1="18" x2="12.01" y2="18" />
+  </svg>
+);
+
+const PlayIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="5 3 19 12 5 21 5 3" />
+  </svg>
+);
+
+const StarIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#F59E0B' }}>
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
 
 const RewardedAdModal = ({
   show,
@@ -35,7 +84,6 @@ const RewardedAdModal = ({
         if (next <= 0) {
           clearInterval(intervalRef.current);
           setAdPhase('done');
-          // Reklam biter bitmez daveti otomatik gönder
           onRewardGranted && onRewardGranted();
           return 0;
         }
@@ -74,8 +122,6 @@ const RewardedAdModal = ({
     ? 'linear-gradient(135deg, #10B981, #059669)'
     : 'linear-gradient(135deg, #6366F1, #3B82F6)';
 
-  const icon = adPhase === 'done' ? '✅' : adPhase === 'watching' ? '🎬' : '🎁';
-
   return (
     <div
       style={{
@@ -85,7 +131,6 @@ const RewardedAdModal = ({
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '20px',
       }}
-      // Sadece teklif aşamasında arka plana tıklayarak kapanabilir
       onClick={adPhase === 'offer' ? onClose : undefined}
     >
       <div
@@ -107,9 +152,9 @@ const RewardedAdModal = ({
           <div style={{
             width: '64px', height: '64px', borderRadius: '20px',
             background: 'rgba(255,255,255,0.18)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            {icon}
+            {adPhase === 'done' ? <CheckIcon /> : adPhase === 'watching' ? <VideoIcon /> : <GiftIcon />}
           </div>
           <div style={{ textAlign: 'center' }}>
             <h3 style={{ margin: 0, color: '#FFFFFF', fontWeight: 800, fontSize: '1.1rem' }}>
@@ -133,7 +178,9 @@ const RewardedAdModal = ({
             </div>
             {/* Simulated Ad Content */}
             <div style={{ marginTop: '16px', borderRadius: '14px', background: isLight ? '#F8FAFC' : 'rgba(255,255,255,0.05)', border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,0.08)', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, #F59E0B, #EF4444)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>📱</div>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, #F59E0B, #EF4444)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <PhoneIcon />
+              </div>
               <div>
                 <div style={{ fontSize: '0.82rem', fontWeight: 800, color: textPrimary }}>NoteUp Pro</div>
                 <div style={{ fontSize: '0.72rem', color: textSecondary, marginTop: '2px' }}>{lang === 'tr' ? 'Sınırsız paylaşım, sınırsız not.' : 'Unlimited sharing, unlimited notes.'}</div>
@@ -141,7 +188,7 @@ const RewardedAdModal = ({
               <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'linear-gradient(135deg, #6366F1, #3B82F6)', color: '#fff', borderRadius: '8px', padding: '6px 10px', fontSize: '0.7rem', fontWeight: 800 }}>AD</div>
             </div>
             <p style={{ textAlign: 'center', fontSize: '0.72rem', color: '#EF4444', fontWeight: 600, margin: '10px 0 0' }}>
-              ⛔ {lang === 'tr' ? 'Reklam devam ediyor, atlanamaz.' : 'Ad is still running, cannot skip.'}
+              {lang === 'tr' ? 'Reklam devam ediyor, atlanamaz.' : 'Ad is still running, cannot skip.'}
             </p>
           </div>
         )}
@@ -152,11 +199,29 @@ const RewardedAdModal = ({
           {/* TEKLIF aşaması */}
           {adPhase === 'offer' && (
             <>
-              <button onClick={() => setAdPhase('watching')} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, #6366F1, #3B82F6)', color: '#FFF', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(99,102,241,0.35)', fontFamily: 'inherit' }}>
-                🎬 {lang === 'tr' ? 'Reklam İzle (5 sn)' : 'Watch Ad (5s)'}
+              <button 
+                onClick={() => setAdPhase('watching')} 
+                style={{ 
+                  width: '100%', padding: '14px', borderRadius: '14px', border: 'none', 
+                  background: 'linear-gradient(135deg, #6366F1, #3B82F6)', color: '#FFF', 
+                  fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer', 
+                  boxShadow: '0 4px 16px rgba(99,102,241,0.35)', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                }}
+              >
+                <PlayIcon /> {lang === 'tr' ? 'Reklam İzle (5 sn)' : 'Watch Ad (5s)'}
               </button>
-              <button onClick={() => { onClose(); setShowPaywall(true); }} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: isLight ? '1.5px solid #E2E8F0' : '1.5px solid rgba(255,255,255,0.12)', background: isLight ? '#F8FAFC' : 'rgba(255,255,255,0.06)', color: textPrimary, fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'inherit' }}>
-                {lang === 'tr' ? '⭐ Planını Yükselt' : '⭐ Upgrade Plan'}
+              <button 
+                onClick={() => { onClose(); setShowPaywall(true); }} 
+                style={{ 
+                  width: '100%', padding: '14px', borderRadius: '14px', 
+                  border: isLight ? '1.5px solid #E2E8F0' : '1.5px solid rgba(255,255,255,0.12)', 
+                  background: isLight ? '#F8FAFC' : 'rgba(255,255,255,0.06)', 
+                  color: textPrimary, fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                }}
+              >
+                <StarIcon /> {lang === 'tr' ? 'Planını Yükselt' : 'Upgrade Plan'}
               </button>
               <button onClick={onClose} style={{ background: 'none', border: 'none', color: textSecondary, fontSize: '0.82rem', cursor: 'pointer', padding: '4px', fontFamily: 'inherit' }}>
                 {lang === 'tr' ? 'Vazgeç' : 'Cancel'}
@@ -164,14 +229,14 @@ const RewardedAdModal = ({
             </>
           )}
 
-          {/* İZLEME aşaması — hiç buton yok */}
+          {/* İZLEME aşaması */}
           {adPhase === 'watching' && (
             <div style={{ textAlign: 'center', color: textSecondary, fontSize: '0.8rem', fontWeight: 600, padding: '4px 0' }}>
-              {lang === 'tr' ? `⏳ ${countdown} saniye içinde tamamlanacak...` : `⏳ Ad completes in ${countdown} seconds...`}
+              {lang === 'tr' ? `${countdown} saniye içinde tamamlanacak...` : `Ad completes in ${countdown} seconds...`}
             </div>
           )}
 
-          {/* TAMAMLANDI aşaması — sadece ✕ çarpı */}
+          {/* TAMAMLANDI aşaması */}
           {adPhase === 'done' && (
             <button
               onClick={onClose}
@@ -184,7 +249,7 @@ const RewardedAdModal = ({
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
               }}
             >
-              ✕
+              <CloseIcon />
             </button>
           )}
 

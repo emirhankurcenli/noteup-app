@@ -320,7 +320,11 @@ const SettingsSubTab = ({
               borderBottom: isLight ? '1px solid #F1F5F9' : '1px solid rgba(255,255,255,0.06)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.2rem' }}>🌐</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3B82F6' }}>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
                 <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: isLight ? '#0F172A' : '#F8FAFC' }}>
                   {t('selectLanguage')}
                 </h3>
@@ -340,7 +344,10 @@ const SettingsSubTab = ({
                   color: isLight ? '#64748B' : '#94A3B8'
                 }}
               >
-                ✕
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
               </button>
             </div>
 

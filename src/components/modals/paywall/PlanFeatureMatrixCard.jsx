@@ -2,10 +2,10 @@ import React from 'react';
 
 const PlanFeatureMatrixCard = ({ isLight }) => {
   const features = [
-    { title: 'Sınırsız Not & Eklenti', free: 'Sınırlı', ultra: 'Sınırsız ⚡' },
-    { title: 'Gerçek Zamanlı Arkadaş Paylaşımı', free: '❌', ultra: '✅ Tam Erişim' },
-    { title: 'Ses Kaydı & Yüksek Boyutlu Dosyalar', free: '50 MB', ultra: '5 GB 🚀' },
-    { title: 'Uygulama İçi Reklamsız Deneyim', free: 'Reklamlı', ultra: 'Reklamsız 🛡️' }
+    { title: 'Sınırsız Not & Eklenti', free: 'Sınırlı', ultra: 'Sınırsız' },
+    { title: 'Gerçek Zamanlı Arkadaş Paylaşımı', free: 'Yok', ultra: 'Tam Erişim' },
+    { title: 'Ses Kaydı & Yüksek Boyutlu Dosyalar', free: '50 MB', ultra: '5 GB Bulut' },
+    { title: 'Uygulama İçi Reklamsız Deneyim', free: 'Reklamlı', ultra: 'Reklamsız' }
   ];
 
   return (

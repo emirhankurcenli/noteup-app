@@ -68,7 +68,11 @@ const FriendsListSection = ({
                     fontSize: '0.8rem',
                     boxShadow: isGrantedUltra ? '0 2px 8px rgba(245, 158, 11, 0.3)' : 'none'
                   }}>
-                    {isGrantedUltra ? '👑' : (friend.name ? friend.name.charAt(0).toUpperCase() : 'A')}
+                    {isGrantedUltra ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5">
+                        <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+                      </svg>
+                    ) : (friend.name ? friend.name.charAt(0).toUpperCase() : 'A')}
                   </div>
                 )}
                 <div>

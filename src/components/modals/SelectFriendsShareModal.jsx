@@ -190,7 +190,7 @@ const SelectFriendsShareModal = ({
               ? '#F59E0B'
               : (isLight ? '#2563EB' : '#60A5FA'),
           }}>
-            {selectedFriendCodes.length} / {maxAllowed} {bonusSlots > 0 && `(+${bonusSlots} 🎁)`}
+            {selectedFriendCodes.length} / {maxAllowed} {bonusSlots > 0 && `(+${bonusSlots} Bonus)`}
           </span>
         </div>
 

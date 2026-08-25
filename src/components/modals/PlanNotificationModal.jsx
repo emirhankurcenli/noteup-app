@@ -130,7 +130,7 @@ const PlanNotificationModal = ({
 
   const getButtonLabel = () => {
     if (isDown && to === 'lite') return 'Tamam';
-    return 'Kullanmaya Başla 🚀';
+    return 'Kullanmaya Başla';
   };
 
   return (
@@ -200,7 +200,17 @@ const PlanNotificationModal = ({
         {/* Badge Icon */}
         {to !== 'lite' && (
           <div style={{ marginBottom: '16px', display: 'inline-block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}>
-            {to === 'ultra' && <span style={{ fontSize: '64px' }}>👑</span>}
+            {to === 'ultra' && (
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="url(#crownGradModal)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto', filter: 'drop-shadow(0 4px 14px rgba(245,158,11,0.4))' }}>
+                <defs>
+                  <linearGradient id="crownGradModal" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#F59E0B" />
+                    <stop offset="100%" stopColor="#D97706" />
+                  </linearGradient>
+                </defs>
+                <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" fill="#F59E0B" fillOpacity="0.2" />
+              </svg>
+            )}
             {to === 'pro' && (
               <svg viewBox="0 0 100 100" width="64" height="64" style={{ display: 'block', margin: '0 auto', filter: 'drop-shadow(0 4px 12px rgba(37, 99, 235, 0.25))' }}>
                 <rect x="0" y="0" width="100" height="100" rx="24" fill="#2563EB" />
