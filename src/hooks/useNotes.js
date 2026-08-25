@@ -238,7 +238,10 @@ export default function useNotes({
         });
 
         if (changed) {
-          persistNotes(updated);
+          try {
+            const key = getUserScopedKey('s23_notes');
+            localStorage.setItem(key, JSON.stringify(updated));
+          } catch (_) {}
           return updated;
         }
         return prevNotes;

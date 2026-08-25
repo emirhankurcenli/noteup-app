@@ -47,17 +47,27 @@ const useSupabaseSync = ({
         } catch (e) {}
       }
 
-      // 3. Fetch accepted shared notes for this user
+      // 3. Fetch incoming accepted shared notes and outgoing shares for this user
       let acceptedSharedNotes = [];
+      let outgoingShares = [];
       if (myFriendCode) {
         try {
-          const { data: shares, error: sErr } = await supabase
-            .from('note_shares')
-            .select('*')
-            .eq('to_code', myFriendCode)
-            .eq('status', 'accepted');
+          const [incomingRes, outgoingRes] = await Promise.all([
+            supabase
+              .from('note_shares')
+              .select('*')
+              .eq('to_code', myFriendCode)
+              .eq('status', 'accepted'),
+            supabase
+              .from('note_shares')
+              .select('*')
+              .eq('from_code', myFriendCode)
+          ]);
 
-          if (!sErr && shares && shares.length > 0) {
+          const shares = incomingRes.data || [];
+          outgoingShares = outgoingRes.data || [];
+
+          if (shares.length > 0) {
             const sharedNoteIds = shares.map(s => s.note_id).filter(Boolean);
             let sharedNotesFromDb = [];
             if (sharedNoteIds.length > 0) {
@@ -130,12 +140,23 @@ const useSupabaseSync = ({
             return b;
           });
           const localN = localMap.get(n.id);
+          const noteOutgoingShares = (outgoingShares || []).filter(s => s.note_id === n.id);
+          const acceptedOutgoingCodes = noteOutgoingShares.filter(s => s.status === 'accepted').map(s => s.to_code);
+          const pendingOutgoingCodes = noteOutgoingShares.filter(s => s.status === 'pending').map(s => s.to_code);
+
+          const isShared = Boolean(n.is_shared || acceptedOutgoingCodes.length > 0);
+          const hasPendingShare = pendingOutgoingCodes.length > 0;
+          const sharedWith = acceptedOutgoingCodes.length > 0 ? acceptedOutgoingCodes : (localN?.sharedWith || []);
+          const pendingShares = pendingOutgoingCodes.length > 0 ? pendingOutgoingCodes : (localN?.pendingShares || []);
+
           return {
             id: n.id,
             title: n.title || '',
             blocks: parsedBlocks,
-            isShared: n.is_shared,
-            sharedWith: localN?.sharedWith || [],
+            isShared,
+            sharedWith,
+            pendingShares,
+            hasPendingShare,
             isLocked: n.is_locked || false,
             isPinned: n.is_pinned !== undefined && n.is_pinned !== null ? Boolean(n.is_pinned) : Boolean(localN?.isPinned),
             deletedAt: n.deleted_at ? Number(n.deleted_at) : null,
