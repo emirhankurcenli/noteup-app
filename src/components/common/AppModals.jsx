@@ -52,7 +52,7 @@ const AppModals = ({
   notes,
   showReminderModal, setShowReminderModal, reminderTime, setReminderTime, reminderModes, setReminderModes, handleSetReminder,
   activeShareNoteId, setActiveShareNoteId, friends, selectedFriendCodes, setSelectedFriendCodes, handleSendShareInvitation,
-  incomingRequest, handleAcceptShare, handleRejectShare,
+  handleAcceptShare, handleRejectShare,
   lightboxUrl, setLightboxUrl, handleCloseLightbox, lightboxOverlayRef, lightboxImgRef, handleLightboxDoubleTap,
   previewFileModal, setPreviewFileModal,
   showShareModal, setShowShareModal, editingNote, handleShareNoteImage,
@@ -103,16 +103,7 @@ const AppModals = ({
         setPendingShareReward={setPendingShareReward}
       />
 
-      {/* 5. Incoming Share Request Modal */}
-      <IncomingShareModal
-        incomingRequest={incomingRequest}
-        handleAcceptShare={handleAcceptShare}
-        handleRejectShare={handleRejectShare}
-        lang={lang}
-        t={t}
-        isLight={theme === 'light'}
-        triggerHaptic={triggerHaptic}
-      />
+
 
       {/* Lightbox Image Preview */}
       <LightboxModal

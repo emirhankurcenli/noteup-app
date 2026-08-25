@@ -79,8 +79,8 @@ function App() {
     setFriendRequests,
     selectedFriendCodes,
     setSelectedFriendCodes,
-    incomingRequest,
-    setIncomingRequest,
+    pendingShareRequests,
+    setPendingShareRequests,
     isSendingRequest,
     handleSendFriendRequest,
     handleAcceptFriendRequest,
@@ -641,6 +641,9 @@ function App() {
         setActiveShareNoteId={setActiveShareNoteId}
         setNudgeTargetNote={setNudgeTargetNote}
         setSelectedFriendCodes={setSelectedFriendCodes}
+        pendingShareRequests={pendingShareRequests}
+        handleAcceptShare={handleAcceptShare}
+        handleRejectShare={handleRejectShare}
         handleLeaveShare={handleLeaveShare}
         handleRequestMicPermission={handleRequestMicPermission}
         handleRequestStoragePermission={handleRequestStoragePermission}
@@ -699,7 +702,6 @@ function App() {
         selectedFriendCodes={selectedFriendCodes}
         setSelectedFriendCodes={setSelectedFriendCodes}
         handleSendShareInvitation={handleSendShareInvitation}
-        incomingRequest={incomingRequest}
         handleAcceptShare={handleAcceptShare}
         handleRejectShare={handleRejectShare}
         lightboxUrl={lightboxUrl}

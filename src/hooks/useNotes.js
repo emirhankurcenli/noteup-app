@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { cancelLocalNotification } from '../services/notificationService';
 import { registerPlugin } from '@capacitor/core';
@@ -33,6 +33,12 @@ export default function useNotes({
       const updatedNote = e.detail;
       if (!updatedNote || !updatedNote.id) return;
 
+      if (updatedNote.deletedAt) {
+        setEditingNote((prev) => (prev && prev.id === updatedNote.id ? null : prev));
+        setNotes((prevNotes) => prevNotes.filter((n) => n.id !== updatedNote.id));
+        return;
+      }
+
       setEditingNote((prev) => {
         if (prev && prev.id === updatedNote.id) {
           return {
@@ -47,9 +53,21 @@ export default function useNotes({
       });
     };
 
+    const handleRevokedOrRemoved = (e) => {
+      const { noteId } = e.detail || {};
+      if (!noteId) return;
+
+      setEditingNote((prev) => (prev && prev.id === noteId ? null : prev));
+      setNotes((prevNotes) => prevNotes.filter((n) => n.id !== noteId));
+    };
+
     window.addEventListener('noteup_shared_note_live_update', handleLiveNoteUpdate);
+    window.addEventListener('noteup_shared_note_revoked', handleRevokedOrRemoved);
+    window.addEventListener('noteup_shared_note_removed', handleRevokedOrRemoved);
     return () => {
       window.removeEventListener('noteup_shared_note_live_update', handleLiveNoteUpdate);
+      window.removeEventListener('noteup_shared_note_revoked', handleRevokedOrRemoved);
+      window.removeEventListener('noteup_shared_note_removed', handleRevokedOrRemoved);
     };
   }, []);
 
@@ -341,17 +359,31 @@ export default function useNotes({
       cancelText: t('confirmCancel'),
       danger: true,
       onConfirm: async () => {
-        // If owned note was shared, revoke all shares in Supabase so recipients lose access
-        if (targetNote.isShared) {
+        // 1. If note was shared, revoke all shares in Supabase so recipients lose access
+        if (targetNote.isShared || (targetNote.sharedWith && targetNote.sharedWith.length > 0)) {
           try {
             await supabase
               .from('note_shares')
               .update({ status: 'revoked', updated_at: new Date().toISOString() })
-              .eq('note_id', noteId)
-              .eq('from_code', myCode);
+              .eq('note_id', noteId);
           } catch (revokeErr) {
             console.warn("Error revoking shares on trash:", revokeErr);
           }
+        }
+
+        // 2. If it is a received note, leave the share cleanly
+        if (targetNote.sharedFrom && typeof handleLeaveShare === 'function') {
+          handleLeaveShare(noteId);
+        }
+
+        // 3. Update notes table in Supabase
+        if (user && user.uid && !targetNote.sharedFrom) {
+          try {
+            await supabase
+              .from('notes')
+              .update({ deleted_at: Date.now(), is_shared: false, updated_at: new Date().toISOString() })
+              .eq('id', noteId);
+          } catch (err) {}
         }
 
         const noteReminders = reminders.filter(r => r.noteId === noteId);
@@ -535,6 +567,7 @@ export default function useNotes({
         if (user && user.uid) {
           try {
             await supabase.from('notes').delete().in('id', allDeletedIds);
+            await supabase.from('note_shares').delete().in('note_id', allDeletedIds);
           } catch (err) {
             console.error("Error permanently deleting notes from Supabase:", err);
           }

@@ -11,6 +11,52 @@ const IncomingShareModal = ({
 }) => {
   if (!incomingRequest) return null;
 
+  const getFirstLinePreview = () => {
+    let blocks = incomingRequest.noteBlocks;
+    if (typeof blocks === 'string') {
+      try {
+        blocks = JSON.parse(blocks);
+      } catch (_) {
+        blocks = [];
+      }
+    }
+    if (Array.isArray(blocks) && blocks.length > 0) {
+      for (const b of blocks) {
+        if (!b) continue;
+        if (b.type === 'text' && typeof b.content === 'string') {
+          const plain = b.content
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/[\u200B\u8203\r\n]/g, ' ')
+            .trim();
+          if (plain) return plain;
+        } else if (b.type === 'todo' && Array.isArray(b.items) && b.items.length > 0) {
+          const first = b.items.find(i => i && i.text && i.text.trim());
+          if (first) return `☑ ${first.text.trim()}`;
+        } else if (b.type === 'bill' && b.name) {
+          return `💳 ${b.name}: ${b.amount || ''}₺`;
+        } else if (b.type === 'debt' && Array.isArray(b.items) && b.items.length > 0) {
+          const first = b.items.find(d => d && d.name);
+          if (first) return `💰 ${first.name}: ${first.amount || ''}₺`;
+        }
+      }
+    }
+
+    if (typeof incomingRequest.noteContent === 'string' && incomingRequest.noteContent.trim()) {
+      const clean = incomingRequest.noteContent
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/[\u200B\u8203\r\n]/g, ' ')
+        .trim();
+      if (clean) return clean;
+    }
+
+    return '';
+  };
+
+  const firstLineText = getFirstLinePreview();
+  const noteTitle = incomingRequest.noteTitle || (lang === 'tr' ? 'Başlıksız Not' : 'Untitled Note');
+
   return (
     <div
       style={{
@@ -70,29 +116,35 @@ const IncomingShareModal = ({
           }}
         />
 
-        {/* 3D Icon Badge */}
+        {/* Modern Clean SVG Badge */}
         <div
           style={{
-            width: '54px',
-            height: '54px',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+            width: '56px',
+            height: '56px',
+            borderRadius: '18px',
+            background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.6rem',
-            boxShadow: '0 8px 20px rgba(59, 130, 246, 0.35)',
+            boxShadow: '0 8px 24px rgba(37, 99, 235, 0.35)',
             flexShrink: 0,
+            color: '#FFFFFF'
           }}
         >
-          🌐
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
         </div>
 
-        {/* Title */}
+        {/* Title & Sender */}
         <div style={{ textAlign: 'center' }}>
           <h3
             style={{
-              fontSize: '1.15rem',
+              fontSize: '1.18rem',
               fontWeight: 800,
               color: isLight ? '#0F172A' : '#F8FAFC',
               margin: '0 0 4px 0',
@@ -112,7 +164,10 @@ const IncomingShareModal = ({
               marginTop: '4px',
             }}
           >
-            <span style={{ fontSize: '0.85rem' }}>👤</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: isLight ? '#2563EB' : '#93C5FD' }}>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
             <span
               style={{
                 fontSize: '0.82rem',
@@ -125,54 +180,61 @@ const IncomingShareModal = ({
           </div>
         </div>
 
-        {/* Note title & invite description */}
-        <p
-          style={{
-            fontSize: '0.86rem',
-            color: isLight ? '#475569' : '#94A3B8',
-            textAlign: 'center',
-            margin: 0,
-            lineHeight: 1.45,
-          }}
-        >
-          {lang === 'tr' ? (
-            <>
-              sizinle <strong style={{ color: isLight ? '#0F172A' : '#F1F5F9' }}>"{incomingRequest.noteTitle}"</strong> notunu ortak kullanmak istiyor.
-            </>
-          ) : (
-            <>
-              wants to collaborate with you on <strong style={{ color: isLight ? '#0F172A' : '#F1F5F9' }}>"{incomingRequest.noteTitle}"</strong>.
-            </>
-          )}
-        </p>
-
-        {/* Note Preview Snippet */}
+        {/* Note Card (Title + First Line Content) */}
         <div
           style={{
             width: '100%',
-            background: isLight ? 'rgba(241, 245, 249, 0.7)' : 'rgba(255, 255, 255, 0.03)',
-            padding: '12px 14px',
-            borderRadius: '14px',
-            fontSize: '0.78rem',
-            color: isLight ? '#64748B' : '#94A3B8',
+            background: isLight ? 'rgba(241, 245, 249, 0.8)' : 'rgba(255, 255, 255, 0.04)',
+            padding: '14px 16px',
+            borderRadius: '16px',
             textAlign: 'left',
-            maxHeight: '90px',
+            maxHeight: '110px',
             overflowY: 'auto',
-            border: isLight ? '1px solid #E2E8F0' : '1px dashed rgba(255, 255, 255, 0.1)',
+            border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)',
             boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '5px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px', opacity: 0.7 }}>
-            <span>📝</span>
-            <span style={{ fontSize: '0.72rem', fontWeight: 600 }}>Önizleme:</span>
+          <div
+            style={{
+              fontSize: '0.96rem',
+              fontWeight: 800,
+              color: isLight ? '#0F172A' : '#F1F5F9',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {noteTitle}
           </div>
-          <p style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-            {incomingRequest.noteContent || (lang === 'tr' ? '(Boş not içeriği)' : '(Empty note content)')}
-          </p>
+          {firstLineText ? (
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.82rem',
+                color: isLight ? '#64748B' : '#94A3B8',
+                lineHeight: 1.4,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {firstLineText}
+            </p>
+          ) : (
+            <span style={{ fontSize: '0.78rem', color: isLight ? '#94A3B8' : '#64748B', fontStyle: 'italic' }}>
+              {lang === 'tr' ? '(İçerik boş)' : '(Empty content)'}
+            </span>
+          )}
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '6px' }}>
+        <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '4px' }}>
           <button
             onClick={() => {
               triggerHaptic?.('light');
@@ -221,4 +283,3 @@ const IncomingShareModal = ({
 };
 
 export default IncomingShareModal;
-

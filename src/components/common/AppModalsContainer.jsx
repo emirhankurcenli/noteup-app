@@ -16,7 +16,6 @@ export default function AppModalsContainer({
   selectedFriendCodes,
   setSelectedFriendCodes,
   handleSendShareInvitation,
-  incomingRequest,
   handleAcceptShare,
   handleRejectShare,
   lightboxUrl,
@@ -98,7 +97,6 @@ export default function AppModalsContainer({
       selectedFriendCodes={selectedFriendCodes}
       setSelectedFriendCodes={setSelectedFriendCodes}
       handleSendShareInvitation={handleSendShareInvitation}
-      incomingRequest={incomingRequest}
       handleAcceptShare={handleAcceptShare}
       handleRejectShare={handleRejectShare}
       lightboxUrl={lightboxUrl}

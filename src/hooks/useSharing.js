@@ -20,7 +20,7 @@ export default function useSharing({
   setShowPaywall,
   setShowRewardedAdModal,
 }) {
-  const [incomingRequest, setIncomingRequest] = useState(null);
+  const [pendingShareRequests, setPendingShareRequests] = useState([]);
   const [pendingShareReward, setPendingShareReward] = useState(null);
 
   // --- SUB-HOOK: FRIEND MANAGER ---
@@ -36,7 +36,7 @@ export default function useSharing({
   useSharedNotesSync({
     myCode,
     setToast,
-    setIncomingRequest,
+    setPendingShareRequests,
     setFriendRequests: friendMgr.setFriendRequests,
     setFriends: friendMgr.setFriends,
   });
@@ -50,6 +50,13 @@ export default function useSharing({
       if (notes && Array.isArray(notes) && typeof saveNotes === 'function') {
         const existing = notes.find(n => n.id === updatedNote.id);
         if (existing) {
+          if (updatedNote.deletedAt) {
+            const filtered = notes.filter(n => n.id !== updatedNote.id);
+            if (filtered.length !== notes.length) {
+              saveNotes(filtered);
+            }
+            return;
+          }
           const updated = notes.map(n => {
             if (n.id === updatedNote.id) {
               return {
@@ -72,7 +79,7 @@ export default function useSharing({
       if (!noteId) return;
 
       if (notes && Array.isArray(notes) && typeof saveNotes === 'function') {
-        const filtered = notes.filter(n => !(n.id === noteId && n.sharedFrom));
+        const filtered = notes.filter(n => n.id !== noteId);
         if (filtered.length !== notes.length) {
           saveNotes(filtered);
         }
@@ -253,11 +260,12 @@ export default function useSharing({
     });
   };
 
-  const handleAcceptShare = async () => {
-    if (!incomingRequest) return;
-    const req = { ...incomingRequest };
-    // Instantly dismiss modal so UI never hangs
-    setIncomingRequest(null);
+  const handleAcceptShare = async (targetRequest) => {
+    const req = targetRequest || pendingShareRequests[0];
+    if (!req) return;
+
+    // Instantly remove from pending list
+    setPendingShareRequests(prev => prev.filter(r => r.id !== req.id && r.noteId !== req.noteId));
 
     // Enforce maxSharedNotes limit for Lite
     const limits = PLAN_LIMITS[userPlan] || PLAN_LIMITS.lite;
@@ -322,16 +330,17 @@ export default function useSharing({
 
     setToast({
       title: "✅ Davet Kabul Edildi",
-      msg: `"${req.noteTitle}" notu paylaşılanlara eklendi.`
+      msg: `"${req.noteTitle || 'Not'}" listenize eklendi.`
     });
     friendMgr.playChime();
   };
 
-  const handleRejectShare = async () => {
-    if (!incomingRequest) return;
-    const req = { ...incomingRequest };
-    // Instantly dismiss modal
-    setIncomingRequest(null);
+  const handleRejectShare = async (targetRequest) => {
+    const req = targetRequest || pendingShareRequests[0];
+    if (!req) return;
+
+    // Instantly remove from pending list
+    setPendingShareRequests(prev => prev.filter(r => r.id !== req.id && r.noteId !== req.noteId));
 
     // Clean up if this note was previously added to state/storage mistakenly
     if (notes && Array.isArray(notes)) {
@@ -435,8 +444,8 @@ export default function useSharing({
     setFriendRequests: friendMgr.setFriendRequests,
     selectedFriendCodes: friendMgr.selectedFriendCodes,
     setSelectedFriendCodes: friendMgr.setSelectedFriendCodes,
-    incomingRequest,
-    setIncomingRequest,
+    pendingShareRequests,
+    setPendingShareRequests,
     isSendingRequest: friendMgr.isSendingRequest,
     handleSendFriendRequest: friendMgr.handleSendFriendRequest,
     handleAcceptFriendRequest: friendMgr.handleAcceptFriendRequest,

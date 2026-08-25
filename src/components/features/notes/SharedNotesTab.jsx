@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import NotesGrid from './NotesGrid';
 
 const SharedNotesTab = ({
@@ -23,186 +23,213 @@ const SharedNotesTab = ({
   lang,
   t,
   myCode,
-  handleLeaveShare
+  handleLeaveShare,
+  pendingShareRequests = [],
+  handleAcceptShare,
+  handleRejectShare,
 }) => {
-  const [filter, setFilter] = useState('all'); // 'all' | 'mine' | 'withMe'
   const isLight = theme === 'light';
 
-  // 1. All active shared notes
+  // All active shared notes
   const allSharedNotes = useMemo(() => {
     return (notes || []).filter(n => n && !n.deletedAt && (n.isShared || Boolean(n.sharedFrom) || (n.sharedWith && n.sharedWith.length > 0)));
   }, [notes]);
 
-  // 2. Filtered list based on segmented selection
-  const filteredNotes = useMemo(() => {
-    if (filter === 'mine') {
-      return allSharedNotes.filter(n => !n.sharedFrom);
+  const getFirstLinePreview = (req) => {
+    if (!req) return '';
+    let blocks = req.noteBlocks;
+    if (typeof blocks === 'string') {
+      try {
+        blocks = JSON.parse(blocks);
+      } catch (_) {
+        blocks = [];
+      }
     }
-    if (filter === 'withMe') {
-      return allSharedNotes.filter(n => Boolean(n.sharedFrom));
+    if (Array.isArray(blocks) && blocks.length > 0) {
+      for (const b of blocks) {
+        if (!b) continue;
+        if (b.type === 'text' && typeof b.content === 'string') {
+          const plain = b.content
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/[\u200B\u8203\r\n]/g, ' ')
+            .trim();
+          if (plain) return plain;
+        } else if (b.type === 'todo' && Array.isArray(b.items) && b.items.length > 0) {
+          const first = b.items.find(i => i && i.text && i.text.trim());
+          if (first) return `☑ ${first.text.trim()}`;
+        } else if (b.type === 'bill' && b.name) {
+          return `💳 ${b.name}: ${b.amount || ''}₺`;
+        } else if (b.type === 'debt' && Array.isArray(b.items) && b.items.length > 0) {
+          const first = b.items.find(d => d && d.name);
+          if (first) return `💰 ${first.name}: ${first.amount || ''}₺`;
+        }
+      }
     }
-    return allSharedNotes;
-  }, [allSharedNotes, filter]);
 
-  const mineCount = useMemo(() => allSharedNotes.filter(n => !n.sharedFrom).length, [allSharedNotes]);
-  const withMeCount = useMemo(() => allSharedNotes.filter(n => Boolean(n.sharedFrom)).length, [allSharedNotes]);
+    if (typeof req.noteContent === 'string' && req.noteContent.trim()) {
+      const clean = req.noteContent
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/[\u200B\u8203\r\n]/g, ' ')
+        .trim();
+      if (clean) return clean;
+    }
+
+    return '';
+  };
+
+  const hasPending = pendingShareRequests && pendingShareRequests.length > 0;
 
   return (
-    <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
       {/* ── Header ───────────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
-          🤝 {t('sharedNotesTab') || 'Paylaşılan Notlar'}
+          {t('sharedNotesTab') || 'Paylaşılan Notlar'}
         </h2>
-        <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-          {t('sharedNotesSub') || 'Arkadaşlarınızla ortaklaşa çalıştığınız tüm notlar'}
-        </span>
       </div>
 
-      {/* ── Segmented Control Filter Chips ────────────────────────────────────── */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '4px',
-          background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '16px',
-          border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)',
-          width: '100%',
-          boxSizing: 'border-box',
-          overflowX: 'auto'
-        }}
-      >
-        <button
-          onClick={() => setFilter('all')}
-          style={{
-            flex: 1,
-            padding: '8px 12px',
-            borderRadius: '12px',
-            border: 'none',
-            fontSize: '0.82rem',
-            fontWeight: filter === 'all' ? 800 : 600,
-            cursor: 'pointer',
-            background: filter === 'all'
-              ? (isLight ? '#FFFFFF' : 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)')
-              : 'transparent',
-            color: filter === 'all'
-              ? (isLight ? '#1D4ED8' : '#FFFFFF')
-              : 'var(--text-muted)',
-            boxShadow: filter === 'all' ? (isLight ? '0 2px 8px rgba(0,0,0,0.06)' : '0 2px 10px rgba(59, 130, 246, 0.3)') : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <span>{t('allShared') || 'Tümü'}</span>
-          <span
-            style={{
-              fontSize: '0.72rem',
-              padding: '1px 6px',
-              borderRadius: '8px',
-              background: filter === 'all' ? (isLight ? '#EFF6FF' : 'rgba(255,255,255,0.25)') : 'rgba(0,0,0,0.06)',
-              color: filter === 'all' ? (isLight ? '#2563EB' : '#FFFFFF') : 'var(--text-muted)'
-            }}
-          >
-            {allSharedNotes.length}
-          </span>
-        </button>
+      {/* ── Pending Share Invitations Section ─────────────────────────────────── */}
+      {hasPending && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              {t('pendingShareRequests') || 'Gelen Davetler'}
+            </span>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                padding: '2px 8px',
+                borderRadius: '10px',
+                background: '#3B82F6',
+                color: '#FFFFFF'
+              }}
+            >
+              {pendingShareRequests.length}
+            </span>
+          </div>
 
-        <button
-          onClick={() => setFilter('mine')}
-          style={{
-            flex: 1,
-            padding: '8px 12px',
-            borderRadius: '12px',
-            border: 'none',
-            fontSize: '0.82rem',
-            fontWeight: filter === 'mine' ? 800 : 600,
-            cursor: 'pointer',
-            background: filter === 'mine'
-              ? (isLight ? '#FFFFFF' : 'linear-gradient(135deg, #10B981 0%, #059669 100%)')
-              : 'transparent',
-            color: filter === 'mine'
-              ? (isLight ? '#047857' : '#FFFFFF')
-              : 'var(--text-muted)',
-            boxShadow: filter === 'mine' ? (isLight ? '0 2px 8px rgba(0,0,0,0.06)' : '0 2px 10px rgba(16, 185, 129, 0.3)') : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <span>📤 {t('sharedByMe') || 'Paylaştıklarım'}</span>
-          <span
-            style={{
-              fontSize: '0.72rem',
-              padding: '1px 6px',
-              borderRadius: '8px',
-              background: filter === 'mine' ? (isLight ? '#ECFDF5' : 'rgba(255,255,255,0.25)') : 'rgba(0,0,0,0.06)',
-              color: filter === 'mine' ? (isLight ? '#059669' : '#FFFFFF') : 'var(--text-muted)'
-            }}
-          >
-            {mineCount}
-          </span>
-        </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {pendingShareRequests.map((req) => {
+              const firstLine = getFirstLinePreview(req);
+              return (
+                <div
+                  key={req.id}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    padding: '14px 16px',
+                    borderRadius: '18px',
+                    background: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.04)',
+                    border: isLight ? '1.5px solid #E2E8F0' : '1.5px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: isLight ? '0 4px 14px rgba(0,0,0,0.03)' : '0 4px 20px rgba(0,0,0,0.2)',
+                  }}
+                  className="animate-slide-up"
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '12px',
+                        background: isLight ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.15)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#3B82F6',
+                        flexShrink: 0
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                      </svg>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, flex: 1 }}>
+                      <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {req.noteTitle || (lang === 'tr' ? 'Başlıksız Not' : 'Untitled Note')}
+                      </span>
+                      <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        {req.fromName || 'Arkadaş'}
+                      </span>
+                    </div>
+                  </div>
 
-        <button
-          onClick={() => setFilter('withMe')}
-          style={{
-            flex: 1,
-            padding: '8px 12px',
-            borderRadius: '12px',
-            border: 'none',
-            fontSize: '0.82rem',
-            fontWeight: filter === 'withMe' ? 800 : 600,
-            cursor: 'pointer',
-            background: filter === 'withMe'
-              ? (isLight ? '#FFFFFF' : 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)')
-              : 'transparent',
-            color: filter === 'withMe'
-              ? (isLight ? '#6D28D9' : '#FFFFFF')
-              : 'var(--text-muted)',
-            boxShadow: filter === 'withMe' ? (isLight ? '0 2px 8px rgba(0,0,0,0.06)' : '0 2px 10px rgba(139, 92, 246, 0.3)') : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <span>📥 {t('sharedWithMe') || 'Benimle Paylaşılanlar'}</span>
-          <span
-            style={{
-              fontSize: '0.72rem',
-              padding: '1px 6px',
-              borderRadius: '8px',
-              background: filter === 'withMe' ? (isLight ? '#F5F3FF' : 'rgba(255,255,255,0.25)') : 'rgba(0,0,0,0.06)',
-              color: filter === 'withMe' ? (isLight ? '#7C3AED' : '#FFFFFF') : 'var(--text-muted)'
-            }}
-          >
-            {withMeCount}
-          </span>
-        </button>
-      </div>
+                  {firstLine ? (
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '0.82rem',
+                        color: 'var(--text-muted)',
+                        lineHeight: 1.35,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {firstLine}
+                    </p>
+                  ) : null}
+
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
+                    <button
+                      onClick={() => handleRejectShare?.(req)}
+                      style={{
+                        flex: 1,
+                        padding: '9px 12px',
+                        borderRadius: '12px',
+                        border: isLight ? '1px solid #FECACA' : '1px solid rgba(239, 68, 68, 0.3)',
+                        background: isLight ? '#FEF2F2' : 'rgba(239, 68, 68, 0.1)',
+                        color: '#EF4444',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {t('reject') || 'Reddet'}
+                    </button>
+                    <button
+                      onClick={() => handleAcceptShare?.(req)}
+                      style={{
+                        flex: 1.2,
+                        padding: '9px 12px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                        color: '#FFFFFF',
+                        fontSize: '0.82rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
+                      }}
+                    >
+                      {t('accept') || 'Kabul Et'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Notes List or Empty State ─────────────────────────────────────────── */}
-      {filteredNotes.length === 0 ? (
+      {allSharedNotes.length === 0 && !hasPending ? (
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '48px 20px',
+            padding: '56px 20px',
             textAlign: 'center',
-            gap: '12px',
+            gap: '14px',
             background: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.02)',
             borderRadius: '20px',
             border: isLight ? '1px dashed #CBD5E1' : '1px dashed rgba(255, 255, 255, 0.12)'
@@ -210,36 +237,30 @@ const SharedNotesTab = ({
         >
           <div
             style={{
-              width: '60px',
-              height: '60px',
+              width: '64px',
+              height: '64px',
               borderRadius: '20px',
-              background: isLight ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.15)',
+              background: isLight ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.12)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.8rem'
+              color: '#3B82F6'
             }}
           >
-            {filter === 'mine' ? '📤' : (filter === 'withMe' ? '📥' : '🤝')}
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
           </div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            {filter === 'mine'
-              ? (t('noSharedByMeTitle') || 'Henüz paylaştığınız bir not yok')
-              : filter === 'withMe'
-              ? (t('noSharedWithMeTitle') || 'Sizinle paylaşılan bir not yok')
-              : (t('noSharedNotesTitle') || 'Paylaşılan not bulunamadı')}
+            {t('noSharedNotesTitle') || 'Paylaşılan not bulunamadı'}
           </h3>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, maxWidth: '280px', lineHeight: 1.4 }}>
-            {filter === 'mine'
-              ? (t('noSharedByMeSub') || 'Bir notu açıp menüden "Arkadaşınla Paylaş" seçeneğini kullanarak arkadaşlarınızı davet edebilirsiniz.')
-              : filter === 'withMe'
-              ? (t('noSharedWithMeSub') || 'Arkadaşlarınız sizinle bir not paylaştığında burada görünecektir.')
-              : (t('noSharedNotesSub') || 'Notlarınızı arkadaşlarınızla paylaşarak birlikte eş zamanlı çalışabilirsiniz.')}
-          </p>
         </div>
       ) : (
         <NotesGrid
-          visibleNotes={filteredNotes}
+          visibleNotes={allSharedNotes}
           reminders={reminders}
           activeMenuNoteId={activeMenuNoteId}
           setActiveMenuNoteId={setActiveMenuNoteId}

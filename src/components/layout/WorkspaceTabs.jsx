@@ -8,6 +8,9 @@ import SearchTab from '../features/search/SearchTab';
 
 const WorkspaceTabs = ({
   handleLeaveShare,
+  pendingShareRequests,
+  handleAcceptShare,
+  handleRejectShare,
   activeTab,
   getVisibleNotes,
   notes,
@@ -171,6 +174,9 @@ const WorkspaceTabs = ({
           t={t}
           myCode={myCode}
           handleLeaveShare={handleLeaveShare}
+          pendingShareRequests={pendingShareRequests}
+          handleAcceptShare={handleAcceptShare}
+          handleRejectShare={handleRejectShare}
         />
       )}
 

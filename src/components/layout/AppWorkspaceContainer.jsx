@@ -99,6 +99,9 @@ export default function AppWorkspaceContainer({
   setActiveShareNoteId,
   setNudgeTargetNote,
   setSelectedFriendCodes,
+  pendingShareRequests,
+  handleAcceptShare,
+  handleRejectShare,
   handleLeaveShare,
   handleRequestMicPermission,
   handleRequestStoragePermission,
@@ -271,6 +274,9 @@ export default function AppWorkspaceContainer({
         setShowReminderModal={setShowReminderModal}
         setActiveShareNoteId={setActiveShareNoteId}
         setNudgeTargetNote={setNudgeTargetNote}
+        pendingShareRequests={pendingShareRequests}
+        handleAcceptShare={handleAcceptShare}
+        handleRejectShare={handleRejectShare}
         permissionStates={permissionStates}
         handleCancelReminder={handleCancelReminder}
         handleRestoreNote={handleRestoreNote}

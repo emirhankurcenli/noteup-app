@@ -5,7 +5,7 @@ import { playChime } from '../services/soundService';
 export const useSharedNotesSync = ({
   myCode,
   setToast,
-  setIncomingRequest,
+  setPendingShareRequests,
   setFriendRequests,
   setFriends,
 }) => {
@@ -25,22 +25,20 @@ export const useSharedNotesSync = ({
           .eq('status', 'pending')
           .order('created_at', { ascending: false });
 
-        if (!error && data && data.length > 0) {
-          const firstUnprocessed = data.find(req => !processedRequestIdsRef.current.has(req.id));
-          if (firstUnprocessed) {
-            processedRequestIdsRef.current.add(firstUnprocessed.id);
-            setIncomingRequest({
-              id: firstUnprocessed.id,
-              fromCode: firstUnprocessed.from_code,
-              fromName: firstUnprocessed.from_name || 'Arkadaş',
-              toCode: firstUnprocessed.to_code,
-              noteId: firstUnprocessed.note_id,
-              noteTitle: firstUnprocessed.note_title,
-              noteBlocks: firstUnprocessed.note_blocks,
-              timestamp: new Date(firstUnprocessed.created_at).getTime(),
-              processed: false,
-            });
-          }
+        if (!error && data && Array.isArray(data)) {
+          const formatted = data.map((item) => ({
+            id: item.id,
+            fromCode: item.from_code,
+            fromName: item.from_name || 'Arkadaş',
+            toCode: item.to_code,
+            noteId: item.note_id,
+            noteTitle: item.note_title,
+            noteBlocks: item.note_blocks,
+            timestamp: new Date(item.created_at).getTime(),
+            processed: false,
+          }));
+
+          setPendingShareRequests(formatted);
         }
       } catch (err) {
         console.warn('Error fetching note shares from Supabase:', err);
@@ -83,18 +81,29 @@ export const useSharedNotesSync = ({
             recNew.to_code === myCode &&
             recNew.status === 'pending'
           ) {
+            const newReq = {
+              id: recNew.id,
+              fromCode: recNew.from_code,
+              fromName: recNew.from_name || 'Arkadaş',
+              toCode: recNew.to_code,
+              noteId: recNew.note_id,
+              noteTitle: recNew.note_title,
+              noteBlocks: recNew.note_blocks,
+              timestamp: new Date(recNew.created_at).getTime(),
+              processed: false,
+            };
+
+            setPendingShareRequests((prev) => {
+              const existing = prev.some((r) => r.id === newReq.id);
+              if (existing) return prev;
+              return [newReq, ...prev];
+            });
+
             if (!processedRequestIdsRef.current.has(recNew.id)) {
               processedRequestIdsRef.current.add(recNew.id);
-              setIncomingRequest({
-                id: recNew.id,
-                fromCode: recNew.from_code,
-                fromName: recNew.from_name || 'Arkadaş',
-                toCode: recNew.to_code,
-                noteId: recNew.note_id,
-                noteTitle: recNew.note_title,
-                noteBlocks: recNew.note_blocks,
-                timestamp: new Date(recNew.created_at).getTime(),
-                processed: false,
+              setToast?.({
+                title: '🔔 Paylaşılan Not Daveti',
+                msg: `"${recNew.from_name || 'Arkadaşınız'}" sizinle "${recNew.note_title || 'Not'}" notunu paylaştı. Paylaşılanlar sekmesinden kabul edebilirsiniz.`,
               });
               playChime();
             }
@@ -146,66 +155,100 @@ export const useSharedNotesSync = ({
             );
           }
 
-          // 4. Share revoked / terminated by Owner (UPDATE to_code == myCode status == 'revoked')
+          // 4. Share revoked / terminated by Owner
           if (
             payload.eventType === 'UPDATE' &&
             recNew &&
-            recNew.to_code === myCode &&
             recNew.status === 'revoked'
           ) {
+            setPendingShareRequests((prev) => prev.filter((r) => r.id !== recNew.id && r.noteId !== recNew.note_id));
             window.dispatchEvent(
               new CustomEvent('noteup_shared_note_revoked', {
-                detail: { noteId: recNew.note_id, fromCode: recNew.from_code },
+                detail: { noteId: recNew.note_id, fromCode: recNew.from_code, toCode: recNew.to_code },
               })
             );
-            setToast?.({
-              title: '🔒 Paylaşım Sonlandırıldı',
-              msg: `"${recNew.note_title || 'Not'}" notunun sahibi paylaşımı sonlandırdı.`,
-            });
+            if (recNew.to_code === myCode) {
+              setToast?.({
+                title: '🔒 Paylaşım Sonlandırıldı',
+                msg: `"${recNew.note_title || 'Not'}" notunun sahibi paylaşımı sonlandırdı.`,
+              });
+            }
           }
 
-          // 5. Share record deleted (DELETE to_code == myCode)
-          if (payload.eventType === 'DELETE' && recOld && recOld.to_code === myCode) {
-            window.dispatchEvent(
-              new CustomEvent('noteup_shared_note_removed', {
-                detail: { noteId: recOld.note_id, fromCode: recOld.from_code },
-              })
-            );
+          // 5. Share record deleted
+          if (payload.eventType === 'DELETE') {
+            const deletedNoteId = recOld?.note_id || payload.old?.note_id;
+            const deletedId = recOld?.id || payload.old?.id;
+            if (deletedId || deletedNoteId) {
+              setPendingShareRequests((prev) => prev.filter((r) => r.id !== deletedId && r.noteId !== deletedNoteId));
+            }
+            if (deletedNoteId) {
+              window.dispatchEvent(
+                new CustomEvent('noteup_shared_note_removed', {
+                  detail: { noteId: deletedNoteId },
+                })
+              );
+            }
           }
         }
       );
 
-      // Listen to notes table changes for live content synchronization
+      // Listen to notes table changes for live content synchronization and deletion
       shareChannel.on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'notes',
         },
         (payload) => {
           const recNew = payload.new;
-          if (recNew && recNew.is_shared) {
-            let parsedBlocks = [];
-            try {
-              if (Array.isArray(recNew.blocks)) parsedBlocks = recNew.blocks;
-              else if (typeof recNew.blocks === 'string') parsedBlocks = JSON.parse(recNew.blocks);
-            } catch (e) {
-              parsedBlocks = [];
+          const recOld = payload.old;
+
+          if (payload.eventType === 'DELETE') {
+            const deletedId = recOld?.id || payload.old?.id;
+            if (deletedId) {
+              window.dispatchEvent(
+                new CustomEvent('noteup_shared_note_removed', {
+                  detail: { noteId: deletedId },
+                })
+              );
+            }
+            return;
+          }
+
+          if (recNew) {
+            if (recNew.deleted_at) {
+              window.dispatchEvent(
+                new CustomEvent('noteup_shared_note_revoked', {
+                  detail: { noteId: recNew.id },
+                })
+              );
+              return;
             }
 
-            window.dispatchEvent(
-              new CustomEvent('noteup_shared_note_live_update', {
-                detail: {
-                  id: recNew.id,
-                  title: recNew.title || '',
-                  blocks: parsedBlocks,
-                  isShared: recNew.is_shared,
-                  deletedAt: recNew.deleted_at ? Number(recNew.deleted_at) : null,
-                  updatedAt: recNew.updated_at ? new Date(recNew.updated_at).getTime() : Date.now(),
-                },
-              })
-            );
+            if (recNew.is_shared) {
+              let parsedBlocks = [];
+              try {
+                if (Array.isArray(recNew.blocks)) parsedBlocks = recNew.blocks;
+                else if (typeof recNew.blocks === 'string') parsedBlocks = JSON.parse(recNew.blocks);
+              } catch (e) {
+                parsedBlocks = [];
+              }
+
+              window.dispatchEvent(
+                new CustomEvent('noteup_shared_note_live_update', {
+                  detail: {
+                    id: recNew.id,
+                    title: recNew.title || '',
+                    blocks: parsedBlocks,
+                    isShared: recNew.is_shared,
+                    deletedAt: recNew.deleted_at ? Number(recNew.deleted_at) : null,
+                    updatedAt: recNew.updated_at ? new Date(recNew.updated_at).getTime() : Date.now(),
+                  },
+                })
+              );
+            }
           }
         }
       );
@@ -219,58 +262,87 @@ export const useSharedNotesSync = ({
       console.warn('[Realtime] Failed to initialize note_shares channel:', e);
     }
 
-    const handleStorageChange = (e) => {
-      if (e.key === 's23_friend_requests' && typeof setFriendRequests === 'function') {
-        const reqs = JSON.parse(e.newValue || '[]');
-        setFriendRequests(reqs);
+    // 3. Supabase Realtime for Friend Requests
+    let friendsChannel = null;
+    try {
+      const activeChannels = supabase.getChannels();
+      activeChannels.forEach((ch) => {
+        if (ch && ch.topic && ch.topic.includes(`friends_sync_${myCode}`)) {
+          try {
+            supabase.removeChannel(ch);
+          } catch (e) {}
+        }
+      });
 
-        const acceptedSentRequest = reqs.find((r) => r.fromCode === myCode && r.status === 'accepted');
-        if (acceptedSentRequest) {
-          const newFriendCode = acceptedSentRequest.toCode;
-          const currentFriends = JSON.parse(localStorage.getItem('s23_friends_' + myCode) || '[]');
-          if (!currentFriends.some((f) => f.code === newFriendCode)) {
-            const newFriend = {
-              code: newFriendCode,
-              name: acceptedSentRequest.toName || 'Arkadaş (' + newFriendCode.substring(9) + ')',
-            };
-            const updatedFriends = [...currentFriends, newFriend];
-            if (typeof setFriends === 'function') setFriends(updatedFriends);
-            localStorage.setItem('s23_friends_' + myCode, JSON.stringify(updatedFriends));
+      const friendsChannelName = `friends_sync_${myCode}_${Date.now()}`;
+      friendsChannel = supabase.channel(friendsChannelName);
+
+      friendsChannel.on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'friend_requests',
+        },
+        (payload) => {
+          const recNew = payload.new;
+          const recOld = payload.old;
+
+          if (payload.eventType === 'INSERT' && recNew && recNew.to_code === myCode && recNew.status === 'pending') {
+            setFriendRequests((prev) => {
+              const exists = prev.some((r) => r.id === recNew.id);
+              if (exists) return prev;
+              return [
+                {
+                  id: recNew.id,
+                  fromCode: recNew.from_code,
+                  fromName: recNew.from_name,
+                  toCode: recNew.to_code,
+                  toName: recNew.to_name,
+                  status: 'pending',
+                  timestamp: new Date(recNew.created_at).getTime(),
+                },
+                ...prev,
+              ];
+            });
+
             setToast?.({
-              title: '🎉 Davet Kabul Edildi',
-              msg: `${newFriend.name} arkadaşlık davetinizi kabul etti!`,
+              title: '👋 Yeni Arkadaşlık İsteği',
+              msg: `"${recNew.from_name || 'Bir kullanıcı'}" size arkadaşlık isteği gönderdi.`,
             });
             playChime();
           }
-        }
-      }
-      if (e.key === `s23_friends_${myCode}` && typeof setFriends === 'function') {
-        setFriends(JSON.parse(e.newValue || '[]'));
-      }
-      if (e.key === `s23_nudge_${myCode}`) {
-        const nudge = JSON.parse(e.newValue || '{}');
-        if (nudge.fromName) {
-          const customNoteMsg = nudge.customMessage ? `"${nudge.customMessage}"` : 'Sana bu notla ilgili bir bildirim gönderdi!';
-          setToast?.({
-            title: `🔔 Paylaşımlı Not Bildirimi`,
-            msg: `${nudge.fromName} ("${nudge.noteTitle}"): ${customNoteMsg}`,
-          });
-          playChime();
-        }
-      }
-    };
 
-    window.addEventListener('storage', handleStorageChange);
+          if (payload.eventType === 'UPDATE' && recNew && recNew.from_code === myCode && recNew.status === 'accepted') {
+            setToast?.({
+              title: '🎉 Arkadaşlık Kabul Edildi!',
+              msg: `"${recNew.to_name || 'Arkadaşınız'}" isteğinizi kabul etti.`,
+            });
+            playChime();
+          }
+
+          if (payload.eventType === 'UPDATE' && recNew && recNew.to_code === myCode && recNew.status !== 'pending') {
+            setFriendRequests((prev) => prev.filter((r) => r.id !== recNew.id));
+          }
+        }
+      );
+
+      friendsChannel.subscribe();
+    } catch (e) {
+      console.warn('[Realtime] Failed to initialize friends channel:', e);
+    }
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
       if (shareChannel) {
         try {
           supabase.removeChannel(shareChannel);
         } catch (e) {}
       }
+      if (friendsChannel) {
+        try {
+          supabase.removeChannel(friendsChannel);
+        } catch (e) {}
+      }
     };
-  }, [myCode, setToast, setIncomingRequest, setFriendRequests, setFriends]);
+  }, [myCode]);
 };
-
-export default useSharedNotesSync;
