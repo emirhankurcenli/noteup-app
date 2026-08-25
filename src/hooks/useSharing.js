@@ -41,61 +41,7 @@ export default function useSharing({
     setFriends: friendMgr.setFriends,
   });
 
-  // --- LISTEN TO REALTIME LIVE NOTE UPDATES & REVOCATIONS ---
-  useEffect(() => {
-    const handleLiveUpdate = (e) => {
-      const updatedNote = e.detail;
-      if (!updatedNote || !updatedNote.id) return;
 
-      if (notes && Array.isArray(notes) && typeof saveNotes === 'function') {
-        const existing = notes.find(n => n.id === updatedNote.id);
-        if (existing) {
-          if (updatedNote.deletedAt) {
-            const filtered = notes.filter(n => n.id !== updatedNote.id);
-            if (filtered.length !== notes.length) {
-              saveNotes(filtered);
-            }
-            return;
-          }
-          const updated = notes.map(n => {
-            if (n.id === updatedNote.id) {
-              return {
-                ...n,
-                title: updatedNote.title !== undefined ? updatedNote.title : n.title,
-                blocks: updatedNote.blocks || n.blocks,
-                isShared: updatedNote.isShared !== undefined ? updatedNote.isShared : n.isShared,
-                updatedAt: updatedNote.updatedAt || Date.now(),
-              };
-            }
-            return n;
-          });
-          saveNotes(updated);
-        }
-      }
-    };
-
-    const handleRevokedOrRemoved = (e) => {
-      const { noteId } = e.detail || {};
-      if (!noteId) return;
-
-      if (notes && Array.isArray(notes) && typeof saveNotes === 'function') {
-        const filtered = notes.filter(n => n.id !== noteId);
-        if (filtered.length !== notes.length) {
-          saveNotes(filtered);
-        }
-      }
-    };
-
-    window.addEventListener('noteup_shared_note_live_update', handleLiveUpdate);
-    window.addEventListener('noteup_shared_note_revoked', handleRevokedOrRemoved);
-    window.addEventListener('noteup_shared_note_removed', handleRevokedOrRemoved);
-
-    return () => {
-      window.removeEventListener('noteup_shared_note_live_update', handleLiveUpdate);
-      window.removeEventListener('noteup_shared_note_revoked', handleRevokedOrRemoved);
-      window.removeEventListener('noteup_shared_note_removed', handleRevokedOrRemoved);
-    };
-  }, [notes, saveNotes]);
 
   // --- REWARDED AD CALLBACK ---
   const handleRewardedShareCallback = (rewardData) => {

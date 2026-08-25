@@ -11,6 +11,7 @@ export const useSharedNotesSync = ({
 }) => {
   const processedRequestIdsRef = useRef(new Set());
   const notifiedAcceptedSharesRef = useRef(new Set());
+  const lastDispatchedMapRef = useRef(new Map());
 
   useEffect(() => {
     if (!myCode) return;
@@ -175,25 +176,33 @@ export const useSharedNotesSync = ({
             recNew.status === 'accepted' &&
             (recNew.to_code === myCode || recNew.from_code === myCode)
           ) {
-            let parsedBlocks = [];
-            try {
-              if (Array.isArray(recNew.note_blocks)) parsedBlocks = recNew.note_blocks;
-              else if (typeof recNew.note_blocks === 'string') parsedBlocks = JSON.parse(recNew.note_blocks);
-            } catch (_) {
-              parsedBlocks = [];
-            }
+            const noteId = recNew.note_id;
+            const updatedTime = recNew.updated_at ? new Date(recNew.updated_at).getTime() : Date.now();
+            const lastTime = lastDispatchedMapRef.current.get(noteId) || 0;
 
-            window.dispatchEvent(
-              new CustomEvent('noteup_shared_note_live_update', {
-                detail: {
-                  id: recNew.note_id,
-                  title: recNew.note_title || '',
-                  blocks: parsedBlocks,
-                  isShared: true,
-                  updatedAt: recNew.updated_at ? new Date(recNew.updated_at).getTime() : Date.now(),
-                },
-              })
-            );
+            if (updatedTime > lastTime) {
+              lastDispatchedMapRef.current.set(noteId, updatedTime);
+
+              let parsedBlocks = [];
+              try {
+                if (Array.isArray(recNew.note_blocks)) parsedBlocks = recNew.note_blocks;
+                else if (typeof recNew.note_blocks === 'string') parsedBlocks = JSON.parse(recNew.note_blocks);
+              } catch (_) {
+                parsedBlocks = [];
+              }
+
+              window.dispatchEvent(
+                new CustomEvent('noteup_shared_note_live_update', {
+                  detail: {
+                    id: noteId,
+                    title: recNew.note_title || '',
+                    blocks: parsedBlocks,
+                    isShared: true,
+                    updatedAt: updatedTime,
+                  },
+                })
+              );
+            }
           }
 
           // D. Share revoked / terminated by Owner
@@ -277,26 +286,35 @@ export const useSharedNotesSync = ({
             }
 
             if (recNew.is_shared) {
-              let parsedBlocks = [];
-              try {
-                if (Array.isArray(recNew.blocks)) parsedBlocks = recNew.blocks;
-                else if (typeof recNew.blocks === 'string') parsedBlocks = JSON.parse(recNew.blocks);
-              } catch (e) {
-                parsedBlocks = [];
-              }
+              const noteId = recNew.id;
+              const updatedTime = recNew.updated_at ? new Date(recNew.updated_at).getTime() : Date.now();
+              const lastTime = lastDispatchedMapRef.current.get(noteId) || 0;
 
-              window.dispatchEvent(
-                new CustomEvent('noteup_shared_note_live_update', {
-                  detail: {
-                    id: recNew.id,
-                    title: recNew.title || '',
-                    blocks: parsedBlocks,
-                    isShared: recNew.is_shared,
-                    deletedAt: recNew.deleted_at ? Number(recNew.deleted_at) : null,
-                    updatedAt: recNew.updated_at ? new Date(recNew.updated_at).getTime() : Date.now(),
-                  },
-                })
-              );
+              // Only dispatch if not already dispatched from note_shares in the same update tick
+              if (updatedTime > lastTime) {
+                lastDispatchedMapRef.current.set(noteId, updatedTime);
+
+                let parsedBlocks = [];
+                try {
+                  if (Array.isArray(recNew.blocks)) parsedBlocks = recNew.blocks;
+                  else if (typeof recNew.blocks === 'string') parsedBlocks = JSON.parse(recNew.blocks);
+                } catch (e) {
+                  parsedBlocks = [];
+                }
+
+                window.dispatchEvent(
+                  new CustomEvent('noteup_shared_note_live_update', {
+                    detail: {
+                      id: noteId,
+                      title: recNew.title || '',
+                      blocks: parsedBlocks,
+                      isShared: recNew.is_shared,
+                      deletedAt: recNew.deleted_at ? Number(recNew.deleted_at) : null,
+                      updatedAt: updatedTime,
+                    },
+                  })
+                );
+              }
             }
           }
         }

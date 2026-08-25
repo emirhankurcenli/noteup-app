@@ -35,12 +35,22 @@ export default function useNotes({
 
       if (updatedNote.deletedAt) {
         setEditingNote((prev) => (prev && prev.id === updatedNote.id ? null : prev));
-        setNotes((prevNotes) => prevNotes.filter((n) => n.id !== updatedNote.id));
+        setNotes((prevNotes) => {
+          const filtered = prevNotes.filter((n) => n.id !== updatedNote.id);
+          try {
+            const key = getUserScopedKey('s23_notes');
+            localStorage.setItem(key, JSON.stringify(filtered));
+          } catch (_) {}
+          return filtered;
+        });
         return;
       }
 
       setEditingNote((prev) => {
         if (prev && prev.id === updatedNote.id) {
+          if (prev.updatedAt && updatedNote.updatedAt && prev.updatedAt > updatedNote.updatedAt) {
+            return prev;
+          }
           return {
             ...prev,
             title: updatedNote.title !== undefined ? updatedNote.title : prev.title,
@@ -51,6 +61,34 @@ export default function useNotes({
         }
         return prev;
       });
+
+      setNotes((prevNotes) => {
+        const index = prevNotes.findIndex((n) => n.id === updatedNote.id);
+        if (index === -1) {
+          return prevNotes;
+        }
+
+        const existing = prevNotes[index];
+        if (existing.updatedAt && updatedNote.updatedAt && existing.updatedAt > updatedNote.updatedAt) {
+          return prevNotes;
+        }
+
+        const updated = [...prevNotes];
+        updated[index] = {
+          ...existing,
+          title: updatedNote.title !== undefined ? updatedNote.title : existing.title,
+          blocks: updatedNote.blocks || existing.blocks,
+          isShared: updatedNote.isShared !== undefined ? updatedNote.isShared : existing.isShared,
+          updatedAt: updatedNote.updatedAt || Date.now(),
+        };
+
+        try {
+          const key = getUserScopedKey('s23_notes');
+          localStorage.setItem(key, JSON.stringify(updated));
+        } catch (_) {}
+
+        return updated;
+      });
     };
 
     const handleRevokedOrRemoved = (e) => {
@@ -58,7 +96,14 @@ export default function useNotes({
       if (!noteId) return;
 
       setEditingNote((prev) => (prev && prev.id === noteId ? null : prev));
-      setNotes((prevNotes) => prevNotes.filter((n) => n.id !== noteId));
+      setNotes((prevNotes) => {
+        const filtered = prevNotes.filter((n) => n.id !== noteId);
+        try {
+          const key = getUserScopedKey('s23_notes');
+          localStorage.setItem(key, JSON.stringify(filtered));
+        } catch (_) {}
+        return filtered;
+      });
     };
 
     const handleInviteAccepted = (e) => {
