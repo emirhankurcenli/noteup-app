@@ -173,13 +173,6 @@ const useSupabaseSync = ({
           }
         });
 
-        // Also preserve any existing local shared notes that are active
-        localNotes.forEach(localN => {
-          if (localN.sharedFrom && !combinedNotesMap.has(localN.id) && !localN.deletedAt) {
-            combinedNotesMap.set(localN.id, localN);
-          }
-        });
-
         const finalCombinedNotes = Array.from(combinedNotesMap.values());
         setNotes(finalCombinedNotes);
         const key = getUserScopedKey('s23_notes', userId);
@@ -229,8 +222,23 @@ const useSupabaseSync = ({
         .eq('to_code', myFriendCode)
         .eq('status', 'accepted');
 
-      if (shares && shares.length > 0) {
-        const sharedNoteIds = shares.map((s) => s.note_id).filter(Boolean);
+      const acceptedShares = Array.isArray(shares) ? shares : [];
+      const sharedNoteIds = acceptedShares.map((s) => s.note_id).filter(Boolean);
+
+      // Auto-prune any local notes that were shared from others but are no longer in accepted shares
+      setNotes((prevNotes) => {
+        const valid = prevNotes.filter((n) => !n.sharedFrom || sharedNoteIds.includes(n.id));
+        if (valid.length !== prevNotes.length) {
+          try {
+            const key = getUserScopedKey('s23_notes', userId);
+            localStorage.setItem(key, JSON.stringify(valid));
+          } catch (_) {}
+          return valid;
+        }
+        return prevNotes;
+      });
+
+      if (sharedNoteIds.length > 0) {
         const { data: notesData } = await supabase
           .from('notes')
           .select('*')

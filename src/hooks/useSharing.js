@@ -191,15 +191,27 @@ export default function useSharing({
     );
     saveNotes(updatedNotes);
 
-    // 1. Delete share invitations/connections for friends that were unselected
+    // 1. Mark share as revoked first so Supabase Realtime broadcasts full removal payload to collaborator, then delete
     removedCodes.forEach(async (code) => {
       try {
-        await supabase.from('note_shares').delete()
+        await supabase
+          .from('note_shares')
+          .update({ status: 'revoked', updated_at: new Date().toISOString() })
           .eq('from_code', myCode)
           .eq('note_id', noteToShare.id)
           .eq('to_code', code);
+
+        // Delete from database after a short delay so Realtime event finishes dispatching
+        setTimeout(async () => {
+          try {
+            await supabase.from('note_shares').delete()
+              .eq('from_code', myCode)
+              .eq('note_id', noteToShare.id)
+              .eq('to_code', code);
+          } catch (_) {}
+        }, 3000);
       } catch (err) {
-        console.warn("Supabase note share delete error:", err);
+        console.warn("Supabase note share revoke error:", err);
       }
     });
 
