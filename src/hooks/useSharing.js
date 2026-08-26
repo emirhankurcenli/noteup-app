@@ -101,7 +101,7 @@ export default function useSharing({
 
   // --- ACTIONS ---
 
-  const handleSendShareInvitation = (activeShareNoteId) => {
+  const handleSendShareInvitation = (activeShareNoteId, customSelectedCodes) => {
     if (!activeShareNoteId) return;
     const noteToShare = notes.find(n => n.id === activeShareNoteId);
     if (!noteToShare) return;
@@ -124,17 +124,21 @@ export default function useSharing({
       return;
     }
 
-    const isShared = friendMgr.selectedFriendCodes.length > 0;
+    const currentSelectedCodes = Array.isArray(customSelectedCodes) 
+      ? customSelectedCodes 
+      : (friendMgr.selectedFriendCodes || []);
+
+    const isShared = currentSelectedCodes.length > 0;
 
     // Rule 2: Limit how many friends can be invited based on plan
     if (isShared) {
-      const selectedCount = friendMgr.selectedFriendCodes.length;
+      const selectedCount = currentSelectedCodes.length;
       const planLimits = { lite: 1, pro: 8, ultra: 20, vip: 20 };
       const limit = planLimits[userPlan] ?? 1;
 
       if (selectedCount > limit) {
         if (selectedCount === limit + 1 && setPendingShareReward && setShowRewardedAdModal) {
-          setPendingShareReward({ noteId: activeShareNoteId, codes: friendMgr.selectedFriendCodes });
+          setPendingShareReward({ noteId: activeShareNoteId, codes: currentSelectedCodes });
           setShowRewardedAdModal(true);
         } else {
           setToast({
@@ -162,7 +166,7 @@ export default function useSharing({
     // Compute accepted vs pending codes
     const previousSharedWith = noteToShare.sharedWith || [];
     const previousPending = noteToShare.pendingShares || [];
-    const selectedCodes = friendMgr.selectedFriendCodes || [];
+    const selectedCodes = currentSelectedCodes;
 
     const removedCodes = [...previousSharedWith, ...previousPending].filter(code => !selectedCodes.includes(code));
     const newlyAddedCodes = selectedCodes.filter(code => !previousSharedWith.includes(code) && !previousPending.includes(code));

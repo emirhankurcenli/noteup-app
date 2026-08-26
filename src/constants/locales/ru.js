@@ -48,6 +48,7 @@ const ru = {
   confirmPermanentDeleteMsg: 'Удалить навсегда {count} заметок? Это действие нельзя отменить.',
   confirmCancel: 'Отмена',
   cancelBtn: 'Отмена',
+  confirmBtn: 'Подтвердить',
   saveBtn: 'Сохранить',
   addBtn: 'Добавить',
   addFolder: 'Новая папка',

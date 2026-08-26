@@ -225,34 +225,32 @@ const SelectFriendsShareModal = ({
               cursor: 'pointer',
             }}
           >
-            {cleanText(t?.('cancelBtn'))}
+            {cleanText(t?.('cancelBtn')) || (lang === 'tr' ? 'İptal' : 'Cancel')}
           </button>
 
           {friends && friends.length > 0 && (
             <button
-              disabled={isPaylasDisabled}
               onClick={() => {
-                if (isPaylasDisabled) return;
                 handleSendShareInvitation(activeShareNoteId, selectedFriendCodes);
+                setActiveShareNoteId(null);
+                setSelectedFriendCodes([]);
+                setBonusSlots(0);
               }}
               style={{
                 flex: 1.5,
                 padding: '12px',
                 borderRadius: '14px',
                 border: 'none',
-                background: isPaylasDisabled
-                  ? (isLight ? '#CBD5E1' : 'rgba(255, 255, 255, 0.15)')
-                  : 'linear-gradient(135deg, #3B82F6, #2563EB)',
-                color: isPaylasDisabled ? (isLight ? '#94A3B8' : '#64748B') : '#FFFFFF',
+                background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+                color: '#FFFFFF',
                 fontWeight: 800,
                 fontSize: '0.85rem',
-                cursor: isPaylasDisabled ? 'not-allowed' : 'pointer',
-                opacity: isPaylasDisabled ? 0.5 : 1,
-                boxShadow: isPaylasDisabled ? 'none' : '0 4px 14px rgba(59, 130, 246, 0.35)',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(59, 130, 246, 0.35)',
                 transition: 'all 0.2s ease',
               }}
             >
-              {cleanText(t?.('shareBtn'))}
+              {cleanText(t?.('confirmBtn')) || (lang === 'tr' ? 'Onayla' : 'Confirm')}
             </button>
           )}
         </div>

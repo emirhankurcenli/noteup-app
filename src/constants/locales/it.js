@@ -48,6 +48,7 @@ const it = {
   confirmPermanentDeleteMsg: 'Vuoi eliminare definitivamente {count} nota/e? Questa azione non può essere annullata.',
   confirmCancel: 'Annulla',
   cancelBtn: 'Annulla',
+  confirmBtn: 'Conferma',
   saveBtn: 'Salva',
   addBtn: 'Aggiungi',
   addFolder: 'Nuova cartella',

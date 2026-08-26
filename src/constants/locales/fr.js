@@ -48,6 +48,7 @@ const fr = {
   confirmPermanentDeleteMsg: 'Voulez-vous supprimer définitivement {count} note(s) ? Cette action est irréversible.',
   confirmCancel: 'Annuler',
   cancelBtn: 'Annuler',
+  confirmBtn: 'Confirmer',
   saveBtn: 'Enregistrer',
   addBtn: 'Ajouter',
   addFolder: 'Nouveau dossier',

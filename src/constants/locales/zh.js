@@ -48,6 +48,7 @@ const zh = {
   confirmPermanentDeleteMsg: '确定要永久删除这 {count} 条笔记吗？此操作无法撤销。',
   confirmCancel: '取消',
   cancelBtn: '取消',
+  confirmBtn: '确认',
   saveBtn: '保存',
   addBtn: '添加',
   addFolder: '新建文件夹',

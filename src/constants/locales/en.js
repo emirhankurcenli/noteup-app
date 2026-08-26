@@ -48,6 +48,7 @@ const en = {
   confirmPermanentDeleteMsg: 'Are you sure you want to permanently delete {count} note(s)? This action cannot be undone.',
   confirmCancel: 'Cancel',
   cancelBtn: 'Cancel',
+  confirmBtn: 'Confirm',
   saveBtn: 'Save',
   addBtn: 'Add',
   addFolder: 'New Folder',

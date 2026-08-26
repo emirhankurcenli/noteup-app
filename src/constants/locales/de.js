@@ -48,6 +48,7 @@ const de = {
   confirmPermanentDeleteMsg: 'Möchten Sie diese {count} Notiz(en) wirklich dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.',
   confirmCancel: 'Abbrechen',
   cancelBtn: 'Abbrechen',
+  confirmBtn: 'Bestätigen',
   saveBtn: 'Speichern',
   addBtn: 'Hinzufügen',
   addFolder: 'Neuer Ordner',

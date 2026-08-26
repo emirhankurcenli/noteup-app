@@ -48,6 +48,7 @@ const tr = {
   confirmPermanentDeleteMsg: '{count} notu kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
   confirmCancel: 'İptal',
   cancelBtn: 'İptal',
+  confirmBtn: 'Onayla',
   saveBtn: 'Kaydet',
   addBtn: 'Ekle',
   addFolder: 'Yeni Klasör',

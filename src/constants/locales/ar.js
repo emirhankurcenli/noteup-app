@@ -48,6 +48,7 @@ const ar = {
   confirmPermanentDeleteMsg: 'هل أنت متأكد من حذف {count} ملاحظة نهائياً؟ لا يمكن التراجع عن هذا الإجراء.',
   confirmCancel: 'إلغاء',
   cancelBtn: 'إلغاء',
+  confirmBtn: 'تأكيد',
   saveBtn: 'حفظ',
   addBtn: 'إضافة',
   addFolder: 'مجلد جديد',

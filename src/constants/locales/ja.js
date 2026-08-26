@@ -48,6 +48,7 @@ const ja = {
   confirmPermanentDeleteMsg: '{count}件のメモを完全に削除しますか？この操作は元に戻せません。',
   confirmCancel: 'キャンセル',
   cancelBtn: 'キャンセル',
+  confirmBtn: '確認',
   saveBtn: '保存',
   addBtn: '追加',
   addFolder: '新規フォルダ',

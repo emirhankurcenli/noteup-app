@@ -48,6 +48,7 @@ const es = {
   confirmPermanentDeleteMsg: '¿Seguro que deseas eliminar {count} nota(s) permanentemente? Esta acción no se puede deshacer.',
   confirmCancel: 'Cancelar',
   cancelBtn: 'Cancelar',
+  confirmBtn: 'Confirmar',
   saveBtn: 'Guardar',
   addBtn: 'Añadir',
   addFolder: 'Nueva carpeta',
