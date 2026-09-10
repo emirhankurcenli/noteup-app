@@ -1,5 +1,8 @@
-export { default as SettingsSubTab } from '../../components/features/settings/appSettings/SettingsSubTab';
-export { default as FeedbackModal } from '../../components/modals/FeedbackModal';
-export { default as FeedbackAdminSubTab } from '../../components/features/settings/FeedbackAdminSubTab';
-export { default as FeedbackTypeTabs } from '../../components/modals/feedback/FeedbackTypeTabs';
-export { default as StarRatingSelector } from '../../components/modals/feedback/StarRatingSelector';
+﻿// features/settings — Public API
+export { default as ProfileTab } from './components/ProfileTab';
+export { default as ProfileTabBar } from './components/ProfileTabBar';
+export { default as AccountSubTab } from './components/AccountSubTab';
+export { default as SettingsSubTab } from './components/SettingsSubTab';
+export { default as SocialSubTab } from './components/SocialSubTab';
+export { default as AvatarPickerModal } from './modals/AvatarPickerModal';
+export { default as FeedbackModal } from './modals/FeedbackModal';

@@ -224,4 +224,57 @@ public class AppSettingsPlugin extends Plugin {
     private void permissionCallback(PluginCall call) {
         getPermissionStatus(call);
     }
+
+    @PluginMethod
+    public void getSafeAreaInsets(PluginCall call) {
+        android.app.Activity activity = getActivity();
+        if (activity == null) {
+            JSObject fallback = new JSObject();
+            fallback.put("top", 32);
+            fallback.put("bottom", 48);
+            call.resolve(fallback);
+            return;
+        }
+
+        activity.runOnUiThread(() -> {
+            try {
+                android.view.View decorView = activity.getWindow().getDecorView();
+                android.view.WindowInsets insets = decorView.getRootWindowInsets();
+                float density = activity.getResources().getDisplayMetrics().density;
+                if (density <= 0) density = 1.0f;
+
+                int topPx = 0;
+                int bottomPx = 0;
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R && insets != null) {
+                    android.graphics.Insets nav = insets.getInsets(android.view.WindowInsets.Type.navigationBars());
+                    android.graphics.Insets sb = insets.getInsets(android.view.WindowInsets.Type.statusBars());
+                    android.view.DisplayCutout cutout = insets.getDisplayCutout();
+                    int cutoutTop = cutout != null ? cutout.getSafeInsetTop() : 0;
+                    topPx = Math.max(sb.top, cutoutTop);
+                    bottomPx = nav.bottom;
+                } else if (insets != null) {
+                    topPx = insets.getSystemWindowInsetTop();
+                    bottomPx = insets.getSystemWindowInsetBottom();
+                }
+
+                int topDp = Math.round(topPx / density);
+                int bottomDp = Math.round(bottomPx / density);
+
+                // Sensible fallbacks if insets have not been calculated yet
+                if (topDp <= 0) topDp = 32;
+                if (bottomDp <= 0) bottomDp = 48;
+
+                JSObject ret = new JSObject();
+                ret.put("top", topDp);
+                ret.put("bottom", bottomDp);
+                call.resolve(ret);
+            } catch (Exception e) {
+                JSObject fallback = new JSObject();
+                fallback.put("top", 32);
+                fallback.put("bottom", 48);
+                call.resolve(fallback);
+            }
+        });
+    }
 }

@@ -1,4 +1,4 @@
-import { triggerHaptic } from '../services/haptics';
+﻿import { triggerHaptic } from '@shared/services/haptics';
 
 // Confetti effect helper
 export const triggerConfetti = (blockId) => {

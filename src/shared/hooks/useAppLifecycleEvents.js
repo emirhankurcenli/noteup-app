@@ -1,0 +1,226 @@
+﻿import { useEffect } from 'react';
+import { registerPlugin } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
+import { supabase } from '@src/supabaseClient';
+import {
+  createNotificationChannels,
+  addNotificationListener
+} from '@shared/services/notificationService';
+import { playChime } from '@shared/services/soundService';
+import { triggerHaptic } from '@shared/services/haptics';
+
+const AppSettings = registerPlugin('AppSettings');
+
+const touchLastSeenAt = async () => {
+  try {
+    const userRaw = localStorage.getItem('s23_user');
+    if (!userRaw) return;
+    const u = JSON.parse(userRaw);
+    const userId = u?.uid || u?.id;
+    if (!userId) return;
+    const nowIso = new Date().toISOString();
+    await supabase
+      .from('profiles')
+      .update({ last_seen_at: nowIso, last_seen: nowIso })
+      .eq('id', userId);
+  } catch (e) {}
+};
+
+export default function useAppLifecycleEvents({
+  notes,
+  editingNote,
+  activeTab,
+  setActiveTab,
+  showPaywall,
+  setShowPaywall,
+  confirmDialog,
+  setConfirmDialog,
+  showEditorMenu,
+  setShowEditorMenu,
+  showReminderModal,
+  setShowReminderModal,
+  handleCloseEditor,
+  tabHistoryRef,
+  setPendingOpenNoteId,
+  updatePermissionStates,
+  syncDismissedAlarms,
+  setEditingNote,
+  syncDeltaSharedNotes,
+  user,
+}) {
+  // 1. Initial notification channels & foreground listener + Foreground Delta Re-Sync
+  useEffect(() => {
+    createNotificationChannels();
+
+    const foregroundListener = addNotificationListener(
+      'localNotificationReceived',
+      () => { playChime(); triggerHaptic('success'); }
+    );
+
+    if (updatePermissionStates) updatePermissionStates();
+
+    const handleFocusOrResume = () => {
+      if (updatePermissionStates) updatePermissionStates();
+      if (syncDismissedAlarms) syncDismissedAlarms();
+      touchLastSeenAt();
+
+      // Trigger instantaneous Foreground Delta Re-Sync for iOS and Android
+      if (typeof syncDeltaSharedNotes === 'function') {
+        const uid = user?.uid || user?.id;
+        if (uid) {
+          syncDeltaSharedNotes(uid);
+        }
+      }
+    };
+
+    // FIX: isimli fonksiyon → cleanup'ta doğru şekilde kaldırılabiliyor
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        handleFocusOrResume();
+      }
+    };
+
+    window.addEventListener('focus', handleFocusOrResume);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    let appStateSub = null;
+    try {
+      appStateSub = CapApp.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) {
+          handleFocusOrResume();
+        }
+      });
+    } catch (_) {}
+
+    return () => {
+      foregroundListener.then(l => l.remove()).catch(() => {});
+      window.removeEventListener('focus', handleFocusOrResume);
+      // FIX: artık anonim değil, temizlenebiliyor
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (appStateSub && typeof appStateSub.then === 'function') {
+        appStateSub.then(s => s.remove?.()).catch(() => {});
+      }
+    };
+  }, [user, syncDeltaSharedNotes]);
+
+  // 2. Notification action listener (tapping local notification)
+  useEffect(() => {
+    let actionListener = null;
+    try {
+      actionListener = addNotificationListener(
+        'localNotificationActionPerformed',
+        (action) => {
+          try {
+            const extra = action?.notification?.extra;
+            if (extra && extra.noteId && setPendingOpenNoteId) {
+              setPendingOpenNoteId(extra.noteId.toString());
+            }
+          } catch (err) {
+            console.error("Error in localNotificationActionPerformed:", err);
+          }
+        }
+      );
+    } catch (e) {
+      console.log("LocalNotifications listener registration skipped:", e);
+    }
+
+    return () => {
+      if (actionListener) {
+        actionListener.then(l => l.remove()).catch(() => {});
+      }
+    };
+  }, []);
+
+  // 3. Launch Note ID / Resume intent listener
+  useEffect(() => {
+    const checkLaunchNote = async () => {
+      try {
+        const res = await AppSettings.getLaunchNoteId();
+        if (res && res.noteId && setPendingOpenNoteId) {
+          setPendingOpenNoteId(res.noteId.toString());
+        }
+      } catch (e) {}
+    };
+
+    checkLaunchNote();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkLaunchNote();
+        touchLastSeenAt();
+      }
+    };
+
+    let appStateListener = null;
+    try {
+      // FIX: touchLastSeenAt ve updatePermissionStates useEffect #1'deki
+      // handleFocusOrResume tarafından zaten çağrılıyor. Burada sadece
+      // checkLaunchNote (not bildiriminden açma) mantığı kalıyor.
+      appStateListener = CapApp.addListener('appStateChange', (state) => {
+        if (state.isActive) {
+          checkLaunchNote();
+        }
+      });
+    } catch (e) {}
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (appStateListener) {
+        appStateListener.then(l => l.remove()).catch(() => {});
+      }
+    };
+  }, []);
+
+  // 4. Android Hardware Back Button listener
+  useEffect(() => {
+    const handleBackButton = async () => {
+      if (showPaywall) {
+        setShowPaywall(false);
+        return;
+      }
+      if (confirmDialog) {
+        if (confirmDialog.onCancel) confirmDialog.onCancel();
+        setConfirmDialog(null);
+        return;
+      }
+      if (showEditorMenu) {
+        setShowEditorMenu(false);
+        return;
+      }
+      if (showReminderModal) {
+        setShowReminderModal(false);
+        return;
+      }
+
+      if (editingNote) {
+        handleCloseEditor();
+      } else if (tabHistoryRef && tabHistoryRef.current && tabHistoryRef.current.length > 1) {
+        tabHistoryRef.current.pop();
+        const prevTab = tabHistoryRef.current[tabHistoryRef.current.length - 1] || 'notes';
+        setActiveTab(prevTab);
+      } else if (activeTab !== 'notes') {
+        setActiveTab('notes');
+      } else {
+        try {
+          await CapApp.exitApp();
+        } catch (err) {
+          console.error("Minimize failed:", err);
+        }
+      }
+    };
+
+    const listener = CapApp.addListener('backButton', handleBackButton);
+    return () => {
+      listener.then(l => l.remove());
+    };
+  }, [
+    showPaywall,
+    confirmDialog,
+    editingNote,
+    showEditorMenu,
+    showReminderModal,
+    activeTab
+  ]);
+}

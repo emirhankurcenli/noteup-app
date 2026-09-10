@@ -224,98 +224,6 @@ html, body, #root {
   align-items: center;
 }
 
-.folder-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
-.folder-card {
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 14px;
-  cursor: pointer;
-  position: relative;
-  overflow: visible;
-  height: auto;
-  min-height: 64px;
-}
-
-
-.folder-icon-wrapper {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.2s;
-}
-
-.folder-icon-wrapper svg {
-  width: 22px;
-  height: 22px;
-  stroke: currentColor;
-}
-
-.folder-info {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-width: 0; /* Prevents text overflow breaking layout */
-}
-
-.folder-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-  padding-right: 8px;
-}
-
-.folder-details h3 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 0;
-}
-
-.folder-details p {
-  font-size: 0.76rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-
-/* Search Bar */
-.search-container {
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.search-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  stroke: var(--text-muted);
-}
-
-.search-input {
-  padding-left: 44px;
-}
-
 /* Note List & Cards */
 .note-list {
   display: flex;
@@ -394,14 +302,6 @@ html, body, #root {
   color: var(--text-muted);
 }
 
-.note-folder-tag {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 500;
-  color: var(--folder-color, var(--primary));
-}
-
 /* Note Editor Screen - Clean Standard Flexbox Architecture */
 .editor-container {
   display: flex;
@@ -439,6 +339,77 @@ html, body, #root {
   .editor-meta-bar {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   📱 PLATFORM-SPECIFIC RULES
+   body'ye eklenen .platform-android / .platform-ios sınıfına göre
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Android: Status Bar Padding (CSS variable --status-bar-height) ─── */
+body.platform-android .app-header,
+body.platform-android .editor-header {
+  padding-top: calc(var(--status-bar-height, 32px) + 16px) !important;
+}
+
+/* ── Android: Bottom Nav + FAB + İçerik Alanı ── */
+body.platform-android .bottom-nav {
+  padding-top: 10px !important;
+  padding-bottom: calc(var(--nav-bar-height, 48px) + 8px) !important;
+  box-sizing: border-box !important;
+}
+
+body.platform-android .fab-btn {
+  bottom: calc(var(--nav-bar-height, 48px) + 72px) !important;
+}
+
+body.platform-android .editor-meta-bar {
+  padding-bottom: calc(var(--nav-bar-height, 48px) + 12px) !important;
+}
+
+body.platform-android .app-content {
+  /* Bottom nav yüksekliği + sistem alt çubuğu + içerik sonu payı */
+  padding-bottom: calc(var(--nav-bar-height, 48px) + 88px) !important;
+}
+
+body.platform-android .toast-notification {
+  top: calc(var(--status-bar-height, 32px) + 12px) !important;
+}
+
+body.platform-android .modal-content {
+  padding-bottom: max(28px, calc(20px + var(--nav-bar-height, 48px))) !important;
+}
+
+/* Klavye açıkken alt bar padding'ini sıfırla */
+body.platform-android.keyboard-open .bottom-nav {
+  padding-bottom: 10px !important;
+}
+
+/* ── Android: backdrop-filter KAPALI
+   Android WebView'da blur() her element için ayrı GPU katmanı oluşturur.
+   18 ayrı elementin aynı anda blur render etmesi ısınmaya neden oluyor.
+   Yerine solid/glass arka plan rengi kullanılıyor. ── */
+body.platform-android .app-header,
+body.platform-android .bottom-nav,
+body.platform-android .editor-header,
+body.platform-android .editor-menu-dropdown,
+body.platform-android .block-add-menu,
+body.platform-android .modal-overlay,
+body.platform-android .toast-notification,
+body.platform-android .reminder-card-v2,
+body.platform-android .avatar-picker-overlay,
+body.platform-android .in-app-alarm-banner-inner,
+body.platform-android .lightbox-overlay,
+body.platform-android .context-menu-dropdown {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* iOS: backdrop-filter açık bırak — Metal API sayesinde verimli çalışır */
+body.platform-ios .app-header,
+body.platform-ios .bottom-nav {
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
 }
 
 .editor-header-actions {

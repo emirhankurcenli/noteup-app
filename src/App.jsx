@@ -1,30 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
-import LoginScreen from './components/auth/LoginScreen';
-import ToastNotification from './components/common/ToastNotification';
-import { triggerHaptic } from './services/haptics';
-import { initRevenueCat } from './services/billing';
-import useAppLogic from './hooks/useAppLogic';
-import useAppPermissions from './hooks/useAppPermissions';
-import useEditorLifecycle from './hooks/useEditorLifecycle';
-import useAppLifecycleEvents from './hooks/useAppLifecycleEvents';
-import useInitialDataLoad from './hooks/useInitialDataLoad';
-import useAppEditorHandlers from './hooks/useAppEditorHandlers';
-import useAppLocalState from './hooks/useAppLocalState';
-import useGlobalEventListeners from './hooks/useGlobalEventListeners';
-import AppWorkspaceContainer from './components/layout/AppWorkspaceContainer';
-import AppModalsContainer from './components/common/AppModalsContainer';
-import { DEFAULT_AVATARS } from './constants/avatars';
-import { requestBiometricAuth } from './services/biometricService';
-import { shareNoteImage } from './utils/shareUtils';
-import { formatFriendCode } from './utils/codeUtils';
-import { formatBytes } from './utils/mediaUtils';
-import { PLAN_LEVELS, getChangedFeatures, getLostFeatures } from './utils/planUtils';
-import { ensureElementVisible } from './utils/editorKeyboardUtils';
-import { Capacitor } from '@capacitor/core';
+import LoginScreen from '@features/auth/components/LoginScreen';
+import ToastNotification from '@shared/components/ToastNotification';
+import { triggerHaptic } from '@shared/services/haptics';
+import { initRevenueCat } from '@shared/services/billing';
+import useAppLogic from '@shared/hooks/useAppLogic';
+import useAppPermissions from '@shared/hooks/useAppPermissions';
+import useEditorLifecycle from '@features/editor/hooks/useEditorLifecycle';
+import useAppLifecycleEvents from '@shared/hooks/useAppLifecycleEvents';
+import useInitialDataLoad from '@features/notes/hooks/useInitialDataLoad';
+import useAppEditorHandlers from '@features/editor/hooks/useAppEditorHandlers';
+import useAppLocalState from '@features/notes/hooks/useAppLocalState';
+import useGlobalEventListeners from '@shared/hooks/useGlobalEventListeners';
+import AppWorkspaceContainer from '@layout/AppWorkspaceContainer';
+import AppModalsContainer from '@shared/components/AppModalsContainer';
+import { DEFAULT_AVATARS } from '@shared/constants/avatars';
+import { requestBiometricAuth } from '@shared/services/biometricService';
+import { shareNoteImage } from '@features/sharing/utils/shareUtils';
+import { formatFriendCode } from '@shared/utils/codeUtils';
+import { formatBytes } from '@shared/utils/mediaUtils';
+import { PLAN_LEVELS, getChangedFeatures, getLostFeatures } from '@shared/utils/planUtils';
+import { ensureElementVisible } from '@shared/utils/editorKeyboardUtils';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard } from '@capacitor/keyboard';
-import detectPlatform from './platform/detect';
+import detectPlatform from '@platform/detect';
+
+const AppSettings = registerPlugin('AppSettings');
 
 
 
@@ -205,8 +207,7 @@ function App() {
     setProfileSubTab,
     showPaywall,
     setShowPaywall,
-    cropperImage,
-    setCropperImage,
+
     showAdModal,
     setShowAdModal,
     PLAN_STORAGE_LIMITS,
@@ -258,11 +259,39 @@ function App() {
     initRevenueCat(setUserPlan);
   }, []);
 
-  // 📱 Platform Body Class Initialization ('platform-android' | 'platform-ios' | 'platform-web')
+  // 📱 Platform Body Class & Safe Area Insets Initialization
+  // Android'de AppSettings.getSafeAreaInsets() ile gerçek status bar ve navigation bar yükseklikleri CSS'e atanır.
+  const measuredNavBarHeightRef = useRef('48px');
+
   useEffect(() => {
     const plt = detectPlatform();
     document.body.classList.remove('platform-android', 'platform-ios', 'platform-web');
     document.body.classList.add(`platform-${plt}`);
+
+    if (plt === 'android') {
+      // Android varsayılan güvenli değerler (Samsung 3-tuş çubuğu için 48px, status bar için 32px)
+      document.documentElement.style.setProperty('--status-bar-height', '32px');
+      document.documentElement.style.setProperty('--nav-bar-height', '48px');
+      measuredNavBarHeightRef.current = '48px';
+
+      if (Capacitor.isNativePlatform()) {
+        try {
+          AppSettings.getSafeAreaInsets().then((insets) => {
+            if (insets) {
+              const top = insets.top || 32;
+              const bottom = insets.bottom || 48;
+              document.documentElement.style.setProperty('--status-bar-height', `${top}px`);
+              document.documentElement.style.setProperty('--nav-bar-height', `${bottom}px`);
+              measuredNavBarHeightRef.current = `${bottom}px`;
+            }
+          }).catch(() => {});
+        } catch (_) {}
+      }
+    } else {
+      // Web ve iOS varsayılan değerleri (iOS env() kullanır)
+      document.documentElement.style.setProperty('--status-bar-height', '0px');
+      document.documentElement.style.setProperty('--nav-bar-height', '0px');
+    }
   }, []);
 
   // 🎨 Status Bar Style & Background Sync with App Theme (Edge-to-Edge with Safe Area Insets)
@@ -278,7 +307,7 @@ function App() {
     } catch (e) {}
   }, [theme]);
 
-  // 🎹 Keyboard Hide/Show Window Scroll Lock (Prevents WebView window from shifting up on Android input focus)
+  // 🎹 Keyboard Hide/Show Window Scroll Lock & Dynamic Inset Adjustments
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -288,23 +317,33 @@ function App() {
       document.documentElement.scrollTop = 0;
     };
 
+    const handleKeyboardWillShow = () => {
+      document.body.classList.add('keyboard-open');
+      // Klavye açıldığında alt tuş çubuğu klavyenin altına saklandığı için nav-bar-height sıfırlanır
+      document.documentElement.style.setProperty('--nav-bar-height', '0px');
+    };
+
+    const handleKeyboardWillHide = () => {
+      document.body.classList.remove('keyboard-open');
+      // Klavye kapandığında gerçek nav-bar yüksekliği geri yüklenir
+      document.documentElement.style.setProperty('--nav-bar-height', measuredNavBarHeightRef.current);
+      resetWindowScroll();
+    };
+
+    let showSub = null;
     let hideSub = null;
     let didHideSub = null;
-    let showSub = null;
-    let didShowSub = null;
 
     try {
-      Keyboard.addListener('keyboardWillHide', resetWindowScroll).then(sub => { hideSub = sub; });
+      Keyboard.addListener('keyboardWillShow', handleKeyboardWillShow).then(sub => { showSub = sub; });
+      Keyboard.addListener('keyboardWillHide', handleKeyboardWillHide).then(sub => { hideSub = sub; });
       Keyboard.addListener('keyboardDidHide', resetWindowScroll).then(sub => { didHideSub = sub; });
-      Keyboard.addListener('keyboardWillShow', resetWindowScroll).then(sub => { showSub = sub; });
-      Keyboard.addListener('keyboardDidShow', resetWindowScroll).then(sub => { didShowSub = sub; });
     } catch (e) {}
 
     return () => {
+      if (showSub && typeof showSub.remove === 'function') showSub.remove();
       if (hideSub && typeof hideSub.remove === 'function') hideSub.remove();
       if (didHideSub && typeof didHideSub.remove === 'function') didHideSub.remove();
-      if (showSub && typeof showSub.remove === 'function') showSub.remove();
-      if (didShowSub && typeof didShowSub.remove === 'function') didShowSub.remove();
     };
   }, []);
 
@@ -391,64 +430,12 @@ function App() {
   });
 
 
-  // Handle Authentication Logins
-  // Removed block: const handleLogin =...;
-
-  // Removed block: const handleLogout =...;
-
-  // Removed block: const persistNotes =...
-
-  // Save states to localstorage and Supabase helper
-  // Removed block: const saveNotes =...
- 
-  // Removed block: const saveFolders =...
- 
-  // Removed block: const saveReminders =...
-
-  // --- ACTIONS ---
-
-  // Folder Operations
-  // Removed block: const handleCreateFolder =...
-
-  // Removed block: const handleDeleteFolder =...
-
-  // Note Operations
-  // Removed block: const handleCreateNote =...
-
-  // Removed block: const handleUpdateNote =...
-
-  // Removed block: const handleMoveToTrash =...
-
-  // Removed block: const handleRestoreNote =...
-
-  // Removed block: const handlePermanentDelete =...
-
-
-  const handleToggleShare = (noteId) => {
-    setNotes(prevNotes => {
-      const note = prevNotes.find(n => n.id === noteId);
-      if (!note) return prevNotes;
-      
-      const updated = prevNotes.map(n => n.id === noteId ? { ...n, isShared: !n.isShared, updatedAt: Date.now() } : n);
-      persistNotes(updated);
-
-      setToast({
-        title: !note.isShared ? "🌐 Not Paylaşıldı" : "🔒 Paylaşım Kapatıldı",
-        msg: !note.isShared ? "Bu not artık ortak paylaşıma açık." : "Bu not artık sadece size özel."
-      });
-
-      return updated;
-    });
-  };
-
-
   const handleShareNoteImage = async (note) => {
     await shareNoteImage(note, setToast);
   };
 
   const {
     handleUpdateBlock,
-    handleAddBlock,
     currentAudioRef,
     isRecording,
     recordingSeconds,
@@ -456,7 +443,6 @@ function App() {
     setActiveAudioPlayingId,
     activeAudioProgress,
     setActiveAudioProgress,
-    uploadToR2,
     deleteFromR2,
     handleFileChange,
     startRecording,
@@ -464,25 +450,18 @@ function App() {
     cancelRecording,
     handlePlayPauseAudio,
     handleOpenFile,
-    handleDownloadFile,
-    showCustomConfirm,
     handleDeleteBlock,
-    performDeleteBlock,
-    gc,
     handleInsertWidget,
     handleAddDebtItem,
     handleDeleteDebtItem,
     handleAddExpenseItem,
     handleDeleteExpenseItem,
     handleExpenseTitleChange,
-    handleSaveBillWidget,
     handleDeleteBillBlock,
     handlePayBill,
     handleDeleteBillPaymentItem,
-    handleSaveExamWidget,
     handleDeleteExamBlock,
     handleTextareaKeyDown,
-    updateBlockForm,
     handleTodoTitleChange,
     handleAddTodoItem,
     handleToggleTodoItem,
@@ -732,11 +711,8 @@ function App() {
         setShowAvatarPicker={setShowAvatarPicker}
         user={user}
         setToast={setToast}
-        cropperImage={cropperImage}
-        setCropperImage={setCropperImage}
         handleSelectAvatar={handleSelectAvatar}
         DEFAULT_AVATARS={DEFAULT_AVATARS}
-        checkAndRequestPermission={checkAndRequestPermission}
         checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
         pendingWidgetAlarmCtx={pendingWidgetAlarmCtx}
         handleCancelWidgetAlarm={handleCancelWidgetAlarm}

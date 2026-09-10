@@ -1,0 +1,264 @@
+import { supabase } from '@src/supabaseClient';
+import { getUserScopedKey as coreGetUserScopedKey, getScopedStorageItem as coreGetScopedStorageItem } from '@shared/utils/scopedStorage';
+
+const useSupabaseSync = ({
+  user,
+  setNotes,
+  setReminders,
+}) => {
+  const getUserScopedKey = (baseKey, uidOverride) => {
+    return coreGetUserScopedKey(baseKey, uidOverride || (user && user.uid));
+  };
+
+  const getScopedStorageItem = (baseKey, uidOverride) => {
+    return coreGetScopedStorageItem(baseKey, uidOverride || (user && user.uid));
+  };
+
+  const syncDataFromSupabase = async (userId) => {
+    try {
+      // 1 & 2. Parallel fetch: User's notes, reminders, and profile in a single Promise.all
+      const [
+        { data: dbNotes, error: nErr },
+        { data: dbReminders, error: rErr },
+        profileRes
+      ] = await Promise.all([
+        supabase.from('notes').select('*').eq('user_id', userId),
+        supabase.from('reminders').select('*').eq('user_id', userId),
+        supabase.from('profiles').select('friend_code, my_code').eq('id', userId).maybeSingle()
+      ]);
+
+      let myFriendCode = profileRes?.data?.friend_code || profileRes?.data?.my_code;
+      if (!myFriendCode) {
+        try {
+          const localUser = localStorage.getItem('s23_user');
+          myFriendCode = localUser ? JSON.parse(localUser)?.myCode : null;
+        } catch (e) {}
+      }
+
+      // 3. Fetch incoming & outgoing shared notes in a single query
+      let acceptedSharedNotes = [];
+      let outgoingShares = [];
+      if (myFriendCode) {
+        try {
+          const { data: allShares } = await supabase
+            .from('note_shares')
+            .select('*')
+            .or(`to_code.eq.${myFriendCode},from_code.eq.${myFriendCode}`);
+
+          const shares = (allShares || []).filter(s => s.to_code === myFriendCode && s.status === 'accepted');
+          outgoingShares = (allShares || []).filter(s => s.from_code === myFriendCode);
+
+          if (shares.length > 0) {
+            const sharedNoteIds = shares.map(s => s.note_id).filter(Boolean);
+            let sharedNotesFromDb = [];
+            if (sharedNoteIds.length > 0) {
+              const { data: notesData } = await supabase
+                .from('notes')
+                .select('*')
+                .in('id', sharedNoteIds);
+              sharedNotesFromDb = notesData || [];
+            }
+            const sharedNotesMap = new Map(sharedNotesFromDb.map(n => [n.id, n]));
+
+            acceptedSharedNotes = shares.map(share => {
+              const originNote = sharedNotesMap.get(share.note_id);
+              let parsedBlocks = [];
+              try {
+                const rawBlocks = originNote ? originNote.blocks : share.note_blocks;
+                if (Array.isArray(rawBlocks)) parsedBlocks = rawBlocks;
+                else if (typeof rawBlocks === 'string') parsedBlocks = JSON.parse(rawBlocks);
+              } catch (e) {
+                parsedBlocks = [];
+              }
+              return {
+                id: share.note_id,
+                title: originNote?.title ?? share.note_title ?? '',
+                blocks: parsedBlocks,
+                isShared: true,
+                sharedFrom: share.from_code,
+                sharedFromName: share.from_name || 'Arkadaş',
+                sharedWith: [share.from_code],
+                isLocked: originNote?.is_locked || false,
+                isPinned: Boolean(originNote?.is_pinned),
+                deletedAt: originNote?.deleted_at ? Number(originNote.deleted_at) : null,
+                updatedAt: originNote?.updated_at ? new Date(originNote.updated_at).getTime() : new Date(share.updated_at || share.created_at).getTime(),
+                createdAt: originNote?.created_at ? new Date(originNote.created_at).getTime() : Date.now(),
+              };
+            }).filter(n => !n.deletedAt); // Exclude if owner deleted it
+          }
+        } catch (shareFetchErr) {
+          console.warn('Error fetching shared notes from Supabase:', shareFetchErr);
+        }
+      }
+
+      if (!nErr && dbNotes) {
+        let localNotes = [];
+        try {
+          const localKey = getUserScopedKey('s23_notes', userId);
+          const raw = localStorage.getItem(localKey);
+          if (raw) localNotes = JSON.parse(raw);
+        } catch (e) {}
+        const localMap = new Map(localNotes.map(n => [n.id, n]));
+
+        const formattedOwnedNotes = dbNotes.map(n => {
+          let parsedBlocks = [];
+          try {
+            if (Array.isArray(n.blocks)) {
+              parsedBlocks = n.blocks;
+            } else if (typeof n.blocks === 'string') {
+              parsedBlocks = JSON.parse(n.blocks);
+            }
+          } catch (e) {
+            parsedBlocks = [];
+          }
+          parsedBlocks = (parsedBlocks || []).map(b => {
+            if (b && (b.type === 'image' || b.type === 'file' || b.type === 'audio')) {
+              if (b.url && (b.localUrl || '').startsWith('blob:')) {
+                const { localUrl, ...rest } = b;
+                return rest;
+              }
+            }
+            return b;
+          });
+          const localN = localMap.get(n.id);
+          const noteOutgoingShares = (outgoingShares || []).filter(s => s.note_id === n.id);
+          const acceptedOutgoingCodes = noteOutgoingShares.filter(s => s.status === 'accepted').map(s => s.to_code);
+          const pendingOutgoingCodes = noteOutgoingShares.filter(s => s.status === 'pending').map(s => s.to_code);
+
+          const isShared = Boolean(n.is_shared || acceptedOutgoingCodes.length > 0);
+          const hasPendingShare = pendingOutgoingCodes.length > 0;
+          const sharedWith = acceptedOutgoingCodes.length > 0 ? acceptedOutgoingCodes : (localN?.sharedWith || []);
+          const pendingShares = pendingOutgoingCodes.length > 0 ? pendingOutgoingCodes : (localN?.pendingShares || []);
+
+          return {
+            id: n.id,
+            title: n.title || '',
+            blocks: parsedBlocks,
+            isShared,
+            sharedWith,
+            pendingShares,
+            hasPendingShare,
+            isLocked: n.is_locked || false,
+            isPinned: n.is_pinned !== undefined && n.is_pinned !== null ? Boolean(n.is_pinned) : Boolean(localN?.isPinned),
+            deletedAt: n.deleted_at ? Number(n.deleted_at) : null,
+            updatedAt: n.updated_at ? new Date(n.updated_at).getTime() : Date.now()
+          };
+        });
+
+        // Merge owned notes and accepted shared notes
+        const combinedNotesMap = new Map();
+        formattedOwnedNotes.forEach(n => combinedNotesMap.set(n.id, n));
+        acceptedSharedNotes.forEach(n => {
+          if (!combinedNotesMap.has(n.id)) {
+            combinedNotesMap.set(n.id, n);
+          }
+        });
+
+        const finalCombinedNotes = Array.from(combinedNotesMap.values());
+        setNotes(finalCombinedNotes);
+        const key = getUserScopedKey('s23_notes', userId);
+        localStorage.setItem(key, JSON.stringify(finalCombinedNotes));
+      }
+      if (!rErr && dbReminders) {
+        const formattedReminders = dbReminders.map(r => ({
+          id: r.id,
+          noteId: r.note_id,
+          time: r.time,
+          active: r.active
+        }));
+        setReminders(formattedReminders);
+        const key = getUserScopedKey('s23_reminders', userId);
+        localStorage.setItem(key, JSON.stringify(formattedReminders));
+      }
+    } catch (err) {
+      console.error("Data sync failed:", err);
+    }
+  };
+
+  const syncDeltaSharedNotes = async (userId) => {
+    if (!userId) return;
+    try {
+      let myFriendCode = null;
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('friend_code, my_code')
+          .eq('id', userId)
+          .maybeSingle();
+        myFriendCode = profile?.friend_code || profile?.my_code;
+      } catch (_) {}
+
+      if (!myFriendCode) {
+        try {
+          const localUser = localStorage.getItem('s23_user');
+          myFriendCode = localUser ? JSON.parse(localUser)?.myCode : null;
+        } catch (_) {}
+      }
+
+      if (!myFriendCode) return;
+
+      const { data: shares } = await supabase
+        .from('note_shares')
+        .select('note_id, from_code, from_name')
+        .eq('to_code', myFriendCode)
+        .eq('status', 'accepted');
+
+      const acceptedShares = Array.isArray(shares) ? shares : [];
+      const sharedNoteIds = acceptedShares.map((s) => s.note_id).filter(Boolean);
+
+      // Auto-prune any local notes that were shared from others but are no longer in accepted shares
+      setNotes((prevNotes) => {
+        const valid = prevNotes.filter((n) => !n.sharedFrom || sharedNoteIds.includes(n.id));
+        if (valid.length !== prevNotes.length) {
+          try {
+            const key = getUserScopedKey('s23_notes', userId);
+            localStorage.setItem(key, JSON.stringify(valid));
+          } catch (_) {}
+          return valid;
+        }
+        return prevNotes;
+      });
+
+      if (sharedNoteIds.length > 0) {
+        const { data: notesData } = await supabase
+          .from('notes')
+          .select('*')
+          .in('id', sharedNoteIds);
+
+        if (notesData && notesData.length > 0) {
+          notesData.forEach((remoteNote) => {
+            let parsedBlocks = [];
+            try {
+              if (Array.isArray(remoteNote.blocks)) parsedBlocks = remoteNote.blocks;
+              else if (typeof remoteNote.blocks === 'string') parsedBlocks = JSON.parse(remoteNote.blocks);
+            } catch (_) {}
+
+            window.dispatchEvent(
+              new CustomEvent('noteup_shared_note_live_update', {
+                detail: {
+                  id: remoteNote.id,
+                  title: remoteNote.title || '',
+                  blocks: parsedBlocks,
+                  isShared: remoteNote.is_shared,
+                  deletedAt: remoteNote.deleted_at ? Number(remoteNote.deleted_at) : null,
+                  updatedAt: remoteNote.updated_at ? new Date(remoteNote.updated_at).getTime() : Date.now(),
+                },
+              })
+            );
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Delta sync failed:', err);
+    }
+  };
+
+  return {
+    getUserScopedKey,
+    getScopedStorageItem,
+    syncDataFromSupabase,
+    syncDeltaSharedNotes,
+  };
+};
+
+export default useSupabaseSync;

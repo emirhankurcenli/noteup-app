@@ -15,7 +15,6 @@
     "@capacitor/android": "^8.4.1",
     "@capacitor/app": "^8.1.1",
     "@capacitor/browser": "^8.0.4",
-    "@capacitor/camera": "^8.2.1",
     "@capacitor/cli": "^8.4.1",
     "@capacitor/core": "^8.4.1",
     "@capacitor/filesystem": "^8.1.2",
@@ -28,7 +27,6 @@
     "@capacitor/status-bar": "^8.0.3",
     "@revenuecat/purchases-capacitor": "^13.2.4",
     "@supabase/supabase-js": "^2.110.7",
-    "heic2any": "^0.0.4",
     "jspdf": "^4.2.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"

@@ -2,8 +2,8 @@ import React, { StrictMode, Component } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
-import { supabase } from "./supabaseClient";
-import { LanguageProvider } from "./context/LanguageContext";
+import { supabase } from "@src/supabaseClient";
+import { LanguageProvider } from "@shared/context/LanguageContext";
 
 class ErrorBoundary extends Component {
   constructor(props) {
