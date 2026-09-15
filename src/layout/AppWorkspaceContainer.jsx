@@ -230,13 +230,15 @@ export default function AppWorkspaceContainer({
 
   return (
     <>
-      <HeaderBar
-        setShowFeedbackModal={setShowFeedbackModal}
-        triggerHaptic={triggerHaptic}
-        lang={lang}
-        t={t}
-        theme={theme}
-      />
+      {activeTab !== 'trash' && (
+        <HeaderBar
+          setShowFeedbackModal={setShowFeedbackModal}
+          triggerHaptic={triggerHaptic}
+          lang={lang}
+          t={t}
+          theme={theme}
+        />
+      )}
 
       <WorkspaceTabs
         activeTab={activeTab}

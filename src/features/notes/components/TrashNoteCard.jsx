@@ -60,6 +60,9 @@ const TrashNoteCard = ({
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'stretch',
+        width: '100%',
+        boxSizing: 'border-box',
         textAlign: 'left',
         gap: '8px',
         border: isSelected 
@@ -82,7 +85,7 @@ const TrashNoteCard = ({
       }}
     >
       {/* Top Row: Checkbox (in select mode) + Title + Days Left Badge */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
           {isSelectMode && (
             <div style={{
@@ -139,7 +142,7 @@ const TrashNoteCard = ({
         </span>
       </div>
 
-      {/* Snippet Row — Left-aligned */}
+      {/* Snippet Row — Left-aligned full width */}
       <p style={{ 
         fontSize: '0.82rem', 
         color: isLight ? '#475569' : 'rgba(255, 255, 255, 0.62)', 
@@ -150,7 +153,8 @@ const TrashNoteCard = ({
         WebkitBoxOrient: 'vertical', 
         margin: 0,
         lineHeight: '1.45',
-        textAlign: 'left'
+        textAlign: 'left',
+        width: '100%'
       }}>
         {snippet}
       </p>
@@ -162,6 +166,7 @@ const TrashNoteCard = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '8px',
+          width: '100%',
           marginTop: '2px',
           paddingTop: '8px',
           borderTop: isLight ? '1px solid #F1F5F9' : '1px solid rgba(255, 255, 255, 0.06)'

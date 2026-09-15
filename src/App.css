@@ -348,7 +348,8 @@ html, body, #root {
 
 /* ── Android: Status Bar Padding (CSS variable --status-bar-height) ─── */
 body.platform-android .app-header,
-body.platform-android .editor-header {
+body.platform-android .editor-header,
+body.platform-android .trash-header-container {
   padding-top: calc(var(--status-bar-height, 32px) + 16px) !important;
 }
 
@@ -1954,51 +1955,16 @@ body.platform-ios .bottom-nav {
 
 /* Trash Bin */
 .trash-card {
-  padding: 16px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  text-align: left;
-  gap: 14px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  text-align: left !important;
 }
 
-.trash-card-info {
-  display: flex;
-  justify-content: space-between;
-}
-
-.trash-expiry {
-  font-size: 0.75rem;
-  color: var(--danger);
-  font-weight: 600;
-}
-
-.trash-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.trash-btn {
-  padding: 6px 12px;
-  font-size: 0.75rem;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-}
-
-.trash-btn-restore {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.trash-btn-delete {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+.trash-card * {
+  box-sizing: border-box;
 }
 
 .toast-notification {

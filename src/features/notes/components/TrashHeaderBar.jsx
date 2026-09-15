@@ -16,12 +16,15 @@ const TrashHeaderBar = ({
   onEnterSelectMode,
 }) => {
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      gap: '6px',
-      marginBottom: '14px'
-    }}>
+    <div 
+      className="trash-header-container"
+      style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '6px',
+        marginBottom: '14px'
+      }}
+    >
       {/* Top Header Row — single line, never wraps */}
       <div style={{
         display: 'flex',
