@@ -19,18 +19,19 @@ const TrashHeaderBar = ({
     <div style={{ 
       display: 'flex', 
       flexDirection: 'column', 
-      gap: '12px',
-      marginBottom: '16px'
+      gap: '6px',
+      marginBottom: '14px'
     }}>
-      {/* Top Header Row */}
+      {/* Top Header Row — single line, never wraps */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '10px'
+        gap: '8px',
+        minWidth: 0
       }}>
         {/* Left: Back Button + Title + Count Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
           {typeof onBack === 'function' && !isSelectMode && (
             <button
               onClick={onBack}
@@ -56,13 +57,16 @@ const TrashHeaderBar = ({
             </button>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
             <h2 style={{ 
-              fontSize: '1.35rem', 
+              fontSize: '1.25rem', 
               fontWeight: 800, 
               margin: 0, 
               color: isLight ? '#0F172A' : '#FFFFFF',
-              letterSpacing: '-0.02em'
+              letterSpacing: '-0.02em',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}>
               {isSelectMode ? (
                 <span>{selectedCount} {lang === 'tr' ? 'Seçildi' : 'Selected'}</span>
@@ -73,12 +77,13 @@ const TrashHeaderBar = ({
 
             {!isSelectMode && deletedNotesCount > 0 && (
               <span style={{
-                fontSize: '0.75rem',
+                fontSize: '0.74rem',
                 fontWeight: 700,
-                padding: '2px 8px',
+                padding: '2px 7px',
                 borderRadius: '10px',
-                background: isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.1)',
-                color: isLight ? '#475569' : '#CBD5E1'
+                background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.1)',
+                color: isLight ? '#475569' : '#CBD5E1',
+                flexShrink: 0
               }}>
                 {deletedNotesCount}
               </span>
@@ -88,7 +93,7 @@ const TrashHeaderBar = ({
 
         {/* Right: Actions */}
         {deletedNotesCount > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
             {!isSelectMode ? (
               <>
                 <button
@@ -101,21 +106,22 @@ const TrashHeaderBar = ({
                     }
                   }}
                   style={{
-                    padding: '7px 13px',
-                    borderRadius: '11px',
+                    padding: '6px 12px',
+                    borderRadius: '10px',
                     border: isLight ? '1px solid #BFDBFE' : '1px solid rgba(59, 130, 246, 0.3)',
                     background: isLight ? '#EFF6FF' : 'rgba(59, 130, 246, 0.12)',
                     color: isLight ? '#1D4ED8' : '#60A5FA',
-                    fontSize: '0.82rem',
+                    fontSize: '0.8rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
+                    gap: '4px',
+                    whiteSpace: 'nowrap',
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="9 11 12 14 22 4" />
                     <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                   </svg>
@@ -125,22 +131,23 @@ const TrashHeaderBar = ({
                 <button
                   onClick={onEmptyTrash}
                   style={{
-                    padding: '7px 12px',
-                    borderRadius: '11px',
+                    padding: '6px 11px',
+                    borderRadius: '10px',
                     border: isLight ? '1px solid #FECACA' : '1px solid rgba(239, 68, 68, 0.25)',
                     background: isLight ? '#FEF2F2' : 'rgba(239, 68, 68, 0.12)',
                     color: isLight ? '#DC2626' : '#FCA5A5',
-                    fontSize: '0.82rem',
+                    fontSize: '0.8rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
+                    gap: '4px',
+                    whiteSpace: 'nowrap',
                     transition: 'all 0.15s ease'
                   }}
                   title={t('emptyTrashBtn') || 'Çöpü Boşalt'}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6" />
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                   </svg>
@@ -152,33 +159,35 @@ const TrashHeaderBar = ({
                 <button
                   onClick={handleSelectAll}
                   style={{
-                    padding: '7px 12px',
-                    borderRadius: '11px',
+                    padding: '6px 11px',
+                    borderRadius: '10px',
                     border: isLight ? '1px solid #BFDBFE' : '1px solid rgba(59, 130, 246, 0.3)',
                     background: isLight ? '#EFF6FF' : 'rgba(59, 130, 246, 0.12)',
                     color: isLight ? '#1D4ED8' : '#60A5FA',
-                    fontSize: '0.8rem',
+                    fontSize: '0.78rem',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                     transition: 'all 0.15s ease'
                   }}
                 >
                   {selectedCount === deletedNotesCount 
-                    ? (lang === 'tr' ? 'Seçimi Bırak' : 'Deselect All') 
-                    : (lang === 'tr' ? 'Tümünü Seç' : 'Select All')}
+                    ? (lang === 'tr' ? 'Bırak' : 'Deselect') 
+                    : (lang === 'tr' ? 'Tümü' : 'All')}
                 </button>
 
                 <button
                   onClick={handleCancelSelection}
                   style={{
-                    padding: '7px 12px',
-                    borderRadius: '11px',
+                    padding: '6px 11px',
+                    borderRadius: '10px',
                     border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,0.12)',
                     background: isLight ? '#F8FAFC' : 'rgba(255,255,255,0.06)',
                     color: isLight ? '#64748B' : '#94A3B8',
-                    fontSize: '0.8rem',
+                    fontSize: '0.78rem',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                     transition: 'all 0.15s ease'
                   }}
                 >
@@ -190,31 +199,18 @@ const TrashHeaderBar = ({
         )}
       </div>
 
-      {/* Modern Info Strip (When not in select mode) */}
+      {/* Subtle inline notice — no heavy box */}
       {!isSelectMode && deletedNotesCount > 0 && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 12px',
-          borderRadius: '12px',
-          background: isLight ? '#F8FAFC' : 'rgba(255, 255, 255, 0.04)',
-          border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.06)'
+        <span style={{
+          fontSize: '0.74rem',
+          color: isLight ? '#94A3B8' : 'rgba(255, 255, 255, 0.4)',
+          fontWeight: 500,
+          lineHeight: '1.35'
         }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isLight ? '#64748B' : '#94A3B8'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="16" x2="12" y2="12" />
-            <line x1="12" y1="8" x2="12.01" y2="8" />
-          </svg>
-          <span style={{
-            fontSize: '0.76rem',
-            color: isLight ? '#64748B' : 'rgba(255, 255, 255, 0.6)',
-            fontWeight: 500,
-            lineHeight: '1.3'
-          }}>
-            {t('trashRetentionSub') || 'Silinen notlar 30 gün boyunca saklanır, ardından otomatik kalıcı olarak silinir.'}
-          </span>
-        </div>
+          {lang === 'tr'
+            ? 'Silinen notlar 30 gün sonra otomatik olarak kalıcı silinir.'
+            : 'Deleted notes will be permanently removed after 30 days.'}
+        </span>
       )}
     </div>
   );

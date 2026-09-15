@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { htmlToPlainText, getDaysLeft } from '@shared/utils/textUtils';
+import { getNoteSnippet } from './NoteCard';
 
 const TrashNoteCard = ({
   note,
@@ -20,15 +21,10 @@ const TrashNoteCard = ({
   // FIX: use shared getDaysLeft utility instead of duplicating the formula here
   const daysLeft = getDaysLeft(note.deletedAt);
 
-  const plainSnippet = (() => {
-    if (note.blocks && note.blocks.length > 0) {
-      const textBlock = note.blocks.find(b => b && b.type === 'text' && b.content);
-      if (textBlock) return htmlToPlainText(textBlock.content);
-    }
-    return htmlToPlainText(note.content || '');
-  })();
+  // Use rich snippet matching NoteCard (supports todos, debts, exams, files, etc.)
+  const snippet = getNoteSnippet(note, t);
 
-  const handleCardClick = (e) => {
+  const handleCardClick = () => {
     if (isSelectMode) {
       toggleSelectNote(note.id);
     } else if (typeof openPreviewNote === 'function') {
@@ -53,7 +49,7 @@ const TrashNoteCard = ({
 
   return (
     <div 
-      className={`trash-card ${isSelected ? 'selected' : ''}`}
+      className={`glass-panel-interactive trash-card ${isSelected ? 'selected' : ''}`}
       onClick={handleCardClick}
       onTouchStart={startPress}
       onTouchEnd={endPress}
@@ -65,33 +61,33 @@ const TrashNoteCard = ({
         display: 'flex',
         flexDirection: 'column',
         textAlign: 'left',
-        gap: '10px',
+        gap: '8px',
         border: isSelected 
-          ? '2px solid #3B82F6' 
+          ? '1.5px solid #3B82F6' 
           : isLight ? '1px solid rgba(0, 0, 0, 0.06)' : '1px solid rgba(255, 255, 255, 0.08)',
         background: isSelected 
-          ? (isLight ? '#EFF6FF' : 'rgba(59, 130, 246, 0.12)') 
-          : (isLight ? '#FFFFFF' : 'rgba(23, 29, 44, 0.85)'),
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        padding: '16px 18px',
-        borderRadius: '18px',
-        marginBottom: '12px',
+          ? (isLight ? '#EFF6FF' : 'rgba(59, 130, 246, 0.14)') 
+          : (isLight ? 'rgba(255, 255, 255, 0.92)' : 'rgba(18, 24, 36, 0.85)'),
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        padding: '14px 16px',
+        borderRadius: '16px',
+        marginBottom: '10px',
         position: 'relative',
-        transition: 'all 0.2s ease',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
         boxShadow: isSelected 
-          ? '0 4px 18px rgba(59, 130, 246, 0.25)' 
-          : (isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 4px 16px rgba(0,0,0,0.2)'),
+          ? '0 4px 18px rgba(59, 130, 246, 0.22)' 
+          : (isLight ? '0 3px 12px rgba(0,0,0,0.03)' : '0 4px 16px rgba(0,0,0,0.3)'),
         userSelect: 'none'
       }}
     >
       {/* Top Row: Checkbox (in select mode) + Title + Days Left Badge */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
           {isSelectMode && (
             <div style={{
-              width: '22px',
-              height: '22px',
+              width: '20px',
+              height: '20px',
               borderRadius: '50%',
               border: isSelected ? 'none' : (isLight ? '2px solid #94A3B8' : '2px solid rgba(255, 255, 255, 0.3)'),
               background: isSelected ? 'linear-gradient(135deg, #3B82F6, #1D4ED8)' : 'transparent',
@@ -99,11 +95,11 @@ const TrashNoteCard = ({
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: isSelected ? '0 2px 8px rgba(59, 130, 246, 0.4)' : 'none',
+              boxShadow: isSelected ? '0 2px 6px rgba(59, 130, 246, 0.4)' : 'none',
               transition: 'all 0.15s ease'
             }}>
               {isSelected && (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               )}
@@ -118,17 +114,18 @@ const TrashNoteCard = ({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            flex: 1
+            flex: 1,
+            textAlign: 'left'
           }}>
             {note.title || t('untitledNote') || 'Başlıksız Not'}
           </h3>
         </div>
 
         <span style={{ 
-          fontSize: '0.72rem', 
+          fontSize: '0.7rem', 
           fontWeight: 700, 
-          padding: '3px 9px',
-          borderRadius: '10px',
+          padding: '2px 8px',
+          borderRadius: '8px',
           background: isUrgent 
             ? (isLight ? '#FEE2E2' : 'rgba(239, 68, 68, 0.2)') 
             : (isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.08)'),
@@ -142,44 +139,34 @@ const TrashNoteCard = ({
         </span>
       </div>
 
-      {/* Snippet Row */}
-      {plainSnippet ? (
-        <p style={{ 
-          fontSize: '0.83rem', 
-          color: isLight ? '#475569' : 'rgba(255, 255, 255, 0.65)', 
-          overflow: 'hidden', 
-          textOverflow: 'ellipsis', 
-          display: '-webkit-box', 
-          WebkitLineClamp: 2, 
-          WebkitBoxOrient: 'vertical', 
-          margin: 0,
-          lineHeight: '1.45'
-        }}>
-          {plainSnippet}
-        </p>
-      ) : (
-        <p style={{ 
-          fontSize: '0.8rem', 
-          color: isLight ? '#94A3B8' : 'rgba(255, 255, 255, 0.35)', 
-          margin: 0,
-          fontStyle: 'italic'
-        }}>
-          {/* FIX: was hard-coded Turkish — now uses translation system */}
-          {t('emptyNoteContent') || (lang === 'tr' ? '(Metin içeriği yok)' : '(No text content)')}
-        </p>
-      )}
+      {/* Snippet Row — Left-aligned */}
+      <p style={{ 
+        fontSize: '0.82rem', 
+        color: isLight ? '#475569' : 'rgba(255, 255, 255, 0.62)', 
+        overflow: 'hidden', 
+        textOverflow: 'ellipsis', 
+        display: '-webkit-box', 
+        WebkitLineClamp: 2, 
+        WebkitBoxOrient: 'vertical', 
+        margin: 0,
+        lineHeight: '1.45',
+        textAlign: 'left'
+      }}>
+        {snippet}
+      </p>
 
-      {/* Footer Row: Metadata + Action Buttons */}
+      {/* Footer Row: Deletion Date + Sleek Micro Actions */}
       {!isSelectMode && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '10px',
-          marginTop: '4px',
+          gap: '8px',
+          marginTop: '2px',
           paddingTop: '8px',
           borderTop: isLight ? '1px solid #F1F5F9' : '1px solid rgba(255, 255, 255, 0.06)'
         }}>
+          {/* Deletion Date */}
           <span style={{
             fontSize: '0.72rem',
             color: isLight ? '#94A3B8' : 'rgba(255, 255, 255, 0.4)',
@@ -196,29 +183,30 @@ const TrashNoteCard = ({
               : ''}
           </span>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Micro Action Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button 
               onClick={(e) => { 
                 e.stopPropagation(); 
                 handleRestoreNote(note.id); 
               }}
               style={{
-                padding: '6px 12px',
-                borderRadius: '10px',
+                padding: '4px 10px',
+                borderRadius: '8px',
                 border: isLight ? '1px solid #A7F3D0' : '1px solid rgba(52, 211, 153, 0.25)',
-                background: isLight ? '#ECFDF5' : 'rgba(16, 185, 129, 0.15)',
+                background: isLight ? '#ECFDF5' : 'rgba(16, 185, 129, 0.14)',
                 color: isLight ? '#047857' : '#34D399',
-                fontSize: '0.78rem',
+                fontSize: '0.76rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '4px',
                 transition: 'all 0.15s ease'
               }}
               title={t('restoreBtn') || 'Geri Yükle'}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="1 4 1 10 7 10" />
                 <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
               </svg>
@@ -231,26 +219,25 @@ const TrashNoteCard = ({
                 handlePermanentDelete(note.id); 
               }}
               style={{
-                padding: '6px 12px',
-                borderRadius: '10px',
+                width: '28px',
+                height: '28px',
+                padding: 0,
+                borderRadius: '8px',
                 border: isLight ? '1px solid #FECACA' : '1px solid rgba(248, 113, 113, 0.25)',
-                background: isLight ? '#FEF2F2' : 'rgba(239, 68, 68, 0.15)',
-                color: isLight ? '#B91C1C' : '#FCA5A5',
-                fontSize: '0.78rem',
-                fontWeight: 700,
+                background: isLight ? '#FEF2F2' : 'rgba(239, 68, 68, 0.12)',
+                color: isLight ? '#DC2626' : '#FCA5A5',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
+                justifyContent: 'center',
                 transition: 'all 0.15s ease'
               }}
               title={t('deletePermanentlyBtn') || 'Kalıcı Olarak Sil'}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
-              {lang === 'tr' ? 'Kalıcı Sil' : (t('deletePermanentlyBtn') || 'Delete')}
             </button>
           </div>
         </div>
