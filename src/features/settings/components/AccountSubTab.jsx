@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { getPaymentGraceStatus, getDataRetentionStatus } from '@shared/utils/subscriptionGraceUtils';
+import React from 'react';
 import AccountProfileHeader from '@features/settings/components/account/AccountProfileHeader';
 import LogoutActionCard from '@features/settings/components/account/LogoutActionCard';
 import { stripHtml as cleanText } from '@shared/utils/textUtils';
+import { MAX_STORAGE_BYTES } from '@features/notes/hooks/useAppLocalState';
 
 const AccountSubTab = ({
   user,
   setShowAvatarPicker,
   profileName,
   handleUpdateProfileName,
-  userPlan,
-  setShowPaywall,
   getStorageUsageBytes,
-  PLAN_STORAGE_LIMITS,
   formatBytes,
   isLight,
   DEFAULT_AVATARS,
@@ -23,13 +20,10 @@ const AccountSubTab = ({
   lang,
   t,
 }) => {
-  const usedBytes = getStorageUsageBytes();
-  const limitBytes = PLAN_STORAGE_LIMITS[userPlan] || PLAN_STORAGE_LIMITS.lite;
+  const usedBytes = getStorageUsageBytes ? getStorageUsageBytes() : 0;
+  const limitBytes = MAX_STORAGE_BYTES;
   const percent = Math.min(100, Math.round((usedBytes / limitBytes) * 100));
-  const limitText = formatBytes(limitBytes);
-
-  const paymentGrace = getPaymentGraceStatus(userPlan);
-  const dataRetention = getDataRetentionStatus(usedBytes, limitBytes);
+  const limitText = formatBytes ? formatBytes(limitBytes) : '5 GB';
 
   return (
     <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -45,199 +39,6 @@ const AccountSubTab = ({
         isLight={isLight}
         t={t}
       />
-
-      {/* [EARLY ACCESS] Abonelik kartı yerine Erken Erişim bilgilendirme kartı */}
-      <div
-        style={{
-          position: 'relative',
-          background: isLight
-            ? 'linear-gradient(135deg, #EDE9FE 0%, #F5F3FF 100%)'
-            : 'linear-gradient(135deg, #1e1145 0%, #0f0a2a 100%)',
-          borderRadius: '20px',
-          padding: '20px 18px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '10px',
-          overflow: 'hidden',
-          boxShadow: isLight
-            ? '0 6px 20px rgba(99, 102, 241, 0.1)'
-            : '0 0 25px rgba(139, 92, 246, 0.2)',
-          border: isLight
-            ? '1.5px solid rgba(139, 92, 246, 0.25)'
-            : '1.5px solid rgba(139, 92, 246, 0.35)',
-        }}
-      >
-        {/* Radial Glow */}
-        <div style={{
-          position: 'absolute',
-          top: '-30px',
-          right: '-30px',
-          width: '140px',
-          height: '140px',
-          borderRadius: '50%',
-          background: isLight
-            ? 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(255,255,255,0) 70%)'
-            : 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(0,0,0,0) 70%)',
-          pointerEvents: 'none'
-        }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', zIndex: 1 }}>
-          {/* Icon Badge */}
-          <div style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-            fontSize: '1.3rem'
-          }}>
-            🎉
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
-            <span style={{
-              fontSize: '0.68rem',
-              color: isLight ? '#6366F1' : '#A78BFA',
-              fontWeight: 800,
-              letterSpacing: '0.6px',
-              textTransform: 'uppercase'
-            }}>
-              Erken Erişim
-            </span>
-            <span style={{
-              fontSize: '1.08rem',
-              fontWeight: 800,
-              letterSpacing: '-0.2px',
-              color: isLight ? '#0F172A' : '#F1F5F9',
-            }}>
-              Tüm Özellikler Açık!
-            </span>
-          </div>
-
-          {/* Badge */}
-          <div style={{
-            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-            color: '#FFFFFF',
-            fontSize: '0.72rem',
-            fontWeight: 800,
-            padding: '6px 12px',
-            borderRadius: '10px',
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
-            zIndex: 1,
-            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-          }}>
-            👑 ULTRA
-          </div>
-        </div>
-
-        {/* Alt bilgi */}
-        <div style={{
-          width: '100%',
-          padding: '8px 12px',
-          borderRadius: '10px',
-          background: isLight ? 'rgba(99, 102, 241, 0.06)' : 'rgba(139, 92, 246, 0.12)',
-          border: isLight ? '1px dashed rgba(99, 102, 241, 0.25)' : '1px dashed rgba(139, 92, 246, 0.3)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-          fontSize: '0.78rem',
-          fontWeight: 700,
-          color: isLight ? '#6366F1' : '#A78BFA',
-          zIndex: 1
-        }}>
-          <span>NoteUp'ın tüm Pro & Ultra özelliklerini ücretsiz kullanıyorsunuz ✨</span>
-        </div>
-      </div>
-      {/* [EARLY ACCESS END] — Aşağıdaki orijinal abonelik kartı kodu kaldırıldı (satır 53-200) */}
-
-      {/* 7-DAY PAYMENT GRACE PERIOD BANNER */}
-      {paymentGrace.inPaymentGrace && (
-        <div style={{
-          padding: '14px 16px',
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.08))',
-          border: '1.5px solid rgba(245, 158, 11, 0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFF',
-            fontWeight: 800,
-            fontSize: '1.1rem',
-            flexShrink: 0
-          }}>
-            ⚡
-          </div>
-          <div>
-            <p style={{ fontSize: '0.85rem', fontWeight: 800, color: isLight ? '#92400E' : '#FBBF24', margin: 0 }}>
-              7 Günlük Ödeme Esnekliği Aktif (Kalan: {paymentGrace.daysRemaining} Gün)
-            </p>
-            <p style={{ fontSize: '0.72rem', color: isLight ? '#78350F' : '#FDE68A', margin: '3px 0 0 0', lineHeight: 1.35 }}>
-              Abonelik ödemeniz yenilenemedi. Tüm Ultra/Pro haklarınız {paymentGrace.graceUntilDate} tarihine kadar açık tutuluyor. Lütfen ödeme bilgilerinizi güncelleyin.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* 30-DAY OVER-QUOTA DATA RETENTION & SILME UYARISI BANNER */}
-      {dataRetention.isOverQuota && (
-        <div style={{
-          padding: '14px 16px',
-          borderRadius: '16px',
-          background: dataRetention.isDeletionDue
-            ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.08))'
-            : 'linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(194, 65, 12, 0.08))',
-          border: dataRetention.isDeletionDue
-            ? '1.5px solid rgba(239, 68, 68, 0.5)'
-            : '1.5px solid rgba(249, 115, 22, 0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '10px',
-            background: dataRetention.isDeletionDue ? 'linear-gradient(135deg, #EF4444, #B91C1C)' : 'linear-gradient(135deg, #F97316, #C2410C)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFF',
-            fontWeight: 800,
-            fontSize: '1.1rem',
-            flexShrink: 0
-          }}>
-            {dataRetention.isDeletionDue ? '🗑️' : '📦'}
-          </div>
-          <div>
-            <p style={{ fontSize: '0.85rem', fontWeight: 800, color: dataRetention.isDeletionDue ? '#EF4444' : (isLight ? '#C2410C' : '#FB923C'), margin: 0 }}>
-              {dataRetention.isDeletionDue
-                ? '⚠️ 30 Günlük Süre Doldu - Silme Uyarısı'
-                : `📦 30 Günlük Veri Saklama Süresi (Kalan: ${dataRetention.daysRemaining} Gün)`}
-            </p>
-            <p style={{ fontSize: '0.72rem', color: isLight ? '#7C2D12' : '#FFEDD5', margin: '3px 0 0 0', lineHeight: 1.35 }}>
-              {dataRetention.isDeletionDue
-                ? `Depolama limitiniz (${limitText}) aşıldığı ve 30 günlük yedekleme süreniz dolduğu için kotayı aşan medya dosyalarınız otomatik olarak silinecektir. Lütfen plan yükseltin.`
-                : `100MB depolama limitini aştınız. Mevcut dosyalarınızı ${dataRetention.retentionEndDate} tarihine kadar görüntüleyebilir ve indirebilirsiniz. Yeni dosya eklemek için plan yükseltin.`}
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* CLOUD STORAGE CARD */}
       <div style={{

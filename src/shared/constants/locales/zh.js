@@ -33,6 +33,7 @@ const zh = {
   shared: '已共享',
   sharedNotes: '共享笔记',
   sharedNotesTab: '共享笔记',
+  pendingApproval: '等待共享确认',
   friendsCount: '好友',
   newNote: '新笔记',
   allNotes: '所有笔记',

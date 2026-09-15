@@ -42,22 +42,9 @@
 		</dict>
 	</array>
 
-	<!-- ADMOB CONFIGURATION (REQUIRED ON IOS TO PREVENT FATAL CRASH ON STARTUP) -->
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~3347511713</string>
-	<key>SKAdNetworkItems</key>
-	<array>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>cstr64bu5z.skadnetwork</string>
-		</dict>
-	</array>
-
 	<!-- APPLE PRIVACY PURPOSE STRINGS -->
 	<key>NSFaceIDUsageDescription</key>
 	<string>NoteUp kilitli notlarınızı Face ID veya Touch ID ile güvenle açabilmek için biyometrik erişim izni gereklidir.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>NoteUp deneyiminizi iyileştirmek için izin gereklidir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>NoteUp notlarınıza fotoğraf eklemek ve profil resminizi güncellemek için fotoğraf kitaplığınıza erişim gereklidir.</string>
 	<key>NSCameraUsageDescription</key>

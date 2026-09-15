@@ -1,18 +1,14 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { DEFAULT_AVATARS } from '@shared/constants/avatars';
 import { supabase } from '@src/supabaseClient';
-import { syncRevenueCatUser } from '@shared/services/billing';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import useSupabaseSync from '@shared/hooks/useSupabaseSync';
 import useUserProfile from '@features/auth/hooks/useUserProfile';
-import { useSubscriptionPlanWatcher } from '@features/paywall/hooks/useSubscriptionPlanWatcher';
 import { sanitizeSingleLine } from '@shared/utils/securityUtils';
-import { PLAN_LIMITS } from '@shared/constants/paywallPlans';
 
 const isMockMode = false;
-const PLAN_LEVELS = { lite: 1, pro: 2, ultra: 3 };
 
 export default function useAuth() {
   // --- CORE DATA CACHE STATES ---
@@ -29,9 +25,8 @@ export default function useAuth() {
   const [profileName, setProfileName] = useState('');
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
-  // --- BILLING / SUBSCRIPTION PLAN STATES ---
-  const [userPlan, setUserPlan] = useState('lite');
-  const prevPlanRef = useRef(userPlan);
+  // --- PLAN STATE (All users have full unmetered access) ---
+  const [userPlan, setUserPlan] = useState('ultra');
 
   // --- SUB-HOOK: DATA SYNC ---
   const sync = useSupabaseSync({
@@ -39,9 +34,6 @@ export default function useAuth() {
     setNotes,
     setReminders,
   });
-
-  // Delegate subscription plan changes & 7-day payment grace period monitoring to single-responsibility hook
-  const { planNotification, setPlanNotification } = useSubscriptionPlanWatcher(userPlan);
 
   // --- TOAST NOTIFICATION STATE ---
   const [toast, setToast] = useState(null);
@@ -65,48 +57,19 @@ export default function useAuth() {
         } catch (e) {}
       }
 
-      // Eğer yerel depolamada yoksa Supabase 'profiles' tablosundaki kayıtlı avatarı ve planı kontrol et
-      let dbPlan = null;
+      // Eğer yerel depolamada yoksa Supabase 'profiles' tablosundaki kayıtlı avatarı kontrol et
       try {
         const { data: dbProf } = await supabase
           .from('profiles')
-          .select('*')
+          .select('photo_url')
           .eq('id', u.id)
           .maybeSingle();
-        if (dbProf) {
-          if (dbProf.photo_url && !savedPhotoURL) {
-            savedPhotoURL = dbProf.photo_url;
-            localStorage.setItem(`s23_avatar_${u.id}`, savedPhotoURL);
-          }
-          dbPlan = (dbProf.plan || dbProf.user_plan || dbProf.subscription_plan || dbProf.plan_type || dbProf.tier || dbProf.role || '').toLowerCase();
-          
-          // Profilde özel depolama limiti tanımı varsa
-          const userStorageMb = dbProf.storage_limit_mb || dbProf.storage_limit;
-          if (userStorageMb && typeof Number(userStorageMb) === 'number' && !isNaN(Number(userStorageMb))) {
-            PLAN_STORAGE_LIMITS[dbPlan || 'lite'] = Number(userStorageMb) * 1024 * 1024;
-          }
+        if (dbProf && dbProf.photo_url && !savedPhotoURL) {
+          savedPhotoURL = dbProf.photo_url;
+          localStorage.setItem(`s23_avatar_${u.id}`, savedPhotoURL);
         }
       } catch (e) {
         console.warn("Profiles fetch error:", e);
-      }
-
-      // Supabase 'plan_limits' tablosundan tüm planların veri limitlerini canlı çek
-      try {
-        const { data: limitsData } = await supabase
-          .from('plan_limits')
-          .select('*');
-        if (limitsData && Array.isArray(limitsData) && limitsData.length > 0) {
-          limitsData.forEach(row => {
-            const pId = (row.plan_id || row.plan_name || row.id || row.name || '').toLowerCase();
-            const mb = row.storage_mb || row.max_storage_mb || row.storage_limit_mb || row.storage_limit || row.limit_mb || row.storage;
-            if (pId && mb && typeof Number(mb) === 'number' && !isNaN(Number(mb))) {
-              PLAN_STORAGE_LIMITS[pId] = Number(mb) * 1024 * 1024;
-            }
-          });
-          localStorage.setItem('s23_remote_plan_limits', JSON.stringify(PLAN_STORAGE_LIMITS));
-        }
-      } catch (e) {
-        console.warn("plan_limits table fetch error:", e);
       }
 
       let nameCandidate = savedPhotoURL ? (localStorage.getItem('s23_profile_name') || u.user_metadata?.full_name || u.email?.split('@')[0]) : (u.user_metadata?.full_name || u.email?.split('@')[0] || 'Kullanıcı');
@@ -142,59 +105,6 @@ export default function useAuth() {
       } catch (e) {
         console.warn("Yerel önbellek okuma hatası:", e);
       }
-
-      // Check active cloud gifts for this user
-      let isCloudGiftActive = false;
-      try {
-        if (dbProf?.friend_code) {
-          const { data: gifts } = await supabase
-            .from('friend_gifts')
-            .select('id')
-            .eq('receiver_code', dbProf.friend_code)
-            .gt('expires_at', Date.now())
-            .limit(1);
-          if (gifts && gifts.length > 0) isCloudGiftActive = true;
-        }
-      } catch (giftErr) {}
-
-      // Sync RevenueCat plan & Supabase DB plan — Admin paneli hediye/değişikliğini anında uygular
-      syncRevenueCatUser(u).then(activePlan => {
-        // [EARLY ACCESS] Tüm özellikler ücretsiz — abonelik sistemi geçici olarak pasif
-        const finalPlan = 'ultra';
-        // [EARLY ACCESS ORIGINAL]
-        // const getWeight = (p) => p === 'ultra' ? 3 : p === 'pro' ? 2 : 1;
-        // const rcW = getWeight(activePlan);
-        // const dbW = getWeight(dbPlan);
-        // const localW = getWeight(localStorage.getItem('s23_user_plan'));
-        // const giftW = isCloudGiftActive ? 3 : 1;
-        // const maxW = Math.max(rcW, dbW, localW, giftW);
-        // const finalPlan = maxW === 3 ? 'ultra' : maxW === 2 ? 'pro' : 'lite';
-
-        setUserPlan(finalPlan);
-        localStorage.setItem('s23_user_plan', finalPlan);
-
-        // Check device limit with cryptographically secure Device ID
-        let devId = localStorage.getItem('s23_device_id');
-        if (!devId) {
-          const randomBytes = new Uint8Array(16);
-          window.crypto.getRandomValues(randomBytes);
-          devId = 'dev_' + Array.from(randomBytes, b => b.toString(16).padStart(2, '0')).join('');
-          localStorage.setItem('s23_device_id', devId);
-        }
-        const devKey = `s23_user_devices_${u.id}`;
-        const savedDevs = JSON.parse(localStorage.getItem(devKey) || '[]');
-        if (!savedDevs.includes(devId)) {
-          const limits = PLAN_LIMITS[finalPlan] || PLAN_LIMITS.lite;
-          if (limits.maxDevices !== Infinity && savedDevs.length >= limits.maxDevices) {
-            setToast({
-              title: "⚠️ Cihaz Limiti",
-              msg: `NoteUp ${finalPlan.toUpperCase()} planında en fazla ${limits.maxDevices} cihaz kullanabilirsiniz. Pro/Ultra'ya geçerek cihaz kısıtlamasını kaldırın!`
-            });
-          } else {
-            localStorage.setItem(devKey, JSON.stringify([...savedDevs, devId]));
-          }
-        }
-      });
 
       // Generate deterministic friend code
       const userCode = `HUB-${u.id.replace(/-/g, '').substring(0, 4).toUpperCase()}-${u.id.replace(/-/g, '').slice(-4).toUpperCase()}`;
@@ -269,47 +179,17 @@ export default function useAuth() {
       } catch (e) {
         console.warn("Misafir önbellek okuma hatası:", e);
       }
-
-      syncRevenueCatUser(null);
-      setUserPlan('lite');
     }
   };
 
-  // --- AUTH LISTENER + DEEP LINKS + REALTIME PLAN EFFECT ---
+  // --- AUTH LISTENER + DEEP LINKS EFFECT ---
   useEffect(() => {
-    let profileChannel = null;
-
-    const setupProfileRealtime = (userId) => {
-      if (!userId) return;
-      if (profileChannel) supabase.removeChannel(profileChannel);
-
-      profileChannel = supabase
-        .channel(`public:profiles:${userId}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${userId}`
-        }, (payload) => {
-          if (payload.new) {
-            const livePlan = (payload.new.plan || payload.new.user_plan || '').toLowerCase();
-            if (livePlan && ['lite', 'pro', 'ultra'].includes(livePlan)) {
-              setUserPlan(livePlan);
-              localStorage.setItem('s23_user_plan', livePlan);
-            }
-          }
-        })
-        .subscribe();
-    };
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleAuthChange(session);
-      if (session?.user?.id) setupProfileRealtime(session.user.id);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       handleAuthChange(session);
-      if (session?.user?.id) setupProfileRealtime(session.user.id);
     });
 
     const setupDeepLinks = async () => {
@@ -531,7 +411,6 @@ export default function useAuth() {
     showAvatarPicker, setShowAvatarPicker,
 
     userPlan, setUserPlan,
-    planNotification, setPlanNotification,
 
     toast, setToast,
 

@@ -1,4 +1,4 @@
-﻿import useR2Storage from '@shared/hooks/useR2Storage';
+import useR2Storage from '@shared/hooks/useR2Storage';
 import useAudioRecorderHandler from '@features/editor/hooks/useAudioRecorderHandler';
 
 // ─── useMediaStorageHandlers ────────────────────────────────────────────────
@@ -12,13 +12,10 @@ const useMediaStorageHandlers = ({
   userPlan,
   lang,
   getStorageUsageBytes,
-  PLAN_STORAGE_LIMITS,
   handleInsertWidget,
   handleUpdateNote,
-  trackAttachmentAdded,
   checkAndRequestPermission,
   setToast,
-  setShowPaywall,
   setConfirmDialog,
   setLightboxUrl,
   setPreviewFileModal,
@@ -29,13 +26,10 @@ const useMediaStorageHandlers = ({
     user,
     userPlan,
     getStorageUsageBytes,
-    PLAN_STORAGE_LIMITS,
     handleInsertWidget,
     handleUpdateNote,
-    trackAttachmentAdded,
     checkAndRequestPermission,
     setToast,
-    setShowPaywall,
     setConfirmDialog,
     setLightboxUrl,
     setPreviewFileModal,
@@ -45,7 +39,6 @@ const useMediaStorageHandlers = ({
   const audioRecorder = useAudioRecorderHandler({
     editingNote,
     focusedBlockRef,
-    userPlan,
     handleInsertWidget,
     handleUpdateNote,
     checkAndRequestPermission,
@@ -53,8 +46,6 @@ const useMediaStorageHandlers = ({
     setConfirmDialog,
     uploadToR2: r2Storage.uploadToR2,
     getStorageUsageBytes,
-    PLAN_STORAGE_LIMITS,
-    setShowPaywall,
   });
 
   return {

@@ -42,10 +42,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
-        <!-- AdMob App ID — Required to prevent MobileAdsInitProvider crash on startup -->
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
 
         <receiver android:name=".AlarmReceiver" android:enabled="true" android:exported="false" />
         <service android:name=".AlarmService" android:enabled="true" android:exported="false" android:foregroundServiceType="mediaPlayback" />

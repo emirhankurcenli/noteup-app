@@ -1,34 +1,7 @@
-﻿import React from 'react';
-import { ProPlanIcon, UltraPlanIcon } from '@shared/components/PlanIcons';
+import React from 'react';
 
-const HeaderBar = ({ friends, userPlan = 'lite', setShowPaywall, setShowFeedbackModal, triggerHaptic, lang = 'tr', t, theme = 'dark' }) => {
+const HeaderBar = ({ setShowFeedbackModal, triggerHaptic, lang = 'tr', t, theme = 'dark' }) => {
   const isLight = theme === 'light';
-
-  const getBadgeConfig = () => {
-    if (userPlan === 'ultra') {
-      return {
-        label: 'Ultra',
-        icon: <UltraPlanIcon size={16} />,
-        bg: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(126, 34, 206, 0.25) 100%)',
-        border: '1px solid rgba(168, 85, 247, 0.4)',
-        color: '#C084FC',
-        shadow: '0 2px 10px rgba(168, 85, 247, 0.2)'
-      };
-    }
-    if (userPlan === 'pro') {
-      return {
-        label: 'Pro',
-        icon: <ProPlanIcon size={16} />,
-        bg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.25) 100%)',
-        border: '1px solid rgba(59, 130, 246, 0.4)',
-        color: '#60A5FA',
-        shadow: '0 2px 10px rgba(59, 130, 246, 0.2)'
-      };
-    }
-    return null;
-  };
-
-  const badge = getBadgeConfig();
 
   return (
     <div className="app-header">

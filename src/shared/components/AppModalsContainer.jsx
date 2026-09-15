@@ -30,19 +30,8 @@ export default function AppModalsContainer({
   setShowShareModal,
   editingNote,
   handleShareNoteImage,
-  showPaywall,
-  setShowPaywall,
-  userPlan,
-  setUserPlan,
-  planNotification,
-  setPlanNotification,
   confirmDialog,
   setConfirmDialog,
-  getLostFeatures,
-  getChangedFeatures,
-  PLAN_LEVELS,
-  showAdModal,
-  setShowAdModal,
   showAvatarPicker,
   setShowAvatarPicker,
   user,
@@ -59,17 +48,9 @@ export default function AppModalsContainer({
   quickReminderModes,
   setQuickReminderModes,
   handleCreateWidgetAlarm,
-  showRewardedAdModal,
-  setShowRewardedAdModal,
-  pendingShareReward,
-  setPendingShareReward,
-  handleRewardedShareCallback,
   notes,
   showFeedbackModal,
   setShowFeedbackModal,
-  nudgeTargetNote,
-  setNudgeTargetNote,
-  handleSendNudge,
   myCode,
   profileName,
   theme,
@@ -108,19 +89,8 @@ export default function AppModalsContainer({
       setShowShareModal={setShowShareModal}
       editingNote={editingNote}
       handleShareNoteImage={handleShareNoteImage}
-      showPaywall={showPaywall}
-      setShowPaywall={setShowPaywall}
-      userPlan={userPlan}
-      setUserPlan={setUserPlan}
-      planNotification={planNotification}
-      setPlanNotification={setPlanNotification}
       confirmDialog={confirmDialog}
       setConfirmDialog={setConfirmDialog}
-      getLostFeatures={getLostFeatures}
-      getChangedFeatures={getChangedFeatures}
-      PLAN_LEVELS={PLAN_LEVELS}
-      showAdModal={showAdModal}
-      setShowAdModal={setShowAdModal}
       showAvatarPicker={showAvatarPicker}
       setShowAvatarPicker={setShowAvatarPicker}
       user={user}
@@ -137,16 +107,8 @@ export default function AppModalsContainer({
       quickReminderModes={quickReminderModes}
       setQuickReminderModes={setQuickReminderModes}
       handleCreateWidgetAlarm={handleCreateWidgetAlarm}
-      showRewardedAdModal={showRewardedAdModal}
-      setShowRewardedAdModal={setShowRewardedAdModal}
-      pendingShareReward={pendingShareReward}
-      setPendingShareReward={setPendingShareReward}
-      handleRewardedShareCallback={handleRewardedShareCallback}
       showFeedbackModal={showFeedbackModal}
       setShowFeedbackModal={setShowFeedbackModal}
-      nudgeTargetNote={nudgeTargetNote}
-      setNudgeTargetNote={setNudgeTargetNote}
-      handleSendNudge={handleSendNudge}
       myCode={myCode}
       profileName={profileName}
       theme={theme}
@@ -156,4 +118,3 @@ export default function AppModalsContainer({
     />
   );
 }
-

@@ -4,19 +4,7 @@ import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { Capacitor } from "@capacitor/core";
 
-export const exportNoteAsPDF = async (note, userPlan, setToast, setShowPaywall, lang = "tr", setConfirmDialog) => {
-  // 1. Ultra Plan Validation
-  if (userPlan !== 'ultra' && userPlan !== 'vip') {
-    setToast({
-      title: lang === 'tr' ? "👑 NoteUp Ultra Özelliği" : "👑 NoteUp Ultra Feature",
-      msg: lang === 'tr' 
-        ? "Notlarınızı PDF olarak indirmek veya paylaşmak için Ultra plana geçiş yapın!" 
-        : "Upgrade to Ultra plan to export or share your notes as PDF!"
-    });
-    if (typeof setShowPaywall === 'function') setShowPaywall(true);
-    return;
-  }
-
+export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", setConfirmDialog) => {
   const generatePDFDoc = () => {
     const doc = new jsPDF();
     

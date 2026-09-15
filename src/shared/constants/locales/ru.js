@@ -33,6 +33,7 @@ const ru = {
   shared: 'Общий доступ',
   sharedNotes: 'Общие',
   sharedNotesTab: 'Общие заметки',
+  pendingApproval: 'Ожидает подтверждения',
   friendsCount: 'Друзья',
   newNote: 'Новая заметка',
   allNotes: 'Все заметки',

@@ -1,10 +1,9 @@
-﻿import React from 'react';
+import React from 'react';
 import MyProfileCodeCard from '@features/social/components/MyProfileCodeCard';
 import AddFriendInputForm from '@features/social/components/AddFriendInputForm';
 import IncomingRequestsList from '@features/social/components/IncomingRequestsList';
 import OutgoingRequestsList from '@features/social/components/OutgoingRequestsList';
 import FriendsListSection from '@features/social/components/FriendsListSection';
-import UltraGiftBannerCard from '@features/social/components/UltraGiftBannerCard';
 
 const SocialSubTab = ({
   myCode,
@@ -19,11 +18,6 @@ const SocialSubTab = ({
   handleCancelFriendRequest,
   friends = [],
   handleDisconnect,
-  userPlan,
-  grantedUltraFriendCode,
-  ultraGiftFrom,
-  isGiftedUltra,
-  handleGrantUltraGift,
   isSendingRequest,
   lang,
   isLight,
@@ -34,11 +28,6 @@ const SocialSubTab = ({
 
   return (
     <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <UltraGiftBannerCard 
-        isGiftedUltra={isGiftedUltra}
-        ultraGiftFrom={ultraGiftFrom}
-        isLight={isLight}
-      />
 
       <MyProfileCodeCard 
         myCode={myCode}
@@ -77,10 +66,6 @@ const SocialSubTab = ({
 
       <FriendsListSection 
         friends={friends}
-        grantedUltraFriendCode={grantedUltraFriendCode}
-        userPlan={userPlan}
-        isGiftedUltra={isGiftedUltra}
-        handleGrantUltraGift={handleGrantUltraGift}
         handleDisconnect={handleDisconnect}
         lang={lang}
         isLight={isLight}

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import TRANSLATIONS from '@shared/constants/translations';
 import { formatReminderDate as sharedFormatReminderDate, getRemainingTimeText as sharedGetRemainingTimeText } from '@shared/utils/dateUtils';
 import useAuth from '@features/auth/hooks/useAuth';
@@ -45,8 +45,6 @@ export default function useAppLogic(options = {}) {
     notes: auth.notes,
     saveNotes: (newNotes) => notesHook.saveNotes(newNotes),
     setToast: auth.setToast,
-    setShowPaywall: options.setShowPaywall,
-    setShowRewardedAdModal: options.setShowRewardedAdModal,
   });
 
   const notesHook = useNotes({
@@ -155,14 +153,6 @@ export default function useAppLogic(options = {}) {
     handleAcceptShare: sharing.handleAcceptShare,
     handleRejectShare: sharing.handleRejectShare,
     handleLeaveShare: sharing.handleLeaveShare,
-    handleRewardedShareCallback: sharing.handleRewardedShareCallback,
-    pendingShareReward: sharing.pendingShareReward,
-    setPendingShareReward: sharing.setPendingShareReward,
-    grantedUltraFriendCode: sharing.grantedUltraFriendCode,
-    ultraGiftFrom: sharing.ultraGiftFrom,
-    isPrimaryUltra: sharing.isPrimaryUltra,
-    isGiftedUltra: sharing.isGiftedUltra,
-    handleGrantUltraGift: sharing.handleGrantUltraGift,
 
     // Notes State & Handlers
     editingNote: notesHook.editingNote,

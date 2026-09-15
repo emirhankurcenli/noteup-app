@@ -3,7 +3,6 @@ import { sanitizeFriendCode } from '@shared/utils/securityUtils';
 import { supabase } from '@src/supabaseClient';
 import { triggerHaptic } from '@shared/services/haptics';
 import { playChime } from '@shared/services/soundService';
-import { useUltraGiftManager } from '@features/social/hooks/useUltraGiftManager';
 import { useFriendRealtimeChannel } from '@features/social/hooks/useFriendRealtimeChannel';
 import { useFriendRequestActions } from '@features/social/hooks/useFriendRequestActions';
 import { useFriendListActions } from '@features/social/hooks/useFriendListActions';
@@ -20,16 +19,6 @@ const useFriendManager = ({
   const [friendRequests, setFriendRequests] = useState([]);
   const [selectedFriendCodes, setSelectedFriendCodes] = useState([]);
   const [isSendingRequest, setIsSendingRequest] = useState(false);
-
-  // Delegate Ultra Gift management to single-responsibility hook
-  const {
-    grantedUltraFriendCode,
-    ultraGrantRecord,
-    ultraGiftFrom,
-    isPrimaryUltra,
-    isGiftedUltra,
-    handleGrantUltraGift,
-  } = useUltraGiftManager({ myCode, userPlan, setToast, triggerHaptic });
 
   // Polling interval ref for real-time friend request updates
   const pollingRef = useRef(null);
@@ -170,29 +159,6 @@ const useFriendManager = ({
     const initialPending = initialReqs.filter(r => r.toCode === myCode && !r.processed && r.status === 'pending');
     prevRequestCountRef.current = initialPending.length;
 
-    // Check if someone gifted Ultra to me and if it's still valid for current period
-    const giftRaw = localStorage.getItem(`s23_ultra_gift_received_${myCode}`);
-    if (giftRaw) {
-      try {
-        const parsed = JSON.parse(giftRaw);
-        const isExpired = (parsed.expiresAt && Date.now() > parsed.expiresAt) || (parsed.periodKey && parsed.periodKey !== getCurrentMonthKey());
-        if (isExpired) {
-          localStorage.removeItem(`s23_ultra_gift_received_${myCode}`);
-          setUltraGiftFrom(null);
-          // Fallback to default free plan when gift period ends
-          setUserPlan('lite');
-          setToast({
-            title: "⏳ Ultra Süreniz Doldu",
-            msg: "Arkadaşınızın hediye ettiği Ultra planının dönemsel süresi doldu."
-          });
-        } else {
-          setUltraGiftFrom(parsed);
-          if (userPlan !== 'ultra') {
-            setUserPlan('ultra');
-          }
-        }
-      } catch (e) {}
-    }
 
     // Realtime WebSocket kanalı zaten friend_requests tablosunu anlık dinliyor.
     // Polling sadece WebSocket bağlantı kopması durumunda yedek olarak çalışır (60s).
@@ -593,13 +559,7 @@ const useFriendManager = ({
     setFriendRequests,
     selectedFriendCodes,
     setSelectedFriendCodes,
-    grantedUltraFriendCode,
-    ultraGrantRecord,
-    ultraGiftFrom,
-    isPrimaryUltra,
-    isGiftedUltra,
     isSendingRequest,
-    handleGrantUltraGift,
     playChime,
     handleSendFriendRequest,
     handleAcceptFriendRequest,

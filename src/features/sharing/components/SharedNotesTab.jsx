@@ -281,6 +281,7 @@ const SharedNotesTab = ({
           setActiveShareNoteId={setActiveShareNoteId}
           setNudgeTargetNote={setNudgeTargetNote}
           checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
+          theme={theme}
           lang={lang}
           t={t}
         />

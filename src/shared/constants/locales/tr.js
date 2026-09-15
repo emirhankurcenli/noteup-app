@@ -33,6 +33,7 @@ const tr = {
   shared: 'Paylaşıldı',
   sharedNotes: 'Paylaşılanlar',
   sharedNotesTab: 'Paylaşılan Notlar',
+  pendingApproval: 'Paylaşım Bekliyor',
   friendsCount: 'Arkadaş',
   newNote: 'Yeni Not',
   allNotes: 'Tüm Notlar',

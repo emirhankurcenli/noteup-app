@@ -1,14 +1,11 @@
-﻿import React from 'react';
-import { PLAN_LIMITS } from '@shared/constants/paywallPlans';
+import React from 'react';
 
 export const EditorLockStatusBadge = ({
   editingNote,
   setEditingNote,
   setShowEditorMenu,
-  userPlan = 'lite',
   notes = [],
   setToast,
-  setShowPaywall,
   lang,
   t,
   requestBiometricAuth,
@@ -19,19 +16,6 @@ export const EditorLockStatusBadge = ({
   const handleToggleLock = async () => {
     setShowEditorMenu(false);
     const isLocking = !editingNote.isLocked;
-
-    if (isLocking) {
-      const limits = PLAN_LIMITS[userPlan] || PLAN_LIMITS.lite;
-      const currentLockedCount = (notes || []).filter((n) => n.isLocked && !n.deletedAt && n.id !== editingNote.id).length;
-      if (currentLockedCount >= limits.maxEncryptedNotes) {
-        setToast?.({
-          title: '⭐ Plan Limiti Aşıldı',
-          msg: `Lite planında en fazla ${limits.maxEncryptedNotes} adet not kilitleyebilirsiniz. Sınırsız şifreleme için Pro'ya geçin!`,
-        });
-        if (typeof setShowPaywall === 'function') setShowPaywall(true);
-        return;
-      }
-    }
 
     const title = isLocking ? t('lockNoteAuthTitle') : t('unlockNoteAuthTitle');
     const subtitle = isLocking ? t('lockNoteAuthSub') : t('unlockNoteAuthSub');

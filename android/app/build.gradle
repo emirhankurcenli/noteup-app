@@ -69,9 +69,6 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
-    // 🚀 AppLovin MAX & Unity Ads High-Revenue Mediation Adapters
-    implementation 'com.google.ads.mediation:applovin:13.0.1.0'
-    implementation 'com.google.ads.mediation:unity:4.12.5.0'
 }
 
 apply from: 'capacitor.build.gradle'

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import NoteCard from './NoteCard';
 import { PinnedNotesSection } from './PinnedNotesSection';
 import { FolderTabBar } from './FolderTabBar';
-import { cleanText } from '@shared/utils/textUtils';
+import { cleanText, htmlToPlainText } from '@shared/utils/textUtils';
 import { ThreeDotsIcon, LockIcon, PinIcon } from '@shared/components/Icons';
 
 const ClockIcon = () => (
@@ -38,8 +38,9 @@ const SharedWithMeIcon = () => (
 
 const PendingShareIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: '4px' }}>
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+    <polyline points="16 6 12 2 8 6" />
+    <line x1="12" y1="2" x2="12" y2="15" />
   </svg>
 );
 
@@ -84,20 +85,11 @@ const getNoteSnippet = (note, t) => {
   
   const textBlock = blocks.find(b => {
     if (!b || b.type !== 'text') return false;
-    const clean = (b.content || '')
-      .replace(/<[^>]*>/g, '')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/[\u200B\u8203\r\n]/g, '')
-      .trim();
-    return clean.length > 0;
+    return htmlToPlainText(b.content).length > 0;
   });
 
   if (textBlock && textBlock.content) {
-    const cleanTextStr = textBlock.content
-      .replace(/<[^>]*>/g, '')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/[\u200B\u8203\r\n]/g, '')
-      .trim();
+    const cleanTextStr = htmlToPlainText(textBlock.content);
     if (cleanTextStr) return cleanTextStr;
   }
 
@@ -194,9 +186,11 @@ const NotesGrid = ({
   setActiveShareNoteId,
   setNudgeTargetNote,
   checkAndRequestNotificationPermission,
+  theme = 'light',
   lang,
   t
 }) => {
+  const isLight = theme === 'light';
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -260,7 +254,7 @@ const NotesGrid = ({
                       )}
                       {note.hasPendingShare && !note.isShared && !note.sharedFrom && (
                         <span className="badge badge-reminder" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', display: 'inline-flex', alignItems: 'center' }}>
-                          <PendingShareIcon /> {cleanText(t('pendingApproval') || 'Onay Bekleniyor')}
+                          <PendingShareIcon /> {cleanText(t('pendingApproval') || 'Paylaşım Bekliyor')}
                         </span>
                       )}
                       {note.isShared && (

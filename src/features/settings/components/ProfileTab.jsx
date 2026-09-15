@@ -18,9 +18,7 @@ const ProfileTab = ({
   profileName,
   handleUpdateProfileName,
   getStorageUsageBytes,
-  PLAN_STORAGE_LIMITS,
   formatBytes,
-  setShowPaywall,
   myCode,
   setToast,
   partnerCodeInput,
@@ -44,11 +42,6 @@ const ProfileTab = ({
   DEFAULT_AVATARS,
   deletedNotesCount = 0,
   handleTabClick,
-  grantedUltraFriendCode,
-  ultraGiftFrom,
-  isPrimaryUltra,
-  isGiftedUltra,
-  handleGrantUltraGift,
   t
 }) => {
   const isLight = theme === 'light';
@@ -71,10 +64,7 @@ const ProfileTab = ({
             setShowAvatarPicker={setShowAvatarPicker}
             profileName={profileName}
             handleUpdateProfileName={handleUpdateProfileName}
-            userPlan={userPlan}
-            setShowPaywall={setShowPaywall}
             getStorageUsageBytes={getStorageUsageBytes}
-            PLAN_STORAGE_LIMITS={PLAN_STORAGE_LIMITS}
             formatBytes={formatBytes}
             isLight={isLight}
             DEFAULT_AVATARS={DEFAULT_AVATARS}
@@ -103,12 +93,6 @@ const ProfileTab = ({
             handleCancelFriendRequest={handleCancelFriendRequest}
             friends={friends}
             handleDisconnect={handleDisconnect}
-            userPlan={userPlan}
-            grantedUltraFriendCode={grantedUltraFriendCode}
-            ultraGiftFrom={ultraGiftFrom}
-            isPrimaryUltra={isPrimaryUltra}
-            isGiftedUltra={isGiftedUltra}
-            handleGrantUltraGift={handleGrantUltraGift}
             lang={lang}
             isLight={isLight}
             t={t}

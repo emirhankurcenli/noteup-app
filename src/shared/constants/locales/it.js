@@ -33,6 +33,7 @@ const it = {
   shared: 'Condivisa',
   sharedNotes: 'Condivise',
   sharedNotesTab: 'Note condivise',
+  pendingApproval: 'Condivisione in sospeso',
   friendsCount: 'Amici',
   newNote: 'Nuova nota',
   allNotes: 'Tutte le note',

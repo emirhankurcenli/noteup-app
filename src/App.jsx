@@ -3,7 +3,6 @@ import './App.css';
 import LoginScreen from '@features/auth/components/LoginScreen';
 import ToastNotification from '@shared/components/ToastNotification';
 import { triggerHaptic } from '@shared/services/haptics';
-import { initRevenueCat } from '@shared/services/billing';
 import useAppLogic from '@shared/hooks/useAppLogic';
 import useAppPermissions from '@shared/hooks/useAppPermissions';
 import useEditorLifecycle from '@features/editor/hooks/useEditorLifecycle';
@@ -19,7 +18,6 @@ import { requestBiometricAuth } from '@shared/services/biometricService';
 import { shareNoteImage } from '@features/sharing/utils/shareUtils';
 import { formatFriendCode } from '@shared/utils/codeUtils';
 import { formatBytes } from '@shared/utils/mediaUtils';
-import { PLAN_LEVELS, getChangedFeatures, getLostFeatures } from '@shared/utils/planUtils';
 import { ensureElementVisible } from '@shared/utils/editorKeyboardUtils';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -28,16 +26,11 @@ import detectPlatform from '@platform/detect';
 
 const AppSettings = registerPlugin('AppSettings');
 
-
-
 function App() {
-  const setShowPaywallRef = useRef(null);
   const setConfirmDialogRef = useRef(null);
   const setShowReminderModalRef = useRef(null);
   const checkAndRequestNotificationPermissionRef = useRef(null);
   const deleteFromR2Ref = useRef(null);
-  const setShowRewardedAdModalRef = useRef(null);
-  const setPendingShareRewardRef = useRef(null);
 
   const {
     lang,
@@ -61,8 +54,6 @@ function App() {
     setShowAvatarPicker,
     userPlan,
     setUserPlan,
-    planNotification,
-    setPlanNotification,
     toast,
     setToast,
     getUserScopedKey,
@@ -95,14 +86,6 @@ function App() {
     handleAcceptShare,
     handleRejectShare,
     handleLeaveShare,
-    handleRewardedShareCallback,
-    pendingShareReward,
-    setPendingShareReward,
-    grantedUltraFriendCode,
-    ultraGiftFrom,
-    isPrimaryUltra,
-    isGiftedUltra,
-    handleGrantUltraGift,
     // Notes CRUD & Editor Undo/Redo
     editingNote,
     setEditingNote,
@@ -150,14 +133,11 @@ function App() {
     handleCreateWidgetAlarm,
     handleCreateQuickReminder: handleCreateQuickReminderRaw
   } = useAppLogic({
-    setShowPaywall: (show) => setShowPaywallRef.current?.(show),
     setConfirmDialog: (dialog) => setConfirmDialogRef.current?.(dialog),
     setShowReminderModal: (show) => setShowReminderModalRef.current?.(show),
     checkAndRequestNotificationPermission: async () => await checkAndRequestNotificationPermissionRef.current?.(),
     deleteFromR2: (url) => deleteFromR2Ref.current?.(url),
     requestBiometricAuth: requestBiometricAuth,
-    setShowRewardedAdModal: (show) => setShowRewardedAdModalRef.current?.(show),
-    setPendingShareReward: (data) => setPendingShareRewardRef.current?.(data),
   });
 
   // Encryption removed — Supabase RLS handles data isolation.
@@ -205,14 +185,7 @@ function App() {
     tabHistoryRef,
     profileSubTab,
     setProfileSubTab,
-    showPaywall,
-    setShowPaywall,
-
-    showAdModal,
-    setShowAdModal,
-    PLAN_STORAGE_LIMITS,
     getStorageUsageBytes,
-    trackAttachmentAdded,
     showReminderModal,
     setShowReminderModal,
     showShareModal,
@@ -237,8 +210,6 @@ function App() {
     setShowQuickReminderForm,
     pendingOpenNoteId,
     setPendingOpenNoteId,
-    showRewardedAdModal,
-    setShowRewardedAdModal,
     showFeedbackModal,
     setShowFeedbackModal,
     nudgeTargetNote,
@@ -246,18 +217,10 @@ function App() {
     theme,
     setTheme,
     now
-  } = useAppLocalState({ notes, userPlan });
+  } = useAppLocalState({ notes });
 
-  setShowPaywallRef.current = setShowPaywall;
   setShowReminderModalRef.current = setShowReminderModal;
   setConfirmDialogRef.current = setConfirmDialog;
-  setShowRewardedAdModalRef.current = setShowRewardedAdModal;
-  setPendingShareRewardRef.current = setPendingShareReward;
-
-  // 💎 RevenueCat Initialization
-  useEffect(() => {
-    initRevenueCat(setUserPlan);
-  }, []);
 
   // 📱 Platform Body Class & Safe Area Insets Initialization
   // Android'de AppSettings.getSafeAreaInsets() ile gerçek status bar ve navigation bar yükseklikleri CSS'e atanır.
@@ -411,8 +374,6 @@ function App() {
     editingNote,
     activeTab,
     setActiveTab,
-    showPaywall,
-    setShowPaywall,
     confirmDialog,
     setConfirmDialog,
     showEditorMenu,
@@ -479,12 +440,9 @@ function App() {
     userPlan,
     lang,
     getStorageUsageBytes,
-    PLAN_STORAGE_LIMITS,
     handleUpdateNote,
-    trackAttachmentAdded,
     checkAndRequestPermission,
     setToast,
-    setShowPaywall,
     setConfirmDialog,
     setLightboxUrl,
     setPreviewFileModal,
@@ -523,7 +481,7 @@ function App() {
   }
 
   return (
-    <div className="app-container">
+    <div className="app-container" data-theme={theme}>
 
       {/* Toast Notification */}
       <ToastNotification toast={toast} setToast={setToast} />
@@ -570,7 +528,6 @@ function App() {
         setShowShareModal={setShowShareModal}
         userPlan={userPlan}
         notes={notes}
-        setShowPaywall={setShowPaywall}
         triggerHaptic={triggerHaptic}
         checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
         checkAndRequestPermission={checkAndRequestPermission}
@@ -643,7 +600,6 @@ function App() {
         profileName={profileName}
         handleUpdateProfileName={handleUpdateProfileName}
         getStorageUsageBytes={getStorageUsageBytes}
-        PLAN_STORAGE_LIMITS={PLAN_STORAGE_LIMITS}
         setShowFeedbackModal={setShowFeedbackModal}
         formatBytes={formatBytes}
         myCode={myCode}
@@ -659,11 +615,6 @@ function App() {
         handleDisconnect={handleDisconnect}
         handleLogout={handleLogout}
         DEFAULT_AVATARS={DEFAULT_AVATARS}
-        grantedUltraFriendCode={grantedUltraFriendCode}
-        ultraGiftFrom={ultraGiftFrom}
-        isPrimaryUltra={isPrimaryUltra}
-        isGiftedUltra={isGiftedUltra}
-        handleGrantUltraGift={handleGrantUltraGift}
         handleTabClick={handleTabClick}
         handleCreateNote={handleCreateNote}
       />
@@ -694,19 +645,8 @@ function App() {
         setShowShareModal={setShowShareModal}
         editingNote={editingNote}
         handleShareNoteImage={handleShareNoteImage}
-        showPaywall={showPaywall}
-        setShowPaywall={setShowPaywall}
-        userPlan={userPlan}
-        setUserPlan={setUserPlan}
-        planNotification={planNotification}
-        setPlanNotification={setPlanNotification}
         confirmDialog={confirmDialog}
         setConfirmDialog={setConfirmDialog}
-        getLostFeatures={getLostFeatures}
-        getChangedFeatures={getChangedFeatures}
-        PLAN_LEVELS={PLAN_LEVELS}
-        showAdModal={showAdModal}
-        setShowAdModal={setShowAdModal}
         showAvatarPicker={showAvatarPicker}
         setShowAvatarPicker={setShowAvatarPicker}
         user={user}
@@ -724,11 +664,6 @@ function App() {
         setQuickReminderModes={setQuickReminderModes}
         handleCreateWidgetAlarm={handleCreateWidgetAlarm}
         notes={notes}
-        showRewardedAdModal={showRewardedAdModal}
-        setShowRewardedAdModal={setShowRewardedAdModal}
-        pendingShareReward={pendingShareReward}
-        setPendingShareReward={setPendingShareReward}
-        handleRewardedShareCallback={handleRewardedShareCallback}
         showFeedbackModal={showFeedbackModal}
         setShowFeedbackModal={setShowFeedbackModal}
         nudgeTargetNote={nudgeTargetNote}

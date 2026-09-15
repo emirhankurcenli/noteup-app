@@ -33,6 +33,7 @@ const ja = {
   shared: '共有済み',
   sharedNotes: '共有メモ',
   sharedNotesTab: '共有メモ',
+  pendingApproval: '共有承認待ち',
   friendsCount: '友達',
   newNote: '新規メモ',
   allNotes: 'すべてのメモ',

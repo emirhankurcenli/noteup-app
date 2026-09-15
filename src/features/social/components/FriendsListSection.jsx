@@ -3,10 +3,6 @@ import { stripHtml as cleanText } from '@shared/utils/textUtils';
 
 const FriendsListSection = ({
   friends = [],
-  grantedUltraFriendCode,
-  userPlan,
-  isGiftedUltra,
-  handleGrantUltraGift,
   handleDisconnect,
   lang,
   isLight,
@@ -20,9 +16,6 @@ const FriendsListSection = ({
 
       {friends.length > 0 ? (
         friends.map(friend => {
-          const isGrantedUltra = grantedUltraFriendCode === friend.code;
-          const hasOtherGrantedInPeriod = !!grantedUltraFriendCode && !isGrantedUltra;
-
           return (
             <div key={friend.code} style={{
               padding: '12px 16px',
@@ -31,9 +24,7 @@ const FriendsListSection = ({
               alignItems: 'center',
               background: isLight ? 'rgba(255,255,255,0.85)' : 'rgba(18, 24, 36, 0.85)',
               borderRadius: '14px',
-              border: isGrantedUltra
-                ? '1.5px solid rgba(245, 158, 11, 0.5)'
-                : isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.06)'
+              border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.06)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 {friend.photo_url ? (
@@ -45,7 +36,7 @@ const FriendsListSection = ({
                       height: '34px',
                       borderRadius: '50%',
                       objectFit: 'cover',
-                      border: isGrantedUltra ? '2px solid #F59E0B' : '1.5px solid rgba(99, 102, 241, 0.4)'
+                      border: '1.5px solid rgba(99, 102, 241, 0.4)'
                     }} 
                   />
                 ) : (
@@ -53,32 +44,21 @@ const FriendsListSection = ({
                     width: '34px',
                     height: '34px',
                     borderRadius: '50%',
-                    background: isGrantedUltra
-                      ? 'linear-gradient(135deg, #F59E0B, #D97706)'
-                      : 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                    background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
                     color: '#FFF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 800,
-                    fontSize: '0.8rem',
-                    boxShadow: isGrantedUltra ? '0 2px 8px rgba(245, 158, 11, 0.3)' : 'none'
+                    fontSize: '0.8rem'
                   }}>
-                    {isGrantedUltra ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5">
-                        <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
-                      </svg>
-                    ) : (friend.name ? friend.name.charAt(0).toUpperCase() : 'A')}
+                    {friend.name ? friend.name.charAt(0).toUpperCase() : 'A'}
                   </div>
                 )}
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <p style={{ fontSize: '0.85rem', fontWeight: 700, color: isLight ? '#0F172A' : 'var(--text-primary)', margin: 0 }}>
-                      {friend.name}
-                    </p>
-                    {/* [EARLY ACCESS] Arkadaşa Ultra Hediye rozeti geçici pasif */}
-                    {/* {isGrantedUltra && ( ... )} */}
-                  </div>
+                  <p style={{ fontSize: '0.85rem', fontWeight: 700, color: isLight ? '#0F172A' : 'var(--text-primary)', margin: 0 }}>
+                    {friend.name}
+                  </p>
                   <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '2px 0 0 0', fontFamily: 'monospace' }}>
                     Kod: {friend.code}
                   </p>
@@ -86,10 +66,6 @@ const FriendsListSection = ({
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {/* [EARLY ACCESS] Ultra Hediye Et butonu geçici olarak pasif — herkes zaten Ultra */}
-                {/* {userPlan === 'ultra' && !isGiftedUltra && (
-                  <button ...>
-                )} */}
 
                 <button 
                   onClick={() => {

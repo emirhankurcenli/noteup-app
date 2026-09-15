@@ -1,7 +1,6 @@
-﻿import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import useFriendManager from '@features/social/hooks/useFriendManager';
 import { useSharedNotesSync } from '@features/sharing/hooks/useSharedNotesSync';
-import { PLAN_LIMITS } from '@shared/constants/paywallPlans';
 import { sanitizeSingleLine, sanitizeNoteContent } from '@shared/utils/securityUtils';
 import { supabase } from '@src/supabaseClient';
 
@@ -17,11 +16,8 @@ export default function useSharing({
   notes,
   saveNotes,
   setToast,
-  setShowPaywall,
-  setShowRewardedAdModal,
 }) {
   const [pendingShareRequests, setPendingShareRequests] = useState([]);
-  const [pendingShareReward, setPendingShareReward] = useState(null);
 
   // --- SUB-HOOK: FRIEND MANAGER ---
   const friendMgr = useFriendManager({
@@ -40,64 +36,6 @@ export default function useSharing({
     setFriendRequests: friendMgr.setFriendRequests,
     setFriends: friendMgr.setFriends,
   });
-
-
-
-  // --- REWARDED AD CALLBACK ---
-  const handleRewardedShareCallback = (rewardData) => {
-    const data = rewardData || pendingShareReward;
-    if (!data) return;
-
-    if (data.type === 'select_friend') {
-      const { codeToSelect, onGranted } = data;
-      if (onGranted && codeToSelect) {
-        onGranted(codeToSelect);
-      }
-      setToast({
-        title: '🎉 +1 Ekstra Davet Hakkı!',
-        msg: 'Reklamı izlediğiniz için ekstra davet hakkı kazandınız.',
-      });
-      return;
-    }
-
-    const { noteId, codes } = data;
-    if (!noteId || !Array.isArray(codes)) return;
-    const noteToShare = notes.find(n => n.id === noteId);
-    if (!noteToShare) return;
-
-    const updatedNotes = notes.map(n =>
-      n.id === noteId
-        ? { ...n, isShared: true, sharedWith: codes, updatedAt: Date.now() }
-        : n
-    );
-    saveNotes(updatedNotes);
-
-    codes.forEach(code => {
-      const currentReqs = JSON.parse(localStorage.getItem('s23_share_requests') || '[]');
-      if (!currentReqs.some(r => r.toCode === code && r.noteId === noteId)) {
-        const req = {
-          id: 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-          fromCode: myCode,
-          fromName: profileName || 'Arkadaş',
-          toCode: code,
-          noteId: noteId,
-          noteTitle: noteToShare.title,
-          timestamp: Date.now(),
-          processed: false,
-        };
-        localStorage.setItem('s23_share_requests', JSON.stringify([...currentReqs, req]));
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 's23_share_requests',
-          newValue: JSON.stringify([...currentReqs, req]),
-        }));
-      }
-    });
-
-    setToast({
-      title: '🎉 Davet Gönderildi!',
-      msg: 'Reklamı izlediğiniz için davet başarıyla gönderildi.',
-    });
-  };
 
   // --- ACTIONS ---
 
@@ -129,39 +67,6 @@ export default function useSharing({
       : (friendMgr.selectedFriendCodes || []);
 
     const isShared = currentSelectedCodes.length > 0;
-
-    // Rule 2: Limit how many friends can be invited based on plan
-    if (isShared) {
-      const selectedCount = currentSelectedCodes.length;
-      const planLimits = { lite: 1, pro: 8, ultra: 20, vip: 20 };
-      const limit = planLimits[userPlan] ?? 1;
-
-      if (selectedCount > limit) {
-        if (selectedCount === limit + 1 && setPendingShareReward && setShowRewardedAdModal) {
-          setPendingShareReward({ noteId: activeShareNoteId, codes: currentSelectedCodes });
-          setShowRewardedAdModal(true);
-        } else {
-          setToast({
-            title: '⚠️ Paylaşım Sınırı',
-            msg: `Bu planda bir nota en fazla ${limit + 1} kişi davet edebilirsiniz (${limit + 1}. için reklam izlemeniz gerekir).`,
-          });
-          setShowPaywall(true);
-        }
-        return;
-      }
-
-      if (userPlan === 'lite') {
-        const totalSharedNotes = notes.filter(n => n.isShared && n.id !== activeShareNoteId && !n.deletedAt).length;
-        if (totalSharedNotes >= 5) {
-          setToast({
-            title: '⚠️ Paylaşımlı Not Sınırı',
-            msg: 'Lite planında en fazla 5 paylaşımlı nota sahip olabilirsiniz. Pro\'ya geçerek limiti kaldırın.',
-          });
-          setShowPaywall(true);
-          return;
-        }
-      }
-    }
 
     // Compute accepted vs pending codes
     const previousSharedWith = noteToShare.sharedWith || [];
@@ -247,18 +152,6 @@ export default function useSharing({
 
     // Instantly remove from pending list
     setPendingShareRequests(prev => prev.filter(r => r.id !== req.id && r.noteId !== req.noteId));
-
-    // Enforce maxSharedNotes limit for Lite
-    const limits = PLAN_LIMITS[userPlan] || PLAN_LIMITS.lite;
-    const currentSharedCount = (notes || []).filter(n => n.isShared && !n.deletedAt).length;
-    if (currentSharedCount >= limits.maxSharedNotes) {
-      setToast({
-        title: "⚠️ Paylaşımlı Not Sınırı",
-        msg: `Lite planında en fazla ${limits.maxSharedNotes} paylaşımlı nota sahip olabilirsiniz. Sınırsız paylaşım için Pro'ya geçin!`
-      });
-      if (typeof setShowPaywall === 'function') setShowPaywall(true);
-      return;
-    }
 
     const sharedBlocks = req.noteBlocks 
       ? req.noteBlocks
@@ -438,13 +331,5 @@ export default function useSharing({
     handleAcceptShare,
     handleRejectShare,
     handleLeaveShare,
-    handleRewardedShareCallback,
-    pendingShareReward,
-    setPendingShareReward,
-    grantedUltraFriendCode: friendMgr.grantedUltraFriendCode,
-    ultraGiftFrom: friendMgr.ultraGiftFrom,
-    isPrimaryUltra: friendMgr.isPrimaryUltra,
-    isGiftedUltra: friendMgr.isGiftedUltra,
-    handleGrantUltraGift: friendMgr.handleGrantUltraGift,
   };
 }

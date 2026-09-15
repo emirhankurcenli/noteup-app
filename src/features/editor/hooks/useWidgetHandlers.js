@@ -1,4 +1,4 @@
-﻿import { parseTurkishMoneyToFloat } from '@shared/utils/money';
+import { parseTurkishMoneyToFloat } from '@shared/utils/money';
 import useBillExamWidgets from '@features/widgets/hooks/useBillExamWidgets';
 import useExpenseWidget from '@features/widgets/hooks/useExpenseWidget';
 import { sanitizeSingleLine, sanitizeMoneyInput } from '@shared/utils/securityUtils';
@@ -7,7 +7,6 @@ import { splitBlockAtSelection, getLastSavedSelection } from '@shared/utils/sele
 const useWidgetHandlers = ({
   editingNote,
   notes,
-  userPlan,
   focusedBlockRef,
   blockFormStates,
   setBlockFormStates,
@@ -17,9 +16,7 @@ const useWidgetHandlers = ({
   handleDeleteBlock,
   showCustomConfirm,
   setToast,
-  setShowPaywall,
   setShowEditorMenu,
-  trackAttachmentAdded,
   checkAndRequestNotificationPermission,
   handleCancelReminder,
   saveReminders,
@@ -56,25 +53,6 @@ const useWidgetHandlers = ({
     if (!editingNote) return;
     setShowEditorMenu(false);
 
-    // Enforce Password Kasası Limiti (Lite: max 5 passwords)
-    if (type === 'password' && userPlan === 'lite') {
-      let totalPasswords = 0;
-      (notes || []).forEach(n => {
-        (n.blocks || []).forEach(b => {
-          if (b && b.type === 'password') totalPasswords++;
-        });
-      });
-      if (totalPasswords >= 5) {
-        setToast({
-          title: "⚠️ Not Şifreleme Sınırı",
-          msg: "NoteUp Lite planında en fazla 5 not şifreleyebilirsiniz. Sınırsız not şifreleme için Pro'ya geçin."
-        });
-        setShowPaywall(true);
-        return;
-      }
-    }
-
-    trackAttachmentAdded();
     const blocks = editingNote.blocks || [];
     const savedSelection = getLastSavedSelection();
     const focusedId = (focusedBlockRef?.current?.id) || savedSelection.blockId;

@@ -1,22 +1,8 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { showInterstitialAd } from '@shared/services/adService';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-const cachedRemoteLimits = (() => {
-  try {
-    const item = localStorage.getItem('s23_remote_plan_limits');
-    return item ? JSON.parse(item) : null;
-  } catch (e) {
-    return null;
-  }
-})();
+export const MAX_STORAGE_BYTES = 5 * 1024 * 1024 * 1024; // 5 GB
 
-export const PLAN_STORAGE_LIMITS = cachedRemoteLimits || {
-  lite: 50 * 1024 * 1024,          // 50 MB (Varsayılan yedek)
-  pro: 1 * 1024 * 1024 * 1024,     // 1 GB (Varsayılan yedek)
-  ultra: 5 * 1024 * 1024 * 1024,   // 5 GB (Varsayılan yedek)
-};
-
-export default function useAppLocalState({ notes, userPlan }) {
+export default function useAppLocalState({ notes }) {
   const [activeTodoItemId, setActiveTodoItemId] = useState(null);
   const [activeTab, setActiveTab] = useState('notes');
   const tabHistoryRef = useRef(['notes']);
@@ -32,12 +18,6 @@ export default function useAppLocalState({ notes, userPlan }) {
   }, [activeTab]);
 
   const [profileSubTab, setProfileSubTab] = useState('account');
-  // [EARLY ACCESS] Paywall geçici olarak devre dışı
-  const showPaywall = false;
-  const setShowPaywall = () => {};
-  // [EARLY ACCESS ORIGINAL] const [showPaywall, setShowPaywall] = useState(false);
-
-  const [showAdModal, setShowAdModal] = useState(false);
 
   const getStorageUsageBytes = useCallback(() => {
     let totalBytes = 0;
@@ -57,21 +37,6 @@ export default function useAppLocalState({ notes, userPlan }) {
     return totalBytes;
   }, [notes]);
 
-  const trackAttachmentAdded = async () => {
-    // [EARLY ACCESS] Reklamlar geçici olarak devre dışı
-    return;
-    // [EARLY ACCESS ORIGINAL]
-    if (userPlan !== 'lite') return;
-    const currentRaw = localStorage.getItem('s23_attachment_count');
-    const currentCount = currentRaw ? parseInt(currentRaw, 10) : 0;
-    const newCount = currentCount + 1;
-    localStorage.setItem('s23_attachment_count', newCount.toString());
-
-    if (newCount % 5 === 0) {
-      await showInterstitialAd(() => setShowAdModal(true));
-    }
-  };
-
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(null);
@@ -79,21 +44,32 @@ export default function useAppLocalState({ notes, userPlan }) {
   const [activeShareNoteId, setActiveShareNoteId] = useState(null);
   const [blockFormStates, setBlockFormStates] = useState({});
   const [showEditorMenu, setShowEditorMenu] = useState(false);
-  const focusedBlockRef = useRef({ id: null, pos: 0, selStart: 0, selEnd: 0 });
+  const focusedBlockRef = useRef(null);
   const fileInputRef = useRef(null);
   const [lightboxUrl, setLightboxUrl] = useState(null);
   const [previewFileModal, setPreviewFileModal] = useState(null);
   const [showQuickReminderForm, setShowQuickReminderForm] = useState(false);
   const [pendingOpenNoteId, setPendingOpenNoteId] = useState(null);
-  const [showRewardedAdModal, setShowRewardedAdModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [nudgeTargetNote, setNudgeTargetNote] = useState(null);
 
-  const [theme, setTheme] = useState(() => localStorage.getItem('s23_theme') || 'dark');
+  // App Theme: 'light' | 'dark'
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('app_theme') || localStorage.getItem('s23_theme') || 'light';
+  });
 
   useEffect(() => {
-    localStorage.setItem('s23_theme', theme);
+    try {
+      localStorage.setItem('app_theme', theme);
+      localStorage.setItem('s23_theme', theme);
+    } catch (_) {}
     document.documentElement.setAttribute('data-theme', theme);
+    if (document.body) {
+      document.body.setAttribute('data-theme', theme);
+    }
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', theme === 'light' ? '#F0F4F8' : '#0A0E17');
+    }
   }, [theme]);
 
   const [now, setNow] = useState(Date.now());
@@ -111,14 +87,8 @@ export default function useAppLocalState({ notes, userPlan }) {
     tabHistoryRef,
     profileSubTab,
     setProfileSubTab,
-    showPaywall,
-    setShowPaywall,
-
-    showAdModal,
-    setShowAdModal,
-    PLAN_STORAGE_LIMITS,
+    MAX_STORAGE_BYTES,
     getStorageUsageBytes,
-    trackAttachmentAdded,
     showReminderModal,
     setShowReminderModal,
     showShareModal,
@@ -143,12 +113,8 @@ export default function useAppLocalState({ notes, userPlan }) {
     setShowQuickReminderForm,
     pendingOpenNoteId,
     setPendingOpenNoteId,
-    showRewardedAdModal,
-    setShowRewardedAdModal,
     showFeedbackModal,
     setShowFeedbackModal,
-    nudgeTargetNote,
-    setNudgeTargetNote,
     theme,
     setTheme,
     now

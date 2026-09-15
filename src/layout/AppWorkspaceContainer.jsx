@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import HeaderBar from '@layout/HeaderBar';
 import WorkspaceTabs from '@layout/WorkspaceTabs';
 import BottomNavBar from '@layout/BottomNavBar';
@@ -46,7 +46,6 @@ export default function AppWorkspaceContainer({
   setShowShareModal,
   userPlan,
   notes,
-  setShowPaywall,
   triggerHaptic,
   checkAndRequestNotificationPermission,
   checkAndRequestPermission,
@@ -119,7 +118,6 @@ export default function AppWorkspaceContainer({
   profileName,
   handleUpdateProfileName,
   getStorageUsageBytes,
-  PLAN_STORAGE_LIMITS,
   formatBytes,
   setShowFeedbackModal,
   myCode,
@@ -135,11 +133,6 @@ export default function AppWorkspaceContainer({
   handleDisconnect,
   handleLogout,
   DEFAULT_AVATARS,
-  grantedUltraFriendCode,
-  ultraGiftFrom,
-  isPrimaryUltra,
-  isGiftedUltra,
-  handleGrantUltraGift,
   handleTabClick,
   handleCreateNote
 }) {
@@ -186,7 +179,6 @@ export default function AppWorkspaceContainer({
         setShowShareModal={setShowShareModal}
         userPlan={userPlan}
         notes={notes}
-        setShowPaywall={setShowPaywall}
         triggerHaptic={triggerHaptic}
         checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
         checkAndRequestPermission={checkAndRequestPermission}
@@ -239,9 +231,6 @@ export default function AppWorkspaceContainer({
   return (
     <>
       <HeaderBar
-        friends={friends}
-        userPlan={userPlan}
-        setShowPaywall={setShowPaywall}
         setShowFeedbackModal={setShowFeedbackModal}
         triggerHaptic={triggerHaptic}
         lang={lang}
@@ -296,9 +285,7 @@ export default function AppWorkspaceContainer({
         profileName={profileName}
         handleUpdateProfileName={handleUpdateProfileName}
         getStorageUsageBytes={getStorageUsageBytes}
-        PLAN_STORAGE_LIMITS={PLAN_STORAGE_LIMITS}
         formatBytes={formatBytes}
-        setShowPaywall={setShowPaywall}
         myCode={myCode}
         partnerCodeInput={partnerCodeInput}
         setPartnerCodeInput={setPartnerCodeInput}
@@ -313,11 +300,6 @@ export default function AppWorkspaceContainer({
         handleDisconnect={handleDisconnect}
         handleLogout={handleLogout}
         DEFAULT_AVATARS={DEFAULT_AVATARS}
-        grantedUltraFriendCode={grantedUltraFriendCode}
-        ultraGiftFrom={ultraGiftFrom}
-        isPrimaryUltra={isPrimaryUltra}
-        isGiftedUltra={isGiftedUltra}
-        handleGrantUltraGift={handleGrantUltraGift}
         t={t}
       />
 

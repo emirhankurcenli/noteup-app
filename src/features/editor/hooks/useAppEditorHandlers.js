@@ -1,6 +1,5 @@
-﻿import { useEffect } from 'react';
+import { useEffect } from 'react';
 import useMediaStorageHandlers from '@features/editor/hooks/useMediaStorageHandlers';
-import useDataRetentionWatcher from '@features/ads/hooks/useDataRetentionWatcher';
 import useWidgetHandlers from '@features/editor/hooks/useWidgetHandlers';
 import useBlockHandlers from '@features/editor/hooks/useBlockHandlers';
 import { handleTextareaKeyDown as handleTextareaKeyDownUtil } from '@shared/utils/editorKeyboardUtils';
@@ -13,12 +12,9 @@ export default function useAppEditorHandlers({
   userPlan,
   lang,
   getStorageUsageBytes,
-  PLAN_STORAGE_LIMITS,
   handleUpdateNote,
-  trackAttachmentAdded,
   checkAndRequestPermission,
   setToast,
-  setShowPaywall,
   setConfirmDialog,
   setLightboxUrl,
   setPreviewFileModal,
@@ -88,13 +84,10 @@ export default function useAppEditorHandlers({
     userPlan,
     lang,
     getStorageUsageBytes,
-    PLAN_STORAGE_LIMITS,
     handleInsertWidget: (...args) => handleInsertWidget(...args),
     handleUpdateNote,
-    trackAttachmentAdded,
     checkAndRequestPermission,
     setToast,
-    setShowPaywall,
     setConfirmDialog,
     setLightboxUrl,
     setPreviewFileModal,
@@ -105,17 +98,6 @@ export default function useAppEditorHandlers({
       deleteFromR2Ref.current = deleteFromR2;
     }
   }, [deleteFromR2]);
-
-  useDataRetentionWatcher({
-    notes,
-    setNotes,
-    userPlan,
-    getStorageUsageBytes,
-    PLAN_STORAGE_LIMITS,
-    persistNotes,
-    deleteFromR2,
-    setToast
-  });
 
   const {
     handleInsertWidget,
@@ -133,7 +115,6 @@ export default function useAppEditorHandlers({
   } = useWidgetHandlers({
     editingNote,
     notes,
-    userPlan,
     focusedBlockRef,
     blockFormStates,
     setBlockFormStates,
@@ -143,9 +124,7 @@ export default function useAppEditorHandlers({
     handleDeleteBlock,
     showCustomConfirm,
     setToast,
-    setShowPaywall,
     setShowEditorMenu,
-    trackAttachmentAdded,
     checkAndRequestNotificationPermission,
     handleCancelReminder,
     saveReminders,

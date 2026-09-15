@@ -33,6 +33,7 @@ const es = {
   shared: 'Compartida',
   sharedNotes: 'Compartidas',
   sharedNotesTab: 'Notas compartidas',
+  pendingApproval: 'Compartido pendiente',
   friendsCount: 'Amigos',
   newNote: 'Nueva nota',
   allNotes: 'Todas las notas',

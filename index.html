@@ -7,6 +7,14 @@
     <meta name="description" content="Samsung Galaxy S23 FE için geliştirilmiş, hatırlatıcılı, borç takip eklentili ve ortak paylaşımlı premium mobil not defteri uygulaması." />
     <meta name="theme-color" content="#000000" />
     <title>NoteUp - Premium Not Defteri</title>
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('app_theme') || localStorage.getItem('s23_theme') || 'light';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch(e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

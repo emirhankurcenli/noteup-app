@@ -264,9 +264,8 @@ const ShareOptionsModal = ({
             </div>
           )}
 
-          {/* Option 3: Export/Share as PDF (Only for Ultra/VIP users) */}
-          {(userPlan === 'ultra' || userPlan === 'vip') && (
-            <button
+          {/* Option 3: Export/Share as PDF (Available for all users) */}
+          <button
               onClick={async () => {
                 if (editingNote?.isLocked) {
                   const title = t('lockedNotePdfAuthTitle');
@@ -278,7 +277,7 @@ const ShareOptionsModal = ({
                   }
                 }
                 setShowShareModal(false);
-                exportNoteAsPDF(editingNote, userPlan, setToast, null, lang, setConfirmDialog);
+                exportNoteAsPDF(editingNote, userPlan, setToast, lang, setConfirmDialog);
               }}
               style={{
                 padding: '14px 16px',
@@ -327,7 +326,6 @@ const ShareOptionsModal = ({
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
-          )}
         </div>
       </div>
     </div>

@@ -1,10 +1,10 @@
-﻿import { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { formatBytes } from '@shared/utils/mediaUtils';
+import { MAX_STORAGE_BYTES } from '@features/notes/hooks/useAppLocalState';
 
 const useAudioRecorderHandler = ({
   editingNote,
   focusedBlockRef,
-  userPlan,
   handleInsertWidget,
   handleUpdateNote,
   checkAndRequestPermission,
@@ -12,8 +12,6 @@ const useAudioRecorderHandler = ({
   setConfirmDialog,
   uploadToR2,
   getStorageUsageBytes,
-  PLAN_STORAGE_LIMITS,
-  setShowPaywall,
 }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -75,15 +73,13 @@ const useAudioRecorderHandler = ({
   const startRecording = async () => {
     // Check storage limit before recording
     const currentUsed = typeof getStorageUsageBytes === 'function' ? getStorageUsageBytes() : 0;
-    const limits = PLAN_STORAGE_LIMITS || { lite: 50 * 1024 * 1024, pro: 1 * 1024 * 1024 * 1024, ultra: 5 * 1024 * 1024 * 1024 };
-    const storageLimit = limits[userPlan] || limits.lite;
+    const storageLimit = MAX_STORAGE_BYTES;
 
     if (currentUsed >= storageLimit) {
       setToast({
         title: "⚠️ Depolama Sınırı Aşıldı",
-        msg: `Bulut depolama alanınız (${formatBytes(currentUsed)} / ${formatBytes(storageLimit)}) doldu. Yeni ses kaydı eklemek için planınızı Pro veya Ultra'ya yükseltin!`
+        msg: `Bulut depolama alanınız (${formatBytes(currentUsed)} / ${formatBytes(storageLimit)}) doldu.`
       });
-      if (typeof setShowPaywall === 'function') setShowPaywall(true);
       return;
     }
 

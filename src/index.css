@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
-:root {
+:root,
+:root[data-theme='dark'],
+[data-theme='dark'] {
   /* Font Family & Transitions */
   --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -65,10 +67,11 @@
 }
 
 /* ── Light Theme Variables (Logo Light-Side Colors) ── */
+:root[data-theme='light'],
 [data-theme='light'] {
   --bg-dark: #F0F4F8;
   --bg-surface: #FFFFFF;
-  --bg-surface-elevated: #E4ECF4;
+  --bg-surface-elevated: #FFFFFF;
   --border-color: rgba(74, 127, 165, 0.22);
   --border-color-active: rgba(74, 127, 165, 0.50);
 
@@ -123,6 +126,20 @@
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+[contenteditable]:empty:before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  opacity: 0.6;
+  pointer-events: none;
+  display: block;
 }
 
 body {

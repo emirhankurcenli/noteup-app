@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react';
+import { useEffect } from 'react';
 import { registerPlugin } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { supabase } from '@src/supabaseClient';
@@ -31,8 +31,6 @@ export default function useAppLifecycleEvents({
   editingNote,
   activeTab,
   setActiveTab,
-  showPaywall,
-  setShowPaywall,
   confirmDialog,
   setConfirmDialog,
   showEditorMenu,
@@ -176,10 +174,6 @@ export default function useAppLifecycleEvents({
   // 4. Android Hardware Back Button listener
   useEffect(() => {
     const handleBackButton = async () => {
-      if (showPaywall) {
-        setShowPaywall(false);
-        return;
-      }
       if (confirmDialog) {
         if (confirmDialog.onCancel) confirmDialog.onCancel();
         setConfirmDialog(null);
@@ -216,7 +210,6 @@ export default function useAppLifecycleEvents({
       listener.then(l => l.remove());
     };
   }, [
-    showPaywall,
     confirmDialog,
     editingNote,
     showEditorMenu,

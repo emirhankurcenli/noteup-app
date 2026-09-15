@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { FriendShareCheckList } from '@features/sharing/components/share/FriendShareCheckList';
 import { cleanText } from '@shared/utils/textUtils';
-
-const PLAN_LIMITS = { lite: 1, pro: 8, ultra: 20, vip: 20 };
 
 const SelectFriendsShareModal = ({
   activeShareNoteId,
@@ -15,18 +13,11 @@ const SelectFriendsShareModal = ({
   theme = 'dark',
   lang = 'tr',
   t,
-  userPlan = 'lite',
-  setShowPaywall,
-  setShowRewardedAdModal,
-  setPendingShareReward,
 }) => {
-  const [bonusSlots, setBonusSlots] = useState(0);
-
   const targetNote = Array.isArray(notes) ? notes.find(n => n.id === activeShareNoteId) : null;
 
   useEffect(() => {
     if (activeShareNoteId) {
-      setBonusSlots(0);
       if (targetNote) {
         const selected = [
           ...(Array.isArray(targetNote.sharedWith) ? targetNote.sharedWith : []),
@@ -40,31 +31,12 @@ const SelectFriendsShareModal = ({
   if (!activeShareNoteId) return null;
 
   const isLight = theme === 'light';
-  const nativeLimit = PLAN_LIMITS[userPlan] || 1;
-  const maxAllowed = nativeLimit + bonusSlots;
 
   const handleFriendToggle = (friendCode) => {
     const isSelected = selectedFriendCodes.includes(friendCode);
     if (isSelected) {
       setSelectedFriendCodes(prev => prev.filter(c => c !== friendCode));
     } else {
-      if (selectedFriendCodes.length >= maxAllowed) {
-        // Limit doldu! Seçimi engelle ve reklam/plan modalını aç
-        if (setPendingShareReward && setShowRewardedAdModal) {
-          setPendingShareReward({
-            type: 'select_friend',
-            codeToSelect: friendCode,
-            onGranted: (targetCode) => {
-              setBonusSlots(prev => prev + 1);
-              setSelectedFriendCodes(prev => (prev.includes(targetCode) ? prev : [...prev, targetCode]));
-            },
-          });
-          setShowRewardedAdModal(true);
-        } else if (setShowPaywall) {
-          setShowPaywall(true);
-        }
-        return;
-      }
       setSelectedFriendCodes(prev => [...prev, friendCode]);
     }
   };
@@ -77,7 +49,6 @@ const SelectFriendsShareModal = ({
       onClick={() => {
         setActiveShareNoteId(null);
         setSelectedFriendCodes([]);
-        setBonusSlots(0);
       }}
       style={{
         position: 'fixed',
@@ -166,7 +137,7 @@ const SelectFriendsShareModal = ({
           </button>
         </div>
 
-        {/* Limit Status Bar */}
+        {/* Selected Count Status Bar */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -182,11 +153,9 @@ const SelectFriendsShareModal = ({
           </span>
           <span style={{
             fontWeight: 800,
-            color: selectedFriendCodes.length >= maxAllowed
-              ? '#F59E0B'
-              : (isLight ? '#2563EB' : '#60A5FA'),
+            color: isLight ? '#2563EB' : '#60A5FA',
           }}>
-            {selectedFriendCodes.length} / {maxAllowed} {bonusSlots > 0 && `(+${bonusSlots} Bonus)`}
+            {selectedFriendCodes.length} / {friends.length}
           </span>
         </div>
 
@@ -207,7 +176,6 @@ const SelectFriendsShareModal = ({
             onClick={() => {
               setActiveShareNoteId(null);
               setSelectedFriendCodes([]);
-              setBonusSlots(0);
             }}
             style={{
               flex: 1,
@@ -230,7 +198,6 @@ const SelectFriendsShareModal = ({
                 handleSendShareInvitation(activeShareNoteId, selectedFriendCodes);
                 setActiveShareNoteId(null);
                 setSelectedFriendCodes([]);
-                setBonusSlots(0);
               }}
               style={{
                 flex: 1.5,

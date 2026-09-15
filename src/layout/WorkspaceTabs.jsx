@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import NotesGrid from '@features/notes/components/NotesGrid';
 import SharedNotesTab from '@features/sharing/components/SharedNotesTab';
 import RemindersTab from '@features/reminders/components/RemindersTab';
@@ -53,9 +53,7 @@ const WorkspaceTabs = ({
   profileName,
   handleUpdateProfileName,
   getStorageUsageBytes,
-  PLAN_STORAGE_LIMITS,
   formatBytes,
-  setShowPaywall,
   myCode,
   partnerCodeInput,
   setPartnerCodeInput,
@@ -70,11 +68,6 @@ const WorkspaceTabs = ({
   handleDisconnect,
   handleLogout,
   DEFAULT_AVATARS,
-  grantedUltraFriendCode,
-  ultraGiftFrom,
-  isPrimaryUltra,
-  isGiftedUltra,
-  handleGrantUltraGift,
   t,
 }) => {
   // Persistent search query — survives tab switches until manually cleared
@@ -115,6 +108,7 @@ const WorkspaceTabs = ({
           setActiveShareNoteId={setActiveShareNoteId}
           setNudgeTargetNote={setNudgeTargetNote}
           checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
+          theme={theme}
           lang={lang}
           t={t}
         />
@@ -196,9 +190,7 @@ const WorkspaceTabs = ({
           profileName={profileName}
           handleUpdateProfileName={handleUpdateProfileName}
           getStorageUsageBytes={getStorageUsageBytes}
-          PLAN_STORAGE_LIMITS={PLAN_STORAGE_LIMITS}
           formatBytes={formatBytes}
-          setShowPaywall={setShowPaywall}
           myCode={myCode}
           setToast={setToast}
           partnerCodeInput={partnerCodeInput}
@@ -222,11 +214,6 @@ const WorkspaceTabs = ({
           DEFAULT_AVATARS={DEFAULT_AVATARS}
           deletedNotesCount={(notes || []).filter(n => n && n.deletedAt).length}
           handleTabClick={setActiveTab}
-          grantedUltraFriendCode={grantedUltraFriendCode}
-          ultraGiftFrom={ultraGiftFrom}
-          isPrimaryUltra={isPrimaryUltra}
-          isGiftedUltra={isGiftedUltra}
-          handleGrantUltraGift={handleGrantUltraGift}
           t={t}
         />
       )}

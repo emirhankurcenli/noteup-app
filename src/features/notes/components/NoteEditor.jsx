@@ -165,7 +165,6 @@ const NoteEditor = ({
   setShowShareModal,
   userPlan,
   notes = [],
-  setShowPaywall,
   triggerHaptic,
   checkAndRequestNotificationPermission,
   checkAndRequestPermission,
@@ -301,7 +300,6 @@ const NoteEditor = ({
     handleMoveToTrash,
     userPlan,
     notes,
-    setShowPaywall,
     theme,
     isLight: theme === 'light',
     reminders,
@@ -374,9 +372,15 @@ const NoteEditor = ({
           type="text" 
           className="editor-title-input" 
           placeholder={t('noteTitlePlaceholder')}
-          value={editingNote.title}
+          value={editingNote.title || ''}
           maxLength={100}
           onChange={(e) => handleUpdateNote('title', e.target.value.slice(0, 100))}
+          onBlur={(e) => {
+            const trimmed = (e.target.value || '').trim();
+            if (trimmed !== e.target.value) {
+              handleUpdateNote('title', trimmed);
+            }
+          }}
           onFocus={(e) => {
             const currentVal = e.target.value;
             if (currentVal === 'Yeni Not' || currentVal === 'New Note' || currentVal === t('noteTitlePlaceholder')) {

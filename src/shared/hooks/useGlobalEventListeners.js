@@ -1,5 +1,4 @@
-﻿import { useEffect } from 'react';
-import { supabase } from '@src/supabaseClient';
+import { useEffect } from 'react';
 
 export const useGlobalEventListeners = ({
   notes,
@@ -68,32 +67,9 @@ export const useGlobalEventListeners = ({
     return () => window.removeEventListener('popstate', handlePopState);
   }, [notes]);
 
-  // Periodic Auto-Purge of Trash notes (>30 days)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-      setNotes(prevNotes => {
-        const activeNotes = prevNotes.filter(n => {
-          if (n.deletedAt && Date.now() - n.deletedAt > thirtyDaysMs) {
-            if (user && user.uid) {
-              supabase.from('notes').delete().eq('id', n.id).then(({ error }) => {
-                if (error) console.error("Auto-purge Supabase deletion error:", error);
-              });
-            }
-            return false;
-          }
-          return true;
-        });
-
-        if (activeNotes.length !== prevNotes.length) {
-          persistNotes(activeNotes);
-          return activeNotes;
-        }
-        return prevNotes;
-      });
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [user]);
+  // NOTE: Periodic auto-purge of trash notes (>30 days) is handled exclusively in
+  // useNotes.js (startup useEffect). Removed duplicate interval here to prevent
+  // race conditions with simultaneous Supabase delete calls.
 
   // Global Outside Click Listener
   useEffect(() => {

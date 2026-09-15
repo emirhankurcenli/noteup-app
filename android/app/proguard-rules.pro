@@ -8,9 +8,6 @@
     @android.webkit.JavascriptInterface <methods>;
 }
 
-# ─── 3. Preserve RevenueCat SDK ───────────────────────────────────────────────
--keep class com.revenuecat.purchases.** { *; }
--keep class com.revenuecat.purchases.hybridcommon.** { *; }
 
 # ─── 4. Preserve App Native Package & Services ─────────────────────────────────
 -keep class com.notes.hub.** { *; }
@@ -28,7 +25,4 @@
     public static *** i(...);
 }
 
-# ─── 7. Suppress Optional Mediation Dependencies (AdMob / Unity) ───────────────
--dontwarn com.unity3d.**
--dontwarn com.google.android.gms.ads.**
--dontwarn com.amazon.**
+

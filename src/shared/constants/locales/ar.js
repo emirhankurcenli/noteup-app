@@ -33,6 +33,7 @@ const ar = {
   shared: 'مشترك',
   sharedNotes: 'المشتركة',
   sharedNotesTab: 'الملاحظات المشتركة',
+  pendingApproval: 'بانتظار قبول المشاركة',
   friendsCount: 'أصدقاء',
   newNote: 'ملاحظة جديدة',
   allNotes: 'جميع الملاحظات',

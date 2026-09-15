@@ -1,40 +1,25 @@
 import React from 'react';
-import PaywallScreen from '@features/paywall/components/PaywallScreen';
 import ModalOverlays from '@shared/components/ModalOverlays';
-import IncomingShareModal from '@features/sharing/modals/IncomingShareModal';
 import LightboxModal from '@shared/components/LightboxModal';
 import DocumentPreviewModal from '@shared/components/DocumentPreviewModal';
 import ShareOptionsModal from '@features/sharing/modals/ShareOptionsModal';
-import AdModal from '@features/ads/modals/AdModal';
 import AvatarPickerModal from '@features/settings/modals/AvatarPickerModal';
 import WidgetAlarmModal from '@shared/components/WidgetAlarmModal';
 import ReminderModal from '@features/reminders/modals/ReminderModal';
 import SelectFriendsShareModal from '@features/sharing/modals/SelectFriendsShareModal';
-import RewardedAdModal from '@features/ads/modals/RewardedAdModal';
 import FeedbackModal from '@features/settings/modals/FeedbackModal';
-import NudgePromptModal from '@features/ads/modals/NudgePromptModal';
-import DrumPicker from '@shared/components/DrumPicker';
-import EncryptedImage from '@shared/components/EncryptedImage';
-
 
 const AppModals = ({
   notes,
   showReminderModal, setShowReminderModal, reminderTime, setReminderTime, reminderModes, setReminderModes, handleSetReminder,
   activeShareNoteId, setActiveShareNoteId, friends, selectedFriendCodes, setSelectedFriendCodes, handleSendShareInvitation,
-  handleAcceptShare, handleRejectShare,
-  lightboxUrl, setLightboxUrl, handleCloseLightbox, lightboxOverlayRef, lightboxImgRef, handleLightboxDoubleTap,
+  lightboxUrl, setLightboxUrl,
   previewFileModal, setPreviewFileModal,
   showShareModal, setShowShareModal, editingNote, handleShareNoteImage,
-  showPaywall, setShowPaywall, userPlan, setUserPlan,
-  planNotification, setPlanNotification, confirmDialog, setConfirmDialog, getLostFeatures, getChangedFeatures, PLAN_LEVELS,
-  showAdModal, setShowAdModal,
+  confirmDialog, setConfirmDialog,
   showAvatarPicker, setShowAvatarPicker, user, setToast, handleSelectAvatar, DEFAULT_AVATARS, checkAndRequestNotificationPermission,
   pendingWidgetAlarmCtx, handleCancelWidgetAlarm, quickReminderTitle, setQuickReminderTitle, quickReminderTime, setQuickReminderTime, quickReminderModes, setQuickReminderModes, handleCreateWidgetAlarm,
-  showRewardedAdModal, setShowRewardedAdModal,
-  pendingShareReward, setPendingShareReward,
-  handleRewardedShareCallback,
   showFeedbackModal, setShowFeedbackModal, myCode, profileName,
-  nudgeTargetNote, setNudgeTargetNote, handleSendNudge,
   theme, lang, t, triggerHaptic
 }) => {
   return (
@@ -66,13 +51,7 @@ const AppModals = ({
         theme={theme}
         lang={lang}
         t={t}
-        userPlan={userPlan}
-        setShowPaywall={setShowPaywall}
-        setShowRewardedAdModal={setShowRewardedAdModal}
-        setPendingShareReward={setPendingShareReward}
       />
-
-
 
       {/* Lightbox Image Preview */}
       <LightboxModal
@@ -97,45 +76,18 @@ const AppModals = ({
         checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
         theme={theme}
         t={t}
-        userPlan={userPlan}
         setToast={setToast}
         setConfirmDialog={setConfirmDialog}
         lang={lang}
       />
 
-      {/* 💎 Paywall / Plan Seçim Ekranı */}
-      {showPaywall && (
-        <PaywallScreen
-          theme={theme}
-          currentPlan={userPlan}
-          onClose={() => setShowPaywall(false)}
-          onSelectPlan={(planId) => {
-            setUserPlan(planId);
-            if (planId === 'lite') {
-              setShowPaywall(false);
-            }
-          }}
-        />
-      )}
-
+      {/* Modal Overlays (Confirm Dialogs) */}
       <ModalOverlays
-        planNotification={planNotification}
-        setPlanNotification={setPlanNotification}
         confirmDialog={confirmDialog}
         setConfirmDialog={setConfirmDialog}
         theme={theme}
         triggerHaptic={triggerHaptic}
-        getLostFeatures={getLostFeatures}
-        getChangedFeatures={getChangedFeatures}
-        PLAN_LEVELS={PLAN_LEVELS}
         t={t}
-      />
-
-      {/* 🚀 Sponsorlu Reklam Modal */}
-      <AdModal
-        showAdModal={showAdModal}
-        setShowAdModal={setShowAdModal}
-        setShowPaywall={setShowPaywall}
       />
 
       {/* Avatar Picker Modal */}
@@ -164,25 +116,6 @@ const AppModals = ({
         t={t}
         triggerHaptic={triggerHaptic}
       />
-      {/* 🎬 Ödüllü Reklam - Arkadaş Daveti (Yalnızca Lite plan 2. davet) */}
-      <RewardedAdModal
-        show={showRewardedAdModal}
-        onClose={() => setShowRewardedAdModal(false)}
-        onRewardGranted={() => handleRewardedShareCallback(pendingShareReward)}
-        setShowPaywall={setShowPaywall}
-        theme={theme}
-        lang={lang}
-      />
-
-      {/* 📣 Dürt / Bildirim Gönder Modalı */}
-      <NudgePromptModal
-        nudgeTargetNote={nudgeTargetNote}
-        setNudgeTargetNote={setNudgeTargetNote}
-        handleSendNudge={handleSendNudge}
-        lang={lang}
-        theme={theme}
-        triggerHaptic={triggerHaptic}
-      />
 
       {/* 💡 İstek ve Öneri Modalı */}
       <FeedbackModal
@@ -190,7 +123,6 @@ const AppModals = ({
         onClose={() => setShowFeedbackModal(false)}
         myCode={myCode}
         profileName={profileName}
-        userPlan={userPlan}
         setToast={setToast}
         theme={theme}
         lang={lang}

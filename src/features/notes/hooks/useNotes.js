@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@src/supabaseClient';
 import { cancelLocalNotification } from '@shared/services/notificationService';
 import { registerPlugin } from '@capacitor/core';
@@ -48,14 +48,19 @@ export default function useNotes({
       if (!updatedNote || !updatedNote.id) return;
 
       if (updatedNote.deletedAt) {
+        // Close editor if this note is open
         setEditingNote((prev) => (prev && prev.id === updatedNote.id ? null : prev));
+        // Move note to trash (keep in state with deletedAt) instead of removing entirely
         setNotes((prevNotes) => {
-          const filtered = prevNotes.filter((n) => n.id !== updatedNote.id);
+          const index = prevNotes.findIndex((n) => n.id === updatedNote.id);
+          if (index === -1) return prevNotes;
+          const updated = [...prevNotes];
+          updated[index] = { ...updated[index], deletedAt: updatedNote.deletedAt };
           try {
             const key = getUserScopedKey('s23_notes');
-            localStorage.setItem(key, JSON.stringify(filtered));
+            localStorage.setItem(key, JSON.stringify(updated));
           } catch (_) {}
-          return filtered;
+          return updated;
         });
         return;
       }
@@ -442,7 +447,7 @@ export default function useNotes({
 
       let cleanValue = value;
       if (field === 'title' && typeof value === 'string') {
-        cleanValue = sanitizeSingleLine(value, 150);
+        cleanValue = sanitizeSingleLine(value, 150, false);
       } else if (field === 'blocks' && Array.isArray(value)) {
         cleanValue = value.map(b => {
           if (!b) return b;

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useEditorContext } from '@features/editor/context/EditorContext';
 import { EditorLockStatusBadge } from './EditorLockStatusBadge';
 import { EditorReminderMenuItem } from './EditorReminderMenuItem';
@@ -16,7 +16,6 @@ export const EditorOptionsMenuDropdown = (props) => {
     userPlan = props.userPlan,
     notes = props.notes,
     setToast = props.setToast,
-    setShowPaywall = props.setShowPaywall,
     lang = props.lang,
     t = props.t,
     requestBiometricAuth = props.requestBiometricAuth,
@@ -67,7 +66,6 @@ export const EditorOptionsMenuDropdown = (props) => {
         userPlan={userPlan}
         notes={notes}
         setToast={setToast}
-        setShowPaywall={setShowPaywall}
         lang={lang}
         t={t}
         requestBiometricAuth={requestBiometricAuth}

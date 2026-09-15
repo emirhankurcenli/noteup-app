@@ -1,4 +1,4 @@
-﻿import { registerPlugin } from '@capacitor/core';
+import { registerPlugin } from '@capacitor/core';
 import { supabase } from '@src/supabaseClient';
 import useMediaGarbageCollector from '@features/editor/hooks/useMediaGarbageCollector';
 import { uploadToR2 as uploadToR2Fn, deleteFromR2 as deleteFromR2Fn } from '@shared/hooks/useR2Uploader';
@@ -8,7 +8,7 @@ import {
   dataURLtoBlob
 } from '@shared/utils/mediaUtils';
 import { sanitizeFilename } from '@shared/utils/securityUtils';
-import { getDataRetentionStatus } from '@shared/utils/subscriptionGraceUtils';
+import { MAX_STORAGE_BYTES } from '@features/notes/hooks/useAppLocalState';
 
 const AppSettings = registerPlugin('AppSettings');
 
@@ -20,13 +20,10 @@ const useR2Storage = ({
   user,
   userPlan,
   getStorageUsageBytes,
-  PLAN_STORAGE_LIMITS,
   handleInsertWidget,
   handleUpdateNote,
-  trackAttachmentAdded,
   checkAndRequestPermission,
   setToast,
-  setShowPaywall,
   setConfirmDialog,
   setLightboxUrl,
   setPreviewFileModal,
@@ -55,22 +52,18 @@ const useR2Storage = ({
       }
     }
 
-    const currentUsed = getStorageUsageBytes();
-    const storageLimit = PLAN_STORAGE_LIMITS[userPlan] || PLAN_STORAGE_LIMITS.lite;
+    const currentUsed = getStorageUsageBytes ? getStorageUsageBytes() : 0;
+    const storageLimit = MAX_STORAGE_BYTES;
     const totalNewBytes = files.reduce((acc, f) => acc + f.size, 0);
 
     if (currentUsed + totalNewBytes > storageLimit) {
-      const retentionStatus = getDataRetentionStatus(currentUsed, storageLimit);
       setToast({
-        title: "⚠️ 30 Günlük Veri Saklama Süresindesiniz",
-        msg: `Depolama alanınız (${formatBytes(currentUsed)} / ${formatBytes(storageLimit)}) doldu. Mevcut dosyalarınızı ${retentionStatus.daysRemaining} gün daha görüntüleyebilir ve indirebilirsiniz. Yeni dosya eklemek için plan yükseltin.`
+        title: "⚠️ Depolama Alanı Doldu",
+        msg: `Depolama alanınız (${formatBytes(currentUsed)} / ${formatBytes(storageLimit)}) doldu.`
       });
-      setShowPaywall(true);
       e.target.value = '';
       return;
     }
-
-    trackAttachmentAdded();
 
     const doUploadFiles = async () => {
       setToast({

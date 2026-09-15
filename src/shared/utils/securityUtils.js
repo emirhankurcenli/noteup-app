@@ -49,12 +49,14 @@ export const sanitizeText = (input) => {
  * Sanitizes and truncates single-line text inputs (Titles, Folder names, Usernames, etc.)
  * @param {string} input - Raw input string
  * @param {number} maxLength - Maximum allowed character length (default: 150)
- * @returns {string} Clean, safe, trimmed single-line string
+ * @param {boolean} trim - Whether to trim leading/trailing whitespace (default: true)
+ * @returns {string} Clean, safe single-line string
  */
-export const sanitizeSingleLine = (input, maxLength = 150) => {
+export const sanitizeSingleLine = (input, maxLength = 150, trim = true) => {
   if (typeof input !== 'string') return '';
-  const clean = sanitizeText(input).replace(/[\r\n\t]+/g, ' ').trim();
-  return clean.substring(0, maxLength);
+  const clean = sanitizeText(input).replace(/[\r\n\t]+/g, ' ');
+  const result = trim ? clean.trim() : clean;
+  return result.substring(0, maxLength);
 };
 
 /**
