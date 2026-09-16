@@ -3,7 +3,7 @@ import { cancelLocalNotification } from '@shared/services/notificationService';
 import { registerPlugin } from '@capacitor/core';
 import { triggerHaptic } from '@shared/services/haptics';
 import useReminderService from '@features/reminders/hooks/useReminderService';
-import { getNowLocalDateTimeString } from '@shared/utils/textUtils';
+import { getNowLocalDateTimeString } from '@shared/utils/dateUtils';
 
 export default function useReminders({
   user,

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AppStateContext — Merkezi uygulama state'i.
  *
  * useAppLogic hook'unu wrap ederek Context API'ye donusturur.
@@ -25,6 +25,7 @@ export const AppStateProvider = ({ children, optionsRef }) => {
     checkAndRequestNotificationPermission: (...args) => optionsRef.current?.checkAndRequestNotificationPermission?.(...args),
     deleteFromR2:        (...args) => optionsRef.current?.deleteFromR2?.(...args),
     requestBiometricAuth:(...args) => optionsRef.current?.requestBiometricAuth?.(...args),
+    updateBlockForm:     (...args) => optionsRef.current?.updateBlockForm?.(...args),
   };
 
   const logic = useAppLogic(options);

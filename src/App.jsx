@@ -254,6 +254,7 @@ function AppInner({ optionsRef }) {
     handleTodoTitleChange, handleAddTodoItem, handleToggleTodoItem, handleDeleteTodoItem,
     handleSetupSplit, handleAddSplitExpense, handleDeleteSplitExpense,
     handleSetReminder, handleCreateQuickReminder,
+    updateBlockForm,
   } = useAppEditorHandlers({
     editingNote, setEditingNote, focusedBlockRef, user, userPlan, lang,
     getStorageUsageBytes, handleUpdateNote, checkAndRequestPermission,
@@ -268,6 +269,7 @@ function AppInner({ optionsRef }) {
   deleteFromR2Ref.current = deleteFromR2;
   if (optionsRef?.current) {
     optionsRef.current.deleteFromR2 = (url) => deleteFromR2Ref.current?.(url);
+    optionsRef.current.updateBlockForm = updateBlockForm;
   }
 
   const getVisibleNotes = () => notes.filter(n => !n.deletedAt && !n.sharedFrom);

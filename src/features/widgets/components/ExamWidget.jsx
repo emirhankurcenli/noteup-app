@@ -1,5 +1,5 @@
 import React from 'react';
-import { getNowLocalDateTimeString } from '@shared/utils/textUtils';
+import { getNowLocalDateTimeString } from '@shared/utils/dateUtils';
 
 const ExamWidget = ({
   block,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { formatTurkishMoneyInput, formatTurkishMoneyDisplay, parseTurkishMoneyToFloat } from '@shared/utils/money';
 import BillDetailModal from '@shared/components/BillDetailModal';
-import { getNowLocalDateTimeString } from '@shared/utils/textUtils';
+import { getNowLocalDateTimeString } from '@shared/utils/dateUtils';
 
 const BillWidget = ({
   block,

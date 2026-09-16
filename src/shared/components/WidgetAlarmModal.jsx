@@ -1,6 +1,7 @@
 import React from 'react';
 import DrumPicker from '@shared/components/DrumPicker';
-import { cleanText, getNowLocalDateTimeString } from '@shared/utils/textUtils';
+import { cleanText } from '@shared/utils/textUtils';
+import { getNowLocalDateTimeString } from '@shared/utils/dateUtils';
 
 const WidgetAlarmModal = ({
   pendingWidgetAlarmCtx,
