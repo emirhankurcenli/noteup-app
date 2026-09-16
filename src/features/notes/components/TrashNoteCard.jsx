@@ -50,6 +50,7 @@ const TrashNoteCard = ({
       onClick={handleCardClick}
       onTouchStart={startPress}
       onTouchEnd={endPress}
+      onTouchMove={endPress}
       onMouseDown={startPress}
       onMouseUp={endPress}
       onMouseLeave={endPress}
