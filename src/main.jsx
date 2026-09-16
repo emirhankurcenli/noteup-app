@@ -1,4 +1,5 @@
-import React, { StrictMode, Component } from "react";
+﻿import React, { StrictMode, Component } from "react";
+import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
@@ -29,7 +30,7 @@ class ErrorBoundary extends Component {
       this.setState({ isReporting: true });
       let localUser = null;
       try {
-        localUser = JSON.parse(localStorage.getItem("s23_user") || "null");
+        localUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || "null");
       } catch (e) {}
 
       const errorPayload = {

@@ -4,7 +4,8 @@ import { cancelLocalNotification } from '@shared/services/notificationService';
 import { registerPlugin } from '@capacitor/core';
 import useNoteUndoRedo from '@features/notes/hooks/useNoteUndoRedo';
 import { sanitizeNoteContent, sanitizeSingleLine } from '@shared/utils/securityUtils';
-import { mergeNoteBlocks, ensureBlockTimestamps } from '@shared/utils/blockMergeUtils';
+import { mergeNoteBlocks, ensureBlockTimestamps, enforceTrailingTextBlock } from '@shared/utils/blockMergeUtils';
+import { cleanText } from '@shared/utils/textUtils';
 
 export default function useNotes({
   user,
@@ -339,16 +340,6 @@ export default function useNotes({
   }, [user?.uid]); // Sadece user değişince tetikle — notes'u dep'e almak döngü yaratır
 
   // --- HELPERS ---
-  const enforceTrailingTextBlock = (blocks = []) => {
-    if (blocks.length === 0) {
-      return [{ id: 'b-' + Date.now(), type: 'text', content: '' }];
-    }
-    const last = blocks[blocks.length - 1];
-    if (last && last.type !== 'text') {
-      return [...blocks, { id: 'b-' + Date.now() + '-trail', type: 'text', content: '' }];
-    }
-    return blocks;
-  };
 
   // --- PERSISTENCE ---
   const persistNotes = async (updatedNotes) => {
@@ -679,7 +670,6 @@ export default function useNotes({
     });
   };
 
-  const cleanText = (txt) => typeof txt === 'string' ? txt.replace(/[\u200B-\u200D\uFEFF]/g, '').trim() : txt;
   const getValidText = (key, fallback) => {
     const txt = cleanText(t(key));
     if (!txt || txt === key) return fallback;

@@ -93,43 +93,10 @@ export const getSearchSnippet = (text, query, contextLength = 13) => {
   return snippet;
 };
 
-export const getNowLocalDateTimeString = () => {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
 
-export const parseDateTimeString = (val) => {
-  const now = new Date();
-  if (!val || typeof val !== 'string') return now;
-  const parts = val.split('T');
-  if (parts.length !== 2) return now;
-  const [datePart, timePart] = parts;
-  const [yearStr, monthStr, dayStr] = datePart.split('-');
-  const [hourStr, minStr] = timePart.split(':');
-  
-  const y = parseInt(yearStr, 10);
-  const m = parseInt(monthStr, 10) - 1;
-  const day = parseInt(dayStr, 10);
-  const h = parseInt(hourStr, 10);
-  const min = parseInt(minStr, 10);
-  
-  if (isNaN(y) || isNaN(m) || isNaN(day) || isNaN(h) || isNaN(min)) return now;
-  return new Date(y, m, day, h, min);
-};
+// ─── Date utilities moved to dateUtils.js ────────────────────────────────────
+// Re-exported here for backward compatibility with existing imports.
+export { getNowLocalDateTimeString, parseDateTimeString, getDaysLeft } from '@shared/utils/dateUtils';
 
-/**
- * Calculates how many days are left before a trash note is permanently deleted.
- * Returns a number (can be 0 or negative if overdue).
- * @param {number|null} deletedAt - Unix timestamp in ms
- * @param {number} retentionDays - default 30
- */
-export const getDaysLeft = (deletedAt, retentionDays = 30) => {
-  if (!deletedAt) return retentionDays;
-  return retentionDays - Math.floor((Date.now() - deletedAt) / (1000 * 60 * 60 * 24));
-};
+
 

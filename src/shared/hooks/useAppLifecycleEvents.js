@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
+import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import { registerPlugin } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { supabase } from '@src/supabaseClient';
@@ -13,7 +14,7 @@ const AppSettings = registerPlugin('AppSettings');
 
 const touchLastSeenAt = async () => {
   try {
-    const userRaw = localStorage.getItem('s23_user');
+    const userRaw = localStorage.getItem(STORAGE_KEYS.USER);
     if (!userRaw) return;
     const u = JSON.parse(userRaw);
     const userId = u?.uid || u?.id;

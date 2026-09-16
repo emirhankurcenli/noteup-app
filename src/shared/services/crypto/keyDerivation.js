@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 const PBKDF2_ITERATIONS = 100000;
 const KEY_LENGTH = 256;
 const ALGORITHM = "AES-GCM";
@@ -28,7 +29,7 @@ const DEVICE_KEY_STORAGE = "__noteup_device_vault_key";
 
 export const getFallbackUserKey = () => {
   try {
-    const raw = localStorage.getItem('s23_user');
+    const raw = localStorage.getItem(STORAGE_KEYS.USER);
     if (raw) {
       const u = JSON.parse(raw);
       if (u && (u.uid || u.id)) return `NoteUp_Vault_${u.uid || u.id}`;

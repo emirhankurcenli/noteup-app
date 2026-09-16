@@ -338,18 +338,7 @@ const NotesGrid = ({
                         }}
                       >
                         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
-                          {note.isLocked ? (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                              <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
-                            </svg>
-                          ) : (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                              <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
-                              <circle cx="12" cy="16" r="1" fill="currentColor"/>
-                            </svg>
-                          )}
+                          <LockIcon size={16} />
                         </span>
                         {note.isLocked ? cleanText(t('unlockNote')) : cleanText(t('lockNote'))}
                       </button>
@@ -371,11 +360,7 @@ const NotesGrid = ({
                         }}
                       >
                         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="12" y1="17" x2="12" y2="22" />
-                            <path d="M5 17h14l-1.5-6H6.5L5 17z" />
-                            <path d="M9 11V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v7" />
-                          </svg>
+                          <PinIcon size={16} />
                         </span>
                         {note.isPinned ? cleanText(t('unpinNote')) : cleanText(t('pinNote'))}
                       </button>

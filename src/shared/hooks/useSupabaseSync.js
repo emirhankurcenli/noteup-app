@@ -1,4 +1,5 @@
-import { supabase } from '@src/supabaseClient';
+﻿import { supabase } from '@src/supabaseClient';
+import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import { getUserScopedKey as coreGetUserScopedKey, getScopedStorageItem as coreGetScopedStorageItem } from '@shared/utils/scopedStorage';
 
 const useSupabaseSync = ({
@@ -30,7 +31,7 @@ const useSupabaseSync = ({
       let myFriendCode = profileRes?.data?.friend_code || profileRes?.data?.my_code;
       if (!myFriendCode) {
         try {
-          const localUser = localStorage.getItem('s23_user');
+          const localUser = localStorage.getItem(STORAGE_KEYS.USER);
           myFriendCode = localUser ? JSON.parse(localUser)?.myCode : null;
         } catch (e) {}
       }
@@ -94,7 +95,7 @@ const useSupabaseSync = ({
       if (!nErr && dbNotes) {
         let localNotes = [];
         try {
-          const localKey = getUserScopedKey('s23_notes', userId);
+          const localKey = getUserScopedKey(STORAGE_KEYS.NOTES, userId);
           const raw = localStorage.getItem(localKey);
           if (raw) localNotes = JSON.parse(raw);
         } catch (e) {}
@@ -156,7 +157,7 @@ const useSupabaseSync = ({
 
         const finalCombinedNotes = Array.from(combinedNotesMap.values());
         setNotes(finalCombinedNotes);
-        const key = getUserScopedKey('s23_notes', userId);
+        const key = getUserScopedKey(STORAGE_KEYS.NOTES, userId);
         localStorage.setItem(key, JSON.stringify(finalCombinedNotes));
       }
       if (!rErr && dbReminders) {
@@ -167,7 +168,7 @@ const useSupabaseSync = ({
           active: r.active
         }));
         setReminders(formattedReminders);
-        const key = getUserScopedKey('s23_reminders', userId);
+        const key = getUserScopedKey(STORAGE_KEYS.REMINDERS, userId);
         localStorage.setItem(key, JSON.stringify(formattedReminders));
       }
     } catch (err) {
@@ -190,7 +191,7 @@ const useSupabaseSync = ({
 
       if (!myFriendCode) {
         try {
-          const localUser = localStorage.getItem('s23_user');
+          const localUser = localStorage.getItem(STORAGE_KEYS.USER);
           myFriendCode = localUser ? JSON.parse(localUser)?.myCode : null;
         } catch (_) {}
       }
@@ -211,7 +212,7 @@ const useSupabaseSync = ({
         const valid = prevNotes.filter((n) => !n.sharedFrom || sharedNoteIds.includes(n.id));
         if (valid.length !== prevNotes.length) {
           try {
-            const key = getUserScopedKey('s23_notes', userId);
+            const key = getUserScopedKey(STORAGE_KEYS.NOTES, userId);
             localStorage.setItem(key, JSON.stringify(valid));
           } catch (_) {}
           return valid;

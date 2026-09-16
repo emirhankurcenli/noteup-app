@@ -1,4 +1,5 @@
 ﻿import { useEffect } from 'react';
+import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import { createNotificationChannels, addNotificationListener } from '@shared/services/notificationService';
 import { playChime } from '@shared/services/soundService';
 import { triggerHaptic } from '@shared/services/haptics';
@@ -48,9 +49,9 @@ export default function useInitialDataLoad({
         setFriendRequests(JSON.parse(localStorage.getItem('s23_friend_requests') || '[]'));
       } catch (e) {}
 
-      const activeUid = JSON.parse(localStorage.getItem('s23_user') || '{}')?.uid || 'guest';
-      let storedNotes = getScopedStorageItem('s23_notes', activeUid);
-      let storedReminders = getScopedStorageItem('s23_reminders', activeUid);
+      const activeUid = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || '{}')?.uid || 'guest';
+      let storedNotes = getScopedStorageItem(STORAGE_KEYS.NOTES, activeUid);
+      let storedReminders = getScopedStorageItem(STORAGE_KEYS.REMINDERS, activeUid);
 
       const migrateNote = (note) => {
         let blocks = note.blocks;
@@ -84,10 +85,10 @@ export default function useInitialDataLoad({
       try {
         const rawNotes = JSON.parse(storedNotes || '[]').map(migrateNote);
         setNotes(rawNotes);
-        localStorage.setItem('s23_notes', JSON.stringify(rawNotes));
+        localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(rawNotes));
       } catch (e) {
         console.error('Corrupted notes data, resetting:', e);
-        localStorage.removeItem('s23_notes');
+        localStorage.removeItem(STORAGE_KEYS.NOTES);
         setNotes([]);
       }
 
@@ -98,7 +99,7 @@ export default function useInitialDataLoad({
           if (syncDismissedAlarms) syncDismissedAlarms(parsed);
         } catch (e) {
           console.error('Corrupted reminders data, resetting:', e);
-          localStorage.removeItem('s23_reminders');
+          localStorage.removeItem(STORAGE_KEYS.REMINDERS);
           setReminders([]);
         }
       }

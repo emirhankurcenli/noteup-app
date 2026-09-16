@@ -101,3 +101,21 @@ export const mergeNoteBlocks = (localBlocks = [], incomingBlocks = []) => {
 
   return result.length > 0 ? result : incomingBlocks;
 };
+
+/**
+ * Ensures the last block of a note is always an editable text block.
+ * Prevents the cursor from getting "stuck" after non-text blocks (images, files, etc.).
+ *
+ * @param {Array} blocks - The note's block array.
+ * @returns {Array} Blocks with a trailing text block guaranteed.
+ */
+export const enforceTrailingTextBlock = (blocks = []) => {
+  if (blocks.length === 0) {
+    return [{ id: 'b-' + Date.now(), type: 'text', content: '' }];
+  }
+  const last = blocks[blocks.length - 1];
+  if (last && last.type !== 'text') {
+    return [...blocks, { id: 'b-' + Date.now() + '-trail', type: 'text', content: '' }];
+  }
+  return blocks;
+};

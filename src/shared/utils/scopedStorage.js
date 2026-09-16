@@ -2,12 +2,13 @@
  * Storage Keys & Scoped Storage Manager (Single Source of Truth)
  * DRY implementation for consistent user-scoped localStorage isolation.
  */
+import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 
 export const getUserScopedKey = (baseKey, uidOverride) => {
   let targetUid = uidOverride;
   if (!targetUid) {
     try {
-      const localUser = localStorage.getItem('s23_user');
+      const localUser = localStorage.getItem(STORAGE_KEYS.USER);
       targetUid = localUser ? JSON.parse(localUser)?.uid : 'guest';
     } catch (e) {
       targetUid = 'guest';

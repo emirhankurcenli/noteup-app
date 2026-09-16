@@ -1,5 +1,5 @@
-﻿import React, { useState } from 'react';
-import { supabase } from '@src/supabaseClient';
+import React, { useState } from 'react';
+import { submitFeedback } from '@shared/services/api/feedbackApi';
 import { sanitizeSingleLine, sanitizeText } from '@shared/utils/securityUtils';
 import FeedbackTypeTabs from '@features/settings/modals/feedback/FeedbackTypeTabs';
 
@@ -96,21 +96,8 @@ const FeedbackModal = ({
 
     let sentSuccessfully = false;
 
-    // 1. Supabase table insert (feedback_messages ve feedbacks tabloları)
-    try {
-      const { error } = await supabase.from('feedback_messages').insert([feedbackData]);
-      if (!error) {
-        sentSuccessfully = true;
-      } else {
-        console.warn('Supabase feedback_messages insert error, trying feedbacks table fallback:', error);
-        const { error: error2 } = await supabase.from('feedbacks').insert([feedbackData]);
-        if (!error2) {
-          sentSuccessfully = true;
-        }
-      }
-    } catch (err) {
-      console.warn('Supabase insertion exception:', err);
-    }
+    // 1. API katmanı üzerinden Supabase'e gönder
+    sentSuccessfully = await submitFeedback(feedbackData);
 
     // 2. LocalStorage fallback
     try {

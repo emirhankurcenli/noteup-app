@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
+import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import { DEFAULT_AVATARS } from '@shared/constants/avatars';
 import { supabase } from '@src/supabaseClient';
 import { Capacitor } from '@capacitor/core';
@@ -17,7 +18,7 @@ export default function useAuth() {
 
   // --- AUTH & PROFILE STATES ---
   const [user, setUser] = useState(() => {
-    const localUser = localStorage.getItem('s23_user');
+    const localUser = localStorage.getItem(STORAGE_KEYS.USER);
     return localUser ? JSON.parse(localUser) : null;
   });
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -47,7 +48,7 @@ export default function useAuth() {
       let savedPhotoURL = localStorage.getItem(`s23_avatar_${u.id}`);
       if (!savedPhotoURL) {
         try {
-          const localData = localStorage.getItem('s23_user');
+          const localData = localStorage.getItem(STORAGE_KEYS.USER);
           if (localData) {
             const parsed = JSON.parse(localData);
             if (parsed?.uid === u.id && parsed?.photoURL) {
@@ -92,7 +93,7 @@ export default function useAuth() {
         providerId: u.app_metadata?.provider || 'google'
       };
       setUser(userData);
-      localStorage.setItem('s23_user', JSON.stringify(userData));
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
       setProfileName(userData.name);
       localStorage.setItem('s23_profile_name', userData.name);
 
@@ -166,7 +167,7 @@ export default function useAuth() {
     } else {
       // LOGOUT: Clear in-memory state so previous user's data disappears
       setUser(null);
-      localStorage.removeItem('s23_user');
+      localStorage.removeItem(STORAGE_KEYS.USER);
       setNotes([]);
       setReminders([]);
 
@@ -267,7 +268,7 @@ export default function useAuth() {
           providerId: providerName === 'google' ? 'google.com' : 'apple.com'
         };
         setUser(mockUser);
-        localStorage.setItem('s23_user', JSON.stringify(mockUser));
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(mockUser));
         setProfileName(mockUser.name);
         localStorage.setItem('s23_profile_name', mockUser.name);
         setIsLoggingIn(false);
@@ -321,14 +322,14 @@ export default function useAuth() {
     setReminders([]);
     if (isMockMode) {
       setUser(null);
-      localStorage.removeItem('s23_user');
+      localStorage.removeItem(STORAGE_KEYS.USER);
       localStorage.removeItem('s23_notes');
       setToast({ title: "🚪 Oturum Kapatıldı", msg: "Simüle oturum sonlandırıldı." });
     } else {
       try {
         await supabase.auth.signOut();
         setUser(null);
-        localStorage.removeItem('s23_user');
+        localStorage.removeItem(STORAGE_KEYS.USER);
         localStorage.removeItem('s23_notes');
         setToast({ title: "🚪 Oturum Kapatıldı", msg: "Başarıyla çıkış yapıldı." });
       } catch (error) {
@@ -346,7 +347,7 @@ export default function useAuth() {
       localStorage.setItem(`s23_avatar_${user.uid}`, avatarUrl);
       const updatedUser = { ...user, photoURL: avatarUrl };
       setUser(updatedUser);
-      localStorage.setItem('s23_user', JSON.stringify(updatedUser));
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
       if (!isMockMode) {
         await supabase.auth.updateUser({ data: { avatar_url: avatarUrl } });
         try {
@@ -379,7 +380,7 @@ export default function useAuth() {
     if (user) {
       const updatedUser = { ...user, name: cleanName };
       setUser(updatedUser);
-      localStorage.setItem('s23_user', JSON.stringify(updatedUser));
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
 
       if (!isMockMode) {
         try {

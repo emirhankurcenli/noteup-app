@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import TRANSLATIONS from '@shared/constants/translations';
-import { formatReminderDate as sharedFormatReminderDate, getRemainingTimeText as sharedGetRemainingTimeText } from '@shared/utils/dateUtils';
 import useAuth from '@features/auth/hooks/useAuth';
 import useSharing from '@features/sharing/hooks/useSharing';
 import useNotes from '@features/notes/hooks/useNotes';
@@ -25,8 +24,31 @@ export default function useAppLogic(options = {}) {
     return TRANSLATIONS[lang]?.[key] || TRANSLATIONS['en']?.[key] || TRANSLATIONS['tr']?.[key] || key;
   };
 
-  const formatReminderDate = (dateStr) => sharedFormatReminderDate(dateStr, lang, t);
-  const getRemainingTimeText = (targetTimeStr) => sharedGetRemainingTimeText(targetTimeStr, t);
+  // Lang+t'ye bağlı olduğu için burada tanımlanıyor (dateUtils'e taşınamaz)
+  const formatReminderDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US', {
+        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+      });
+    } catch { return dateStr; }
+  };
+
+  const getRemainingTimeText = (targetTimeStr) => {
+    if (!targetTimeStr) return '';
+    try {
+      const diff = new Date(targetTimeStr).getTime() - Date.now();
+      if (diff <= 0) return t('reminderOverdue') || 'Geçmiş';
+      const mins = Math.floor(diff / 60000);
+      if (mins < 60) return `${mins} ${t('minutesShort') || 'dk'}`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs} ${t('hoursShort') || 'sa'}`;
+      const days = Math.floor(hrs / 24);
+      return `${days} ${t('daysShort') || 'gün'}`;
+    } catch { return ''; }
+  };
 
   // Persist language selection
   useEffect(() => {
