@@ -1,17 +1,23 @@
-﻿import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@src/supabaseClient';
 import { playChime } from '@shared/services/soundService';
+import { App as CapApp } from '@capacitor/app';
 
 export const useSharedNotesSync = ({
   myCode,
+  user,
   setToast,
   setPendingShareRequests,
   setFriendRequests,
   setFriends,
+  setNotes,
 }) => {
   const processedRequestIdsRef = useRef(new Set());
   const notifiedAcceptedSharesRef = useRef(new Set());
   const lastDispatchedMapRef = useRef(new Map());
+  // Polling için: hangi shared note ID'lerini takip ettiğimizi saklar
+  const acceptedSharedNoteIdsRef = useRef([]);
+  const pollingIntervalRef = useRef(null);
 
   useEffect(() => {
     if (!myCode) return;
@@ -285,12 +291,16 @@ export const useSharedNotesSync = ({
               return;
             }
 
-            if (recNew.is_shared) {
-              const noteId = recNew.id;
+            // FIX: is_shared === true kontrolü kaldırıldı.
+            // Artık "biz bu notu paylaşımlı olarak takip ediyorsak" güncelliyoruz.
+            // acceptedSharedNoteIdsRef: hem gelen (sharedFrom) hem paylaşılan (sharedWith) note ID'lerini tutar.
+            const noteId = recNew.id;
+            const isTracked = acceptedSharedNoteIdsRef.current.includes(noteId);
+            if (isTracked) {
               const updatedTime = recNew.updated_at ? new Date(recNew.updated_at).getTime() : Date.now();
               const lastTime = lastDispatchedMapRef.current.get(noteId) || 0;
 
-              // Only dispatch if not already dispatched from note_shares in the same update tick
+              // note_shares kanalından aynı tick'te dispatch edilmediyse gönder
               if (updatedTime > lastTime) {
                 lastDispatchedMapRef.current.set(noteId, updatedTime);
 
@@ -389,7 +399,123 @@ export const useSharedNotesSync = ({
           supabase.removeChannel(shareChannel);
         } catch (e) {}
       }
-      // FIX: friendsChannel artık yok, sadece shareChannel temizleniyor
     };
   }, [myCode]);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // POLLING FALLBACK + FOREGROUND SYNC
+  // Realtime bağlantısı koptuğunda veya paket kaçırdığında devreye girer.
+  // Her 30 saniyede bir paylaşımlı notların güncel halini Supabase'den çeker.
+  // ─────────────────────────────────────────────────────────────────────────────
+  const pollSharedNotes = useCallback(async () => {
+    if (!myCode) return;
+    try {
+      // 1. Hangi notları takip ettiğimizi öğren
+      const { data: shares } = await supabase
+        .from('note_shares')
+        .select('note_id, from_code, from_name')
+        .or(`to_code.eq.${myCode},from_code.eq.${myCode}`)
+        .eq('status', 'accepted');
+
+      const acceptedShares = Array.isArray(shares) ? shares : [];
+      const sharedNoteIds = [...new Set(acceptedShares.map((s) => s.note_id).filter(Boolean))];
+
+      // Takip listesini güncelle (Realtime listener bu liste sayesinde filtre yapıyor)
+      acceptedSharedNoteIdsRef.current = sharedNoteIds;
+
+      if (sharedNoteIds.length === 0) return;
+
+      // 2. Bu notların güncel hallerini çek
+      const { data: notesData } = await supabase
+        .from('notes')
+        .select('*')
+        .in('id', sharedNoteIds);
+
+      if (!notesData || notesData.length === 0) return;
+
+      notesData.forEach((remoteNote) => {
+        // Silinmiş notları yakala
+        if (remoteNote.deleted_at) {
+          window.dispatchEvent(
+            new CustomEvent('noteup_shared_note_revoked', {
+              detail: { noteId: remoteNote.id },
+            })
+          );
+          return;
+        }
+
+        let parsedBlocks = [];
+        try {
+          if (Array.isArray(remoteNote.blocks)) parsedBlocks = remoteNote.blocks;
+          else if (typeof remoteNote.blocks === 'string') parsedBlocks = JSON.parse(remoteNote.blocks);
+        } catch (_) {}
+
+        const updatedTime = remoteNote.updated_at
+          ? new Date(remoteNote.updated_at).getTime()
+          : Date.now();
+
+        // Son dispatch edilen zamandan daha yeniyse güncelle
+        const lastTime = lastDispatchedMapRef.current.get(remoteNote.id) || 0;
+        if (updatedTime > lastTime) {
+          lastDispatchedMapRef.current.set(remoteNote.id, updatedTime);
+          window.dispatchEvent(
+            new CustomEvent('noteup_shared_note_live_update', {
+              detail: {
+                id: remoteNote.id,
+                title: remoteNote.title || '',
+                blocks: parsedBlocks,
+                isShared: remoteNote.is_shared,
+                deletedAt: remoteNote.deleted_at ? Number(remoteNote.deleted_at) : null,
+                updatedAt: updatedTime,
+              },
+            })
+          );
+        }
+      });
+    } catch (err) {
+      // Polling sessizce başarısız olabilir — Realtime devrededir
+    }
+  }, [myCode]);
+
+  useEffect(() => {
+    if (!myCode) return;
+
+    // İlk yüklemede hemen çalıştır
+    pollSharedNotes();
+
+    // Her 30 saniyede bir polling (Realtime fallback)
+    pollingIntervalRef.current = setInterval(pollSharedNotes, 30_000);
+
+    // Uygulama arka plandan öne geldiğinde hemen sync et
+    let appStateListener = null;
+    try {
+      CapApp.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) {
+          // Ön plana gelindiğinde lastDispatchedMap'i sıfırla → zorla güncelleme
+          lastDispatchedMapRef.current.clear();
+          pollSharedNotes();
+        }
+      }).then((listener) => {
+        appStateListener = listener;
+      });
+    } catch (_) {
+      // Web ortamında CapApp çalışmaz — sessizce geç
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          lastDispatchedMapRef.current.clear();
+          pollSharedNotes();
+        }
+      });
+    }
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      if (appStateListener) {
+        try { appStateListener.remove(); } catch (_) {}
+      }
+    };
+  }, [myCode, pollSharedNotes]);
 };

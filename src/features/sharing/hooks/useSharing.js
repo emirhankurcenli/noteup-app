@@ -31,6 +31,7 @@ export default function useSharing({
   // Delegate Realtime shared notes WebSocket sync to single-responsibility hook
   useSharedNotesSync({
     myCode,
+    user,
     setToast,
     setPendingShareRequests,
     setFriendRequests: friendMgr.setFriendRequests,
