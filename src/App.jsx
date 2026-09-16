@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import LoginScreen from '@features/auth/components/LoginScreen';
 import ToastNotification from '@shared/components/ToastNotification';
@@ -27,12 +27,8 @@ import detectPlatform from '@platform/detect';
 const AppSettings = registerPlugin('AppSettings');
 
 // ─── Inner App (context'e erisebilir) ────────────────────────────────────────
-function AppInner() {
-  // --- Options ref bridge (AppStateProvider'a inject edildi) ---
-  const setConfirmDialogRef                         = useRef(null);
-  const setShowReminderModalRef                     = useRef(null);
-  const checkAndRequestNotificationPermissionRef    = useRef(null);
-  const deleteFromR2Ref                             = useRef(null);
+function AppInner({ optionsRef }) {
+  const deleteFromR2Ref = useRef(null);
 
   // --- Context hook'lari ---
   const { lang, setLang, t, formatReminderDate, getRemainingTimeText } = useLanguageCtx();
@@ -92,9 +88,7 @@ function AppInner() {
     handleRequestMicPermission, handleRequestStoragePermission,
     handleRequestAudioPermission, handleRequestLocationPermission,
     checkAndRequestPermission, showPermissionDialog, openSystemSettings
-  } = useAppPermissions({ setToast, lang, setConfirmDialog: (d) => setConfirmDialogRef.current?.(d) });
-
-  checkAndRequestNotificationPermissionRef.current = checkAndRequestNotificationPermission;
+  } = useAppPermissions({ setToast, lang, setConfirmDialog: (d) => optionsRef?.current?.setConfirmDialog?.(d) });
 
   const handleTabClick = async (tabName) => {
     if (tabName === 'reminders') {
@@ -128,8 +122,13 @@ function AppInner() {
     theme, setTheme, now
   } = useAppLocalState({ notes });
 
-  setShowReminderModalRef.current = setShowReminderModal;
-  setConfirmDialogRef.current = setConfirmDialog;
+  // Sync handlers to optionsRef so AppStateProvider / useNotes can call them
+  if (optionsRef?.current) {
+    optionsRef.current.setConfirmDialog = setConfirmDialog;
+    optionsRef.current.setShowReminderModal = setShowReminderModal;
+    optionsRef.current.checkAndRequestNotificationPermission = checkAndRequestNotificationPermission;
+    optionsRef.current.requestBiometricAuth = requestBiometricAuth;
+  }
 
   // 📱 Platform Body Class & Safe Area Insets
   const measuredNavBarHeightRef = useRef('48px');
@@ -267,6 +266,9 @@ function AppInner() {
   });
 
   deleteFromR2Ref.current = deleteFromR2;
+  if (optionsRef?.current) {
+    optionsRef.current.deleteFromR2 = (url) => deleteFromR2Ref.current?.(url);
+  }
 
   const getVisibleNotes = () => notes.filter(n => !n.deletedAt && !n.sharedFrom);
 
@@ -476,7 +478,7 @@ function App() {
 
   return (
     <AppStateProvider optionsRef={optionsRef}>
-      <AppInner />
+      <AppInner optionsRef={optionsRef} />
     </AppStateProvider>
   );
 }
