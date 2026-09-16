@@ -18,7 +18,7 @@ const TrashTab = ({
 }) => {
   const isLight = theme === 'light';
   const allDeletedNotes = (notes || []).filter(n => n && n.deletedAt);
-  
+
   const [selectedIds, setSelectedIds] = useState([]);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,12 +27,9 @@ const TrashTab = ({
   useEffect(() => {
     window.scrollTo(0, 0);
     const scrollContainer = document.querySelector('.app-content') || document.querySelector('.workspace-container');
-    if (scrollContainer) {
-      scrollContainer.scrollTop = 0;
-    }
+    if (scrollContainer) scrollContainer.scrollTop = 0;
   }, []);
 
-  // Filter notes by search query if any
   const deletedNotes = allDeletedNotes.filter(note => {
     if (!searchQuery.trim()) return true;
     const query = normalizeTurkish(searchQuery.trim());
@@ -48,9 +45,8 @@ const TrashTab = ({
         const next = prev.filter(id => id !== noteId);
         if (next.length === 0) setIsSelectMode(false);
         return next;
-      } else {
-        return [...prev, noteId];
       }
+      return [...prev, noteId];
     });
   };
 
@@ -59,13 +55,11 @@ const TrashTab = ({
     setSelectedIds(initialNoteId ? [initialNoteId] : []);
   };
 
-  // FIX: dedicated handler for header "Seç" button — enters select mode with clean empty selection
   const onEnterSelectMode = () => {
     setSelectedIds([]);
     setIsSelectMode(true);
   };
 
-  // FIX: handleSelectAll operates on the currently visible (filtered) list for consistency
   const handleSelectAll = () => {
     if (selectedIds.length === deletedNotes.length) {
       setSelectedIds([]);
@@ -95,12 +89,16 @@ const TrashTab = ({
     handleCancelSelection();
   };
 
-  // FIX: "Empty Trash" now always deletes ALL deleted notes (regardless of search filter)
-  // and is passed directly to the bulk delete function which shows a confirm dialog
   const onEmptyTrash = () => {
     const allIds = allDeletedNotes.map(n => n.id);
     if (allIds.length === 0) return;
     handleBulkPermanentDelete(allIds);
+  };
+
+  const onRestoreAll = () => {
+    const allIds = allDeletedNotes.map(n => n.id);
+    if (allIds.length === 0) return;
+    handleBulkRestoreNotes(allIds);
   };
 
   const onBack = () => {
@@ -111,18 +109,22 @@ const TrashTab = ({
     }
   };
 
+  const hasNotes = allDeletedNotes.length > 0;
+
   return (
-    <div 
-      className="animate-slide-up" 
-      style={{ 
-        position: 'relative', 
-        paddingBottom: isSelectMode 
-          ? 'calc(180px + env(safe-area-inset-bottom, 0px))' 
-          : 'calc(120px + env(safe-area-inset-bottom, 0px))' 
+    <div
+      className="animate-slide-up"
+      style={{
+        position: 'relative',
+        paddingBottom: isSelectMode
+          ? 'calc(180px + env(safe-area-inset-bottom, 0px))'
+          : hasNotes
+            ? 'calc(140px + env(safe-area-inset-bottom, 0px))'
+            : 'calc(100px + env(safe-area-inset-bottom, 0px))',
       }}
     >
       {/* Header Bar */}
-      <TrashHeaderBar 
+      <TrashHeaderBar
         deletedNotesCount={allDeletedNotes.length}
         isSelectMode={isSelectMode}
         setIsSelectMode={setIsSelectMode}
@@ -137,13 +139,13 @@ const TrashTab = ({
         t={t}
       />
 
-      {/* Search Bar in Trash (When there are deleted notes) */}
-      {allDeletedNotes.length > 0 && !isSelectMode && (
+      {/* Search Bar */}
+      {hasNotes && !isSelectMode && (
         <div style={{
           position: 'relative',
           marginBottom: '16px',
           display: 'flex',
-          alignItems: 'center'
+          alignItems: 'center',
         }}>
           <div style={{
             position: 'absolute',
@@ -151,33 +153,32 @@ const TrashTab = ({
             display: 'flex',
             alignItems: 'center',
             pointerEvents: 'none',
-            color: isLight ? '#94A3B8' : 'rgba(255, 255, 255, 0.4)'
+            color: isLight ? '#94A3B8' : 'rgba(255,255,255,0.4)',
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
           </div>
-
-          <input 
+          <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={lang === 'tr' ? 'Çöp kutusunda ara...' : 'Search in trash...'}
             style={{
               width: '100%',
-              padding: '11px 38px 11px 40px',
+              padding: '10px 36px 10px 38px',
               borderRadius: '14px',
-              border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.1)',
-              background: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.05)',
+              border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,0.1)',
+              background: isLight ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.05)',
               color: isLight ? '#0F172A' : '#FFFFFF',
-              fontSize: '0.88rem',
+              fontSize: '0.87rem',
               outline: 'none',
-              boxShadow: isLight ? '0 2px 8px rgba(0, 0, 0, 0.02)' : 'none',
-              transition: 'all 0.2s ease'
+              boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.03)' : 'none',
+              transition: 'all 0.2s ease',
+              boxSizing: 'border-box',
             }}
           />
-
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
@@ -188,13 +189,13 @@ const TrashTab = ({
                 height: '20px',
                 borderRadius: '50%',
                 border: 'none',
-                background: isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.2)',
+                background: isLight ? '#E2E8F0' : 'rgba(255,255,255,0.2)',
                 color: isLight ? '#64748B' : '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                fontSize: '11px'
+                fontSize: '11px',
               }}
             >
               ✕
@@ -203,76 +204,87 @@ const TrashTab = ({
         </div>
       )}
 
-      {/* Note List / Empty States */}
-      <div className="note-list">
-        {allDeletedNotes.length === 0 ? (
-          /* Empty State */
+      {/* Note Content */}
+      {allDeletedNotes.length === 0 ? (
+        /* Empty State */
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '70px 20px',
+          textAlign: 'center',
+        }}>
           <div style={{
+            width: '72px',
+            height: '72px',
+            borderRadius: '22px',
+            background: isLight ? '#F1F5F9' : 'rgba(255,255,255,0.06)',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '60px 20px',
-            textAlign: 'center'
+            marginBottom: '18px',
+            color: isLight ? '#94A3B8' : 'rgba(255,255,255,0.3)',
           }}>
-            <div style={{
-              width: '68px',
-              height: '68px',
-              borderRadius: '22px',
-              background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.06)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '16px',
-              color: isLight ? '#94A3B8' : 'rgba(255, 255, 255, 0.3)'
-            }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                <line x1="10" y1="11" x2="10" y2="17" />
-                <line x1="14" y1="11" x2="14" y2="17" />
-              </svg>
-            </div>
-            <h3 style={{ fontSize: '1.08rem', fontWeight: 800, margin: '0 0 6px 0', color: isLight ? '#1E293B' : '#F8FAFC' }}>
-              {t('trashEmptyMsg') || 'Çöp Kutusu Boş'}
-            </h3>
-            <p style={{ fontSize: '0.84rem', color: isLight ? '#64748B' : 'rgba(255, 255, 255, 0.5)', margin: 0, maxWidth: '270px', lineHeight: '1.45' }}>
-              {t('trashSubtitle') || 'Silinen notlarınız burada 30 gün boyunca güvenle saklanır.'}
-            </p>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <line x1="10" y1="11" x2="10" y2="17" />
+              <line x1="14" y1="11" x2="14" y2="17" />
+            </svg>
           </div>
-        ) : deletedNotes.length === 0 ? (
-          /* Search No Match State */
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '40px 20px',
-            textAlign: 'center'
+          <h3 style={{ fontSize: '1.08rem', fontWeight: 800, margin: '0 0 8px 0', color: isLight ? '#1E293B' : '#F8FAFC' }}>
+            {t('trashEmptyMsg') || 'Çöp Kutusu Boş'}
+          </h3>
+          <p style={{
+            fontSize: '0.84rem',
+            color: isLight ? '#64748B' : 'rgba(255,255,255,0.5)',
+            margin: 0,
+            maxWidth: '260px',
+            lineHeight: '1.5',
           }}>
-            <p style={{ fontSize: '0.9rem', color: isLight ? '#64748B' : 'rgba(255, 255, 255, 0.6)', margin: '0 0 12px 0' }}>
-              {lang === 'tr' ? `"${searchQuery}" ile eşleşen silinmiş not bulunamadı.` : `No deleted notes matching "${searchQuery}".`}
-            </p>
-            <button
-              onClick={() => setSearchQuery('')}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '12px',
-                border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.15)',
-                background: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.08)',
-                color: isLight ? '#0F172A' : '#FFFFFF',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              {lang === 'tr' ? 'Aramayı Temizle' : 'Clear Search'}
-            </button>
-          </div>
-        ) : (
-          /* Notes Grid / List */
-          deletedNotes.map(note => (
-            <TrashNoteCard 
+            {t('trashSubtitle') || 'Silinen notlarınız burada 30 gün boyunca güvenle saklanır.'}
+          </p>
+        </div>
+      ) : deletedNotes.length === 0 ? (
+        /* Search No Results */
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px 20px',
+          textAlign: 'center',
+        }}>
+          <p style={{ fontSize: '0.9rem', color: isLight ? '#64748B' : 'rgba(255,255,255,0.6)', margin: '0 0 12px 0' }}>
+            {lang === 'tr'
+              ? `"${searchQuery}" ile eşleşen not bulunamadı.`
+              : `No notes matching "${searchQuery}".`}
+          </p>
+          <button
+            onClick={() => setSearchQuery('')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '12px',
+              border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.15)',
+              background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.08)',
+              color: isLight ? '#0F172A' : '#FFFFFF',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {lang === 'tr' ? 'Aramayı Temizle' : 'Clear Search'}
+          </button>
+        </div>
+      ) : (
+        /* ─── 2-Column Masonry Grid ─── */
+        <div style={{
+          columns: 2,
+          columnGap: '10px',
+        }}>
+          {deletedNotes.map(note => (
+            <TrashNoteCard
               key={note.id}
               note={note}
               isSelected={selectedIds.includes(note.id)}
@@ -286,13 +298,13 @@ const TrashTab = ({
               lang={lang}
               t={t}
             />
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Note Preview Bottom Sheet Modal */}
+      {/* Note Preview Modal */}
       {previewNote && (
-        <TrashPreviewModal 
+        <TrashPreviewModal
           note={previewNote}
           onClose={() => setPreviewNote(null)}
           handleRestoreNote={handleRestoreNote}
@@ -304,7 +316,7 @@ const TrashTab = ({
         />
       )}
 
-      {/* Floating Action Bar (In Select Mode) */}
+      {/* ── Floating Action Bar — Select Mode ── */}
       {isSelectMode && (
         <div style={{
           position: 'fixed',
@@ -313,26 +325,26 @@ const TrashTab = ({
           transform: 'translateX(-50%)',
           width: 'calc(100% - 32px)',
           maxWidth: '430px',
-          background: isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(18, 24, 36, 0.92)',
+          background: isLight ? 'rgba(255,255,255,0.94)' : 'rgba(18,24,36,0.93)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          border: isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.12)',
+          border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.12)',
           borderRadius: '20px',
           padding: '12px 16px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          boxShadow: isLight ? '0 12px 36px rgba(0, 0, 0, 0.12)' : '0 14px 40px rgba(0, 0, 0, 0.65)',
+          boxShadow: isLight ? '0 12px 36px rgba(0,0,0,0.13)' : '0 14px 40px rgba(0,0,0,0.65)',
           zIndex: 999,
-          animation: 'slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+          animation: 'slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
             <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFFFFF' }}>
               {selectedIds.length} {lang === 'tr' ? 'Not Seçildi' : 'Selected'}
             </span>
             <span style={{ fontSize: '0.72rem', color: isLight ? '#64748B' : 'rgba(255,255,255,0.5)' }}>
-              {selectedIds.length === deletedNotes.length 
-                ? (lang === 'tr' ? 'Tümü seçildi' : 'All selected') 
+              {selectedIds.length === deletedNotes.length
+                ? (lang === 'tr' ? 'Tümü seçildi' : 'All selected')
                 : (lang === 'tr' ? `${deletedNotes.length - selectedIds.length} not kaldı` : `${deletedNotes.length - selectedIds.length} remaining`)}
             </span>
           </div>
@@ -354,8 +366,8 @@ const TrashTab = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: selectedIds.length > 0 ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none',
-                transition: 'all 0.15s ease'
+                boxShadow: selectedIds.length > 0 ? '0 4px 12px rgba(16,185,129,0.3)' : 'none',
+                transition: 'all 0.15s ease',
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -381,17 +393,95 @@ const TrashTab = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: selectedIds.length > 0 ? '0 4px 12px rgba(239, 68, 68, 0.3)' : 'none',
-                transition: 'all 0.15s ease'
+                boxShadow: selectedIds.length > 0 ? '0 4px 12px rgba(239,68,68,0.3)' : 'none',
+                transition: 'all 0.15s ease',
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
-              {lang === 'tr' ? 'Kalıcı Sil' : (t('deletePermanentlyBtn') || 'Delete')} ({selectedIds.length})
+              {lang === 'tr' ? 'Kalıcı Sil' : 'Delete'} ({selectedIds.length})
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ── Floating Action Bar — Normal Mode (always visible when notes exist) ── */}
+      {!isSelectMode && hasNotes && (
+        <div style={{
+          position: 'fixed',
+          bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'calc(100% - 32px)',
+          maxWidth: '430px',
+          background: isLight ? 'rgba(255,255,255,0.9)' : 'rgba(18,24,36,0.9)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: isLight ? '1px solid rgba(0,0,0,0.07)' : '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '20px',
+          padding: '10px 14px',
+          display: 'flex',
+          gap: '10px',
+          boxShadow: isLight ? '0 8px 28px rgba(0,0,0,0.1)' : '0 10px 32px rgba(0,0,0,0.55)',
+          zIndex: 998,
+        }}>
+          {/* Restore All */}
+          <button
+            onClick={onRestoreAll}
+            style={{
+              flex: 1,
+              padding: '10px 14px',
+              borderRadius: '14px',
+              border: isLight ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(16,185,129,0.2)',
+              background: isLight ? 'rgba(16,185,129,0.07)' : 'rgba(16,185,129,0.12)',
+              color: isLight ? '#047857' : '#34D399',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
+              touchAction: 'manipulation',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            {lang === 'tr' ? 'Tümünü Geri Yükle' : 'Restore All'}
+          </button>
+
+          {/* Empty Trash */}
+          <button
+            onClick={onEmptyTrash}
+            style={{
+              flex: 1,
+              padding: '10px 14px',
+              borderRadius: '14px',
+              border: isLight ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(239,68,68,0.18)',
+              background: isLight ? 'rgba(239,68,68,0.07)' : 'rgba(239,68,68,0.12)',
+              color: isLight ? '#DC2626' : '#FCA5A5',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
+              touchAction: 'manipulation',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+            {lang === 'tr' ? 'Çöpü Boşalt' : 'Empty Trash'}
+          </button>
         </div>
       )}
     </div>
