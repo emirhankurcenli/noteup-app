@@ -1,10 +1,9 @@
-﻿import React, { StrictMode, Component } from "react";
+import React, { StrictMode, Component } from "react";
 import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 import { supabase } from "@src/supabaseClient";
-import { LanguageProvider } from "@shared/context/LanguageContext";
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -160,9 +159,7 @@ class ErrorBoundary extends Component {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ErrorBoundary>
-      <LanguageProvider>
-        <App />
-      </LanguageProvider>
+      <App />
     </ErrorBoundary>
   </StrictMode>,
 );

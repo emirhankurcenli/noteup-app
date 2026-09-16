@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import LoginScreen from '@features/auth/components/LoginScreen';
 import ToastNotification from '@shared/components/ToastNotification';
 import { triggerHaptic } from '@shared/services/haptics';
-import useAppLogic from '@shared/hooks/useAppLogic';
+import { AppStateProvider, useAuthCtx, useNotesCtx, useRemindersCtx, useSharingCtx, useLanguageCtx } from '@shared/context/AppStateContext';
 import useAppPermissions from '@shared/hooks/useAppPermissions';
 import useEditorLifecycle from '@features/editor/hooks/useEditorLifecycle';
 import useAppLifecycleEvents from '@shared/hooks/useAppLifecycleEvents';
@@ -26,218 +26,121 @@ import detectPlatform from '@platform/detect';
 
 const AppSettings = registerPlugin('AppSettings');
 
-function App() {
-  const setConfirmDialogRef = useRef(null);
-  const setShowReminderModalRef = useRef(null);
-  const checkAndRequestNotificationPermissionRef = useRef(null);
-  const deleteFromR2Ref = useRef(null);
+// ─── Inner App (context'e erisebilir) ────────────────────────────────────────
+function AppInner() {
+  // --- Options ref bridge (AppStateProvider'a inject edildi) ---
+  const setConfirmDialogRef                         = useRef(null);
+  const setShowReminderModalRef                     = useRef(null);
+  const checkAndRequestNotificationPermissionRef    = useRef(null);
+  const deleteFromR2Ref                             = useRef(null);
+
+  // --- Context hook'lari ---
+  const { lang, setLang, t, formatReminderDate, getRemainingTimeText } = useLanguageCtx();
+  const {
+    user, isLoggingIn, myCode, setMyCode, profileName, setProfileName,
+    showAvatarPicker, setShowAvatarPicker, userPlan, toast, setToast,
+    getUserScopedKey, getScopedStorageItem,
+    handleLogin, handleLogout, handleSelectAvatar, handleUpdateProfileName,
+    syncDataFromSupabase, syncDeltaSharedNotes,
+  } = useAuthCtx();
 
   const {
-    lang,
-    setLang,
-    t,
-    formatReminderDate,
-    getRemainingTimeText,
-    notes,
-    setNotes,
-    reminders,
-    setReminders,
-    user,
-    setUser,
-    isLoggingIn,
-    setIsLoggingIn,
-    myCode,
-    setMyCode,
-    profileName,
-    setProfileName,
-    showAvatarPicker,
-    setShowAvatarPicker,
-    userPlan,
-    setUserPlan,
-    toast,
-    setToast,
-    getUserScopedKey,
-    getScopedStorageItem,
-    handleLogin,
-    handleLogout,
-    handleSelectAvatar,
-    handleUpdateProfileName,
-    syncDataFromSupabase,
-    syncDeltaSharedNotes,
-    // Sharing
-    partnerCodeInput,
-    setPartnerCodeInput,
-    friends,
-    setFriends,
-    friendRequests,
-    setFriendRequests,
-    selectedFriendCodes,
-    setSelectedFriendCodes,
-    pendingShareRequests,
-    setPendingShareRequests,
-    isSendingRequest,
-    handleSendFriendRequest,
-    handleAcceptFriendRequest,
-    handleRejectFriendRequest,
-    handleCancelFriendRequest,
-    handleDisconnect,
-    handleSendNudge,
-    handleSendShareInvitation,
-    handleAcceptShare,
-    handleRejectShare,
-    handleLeaveShare,
-    // Notes CRUD & Editor Undo/Redo
-    editingNote,
-    setEditingNote,
-    lastEditingNoteId,
-    setLastEditingNoteId,
-    activeFormatBlockId,
-    setActiveFormatBlockId,
-    showFormatToolbar,
-    setShowFormatToolbar,
-    editorUndoStack,
-    editorRedoStack,
-    persistNotes,
-    flushPersist,
-    saveNotes,
-    handleUndo,
-    handleRedo,
-    handleCreateNote,
-    handleUpdateNote,
-    handleMoveToTrash,
-    handleRestoreNote,
-    handlePermanentDelete,
-    handleBulkRestoreNotes,
-    handleBulkPermanentDelete,
+    notes, setNotes, editingNote, setEditingNote,
+    lastEditingNoteId, setLastEditingNoteId,
+    activeFormatBlockId, setActiveFormatBlockId,
+    showFormatToolbar, setShowFormatToolbar,
+    editorUndoStack, editorRedoStack,
+    persistNotes, flushPersist, saveNotes,
+    handleUndo, handleRedo,
+    handleCreateNote, handleUpdateNote,
+    handleMoveToTrash, handleRestoreNote,
+    handlePermanentDelete, handleBulkRestoreNotes, handleBulkPermanentDelete,
     enforceTrailingTextBlock,
-    // Reminders
-    reminderNoteId,
-    setReminderNoteId,
-    reminderTime,
-    setReminderTime,
-    reminderModes,
-    setReminderModes,
-    quickReminderTitle,
-    setQuickReminderTitle,
-    quickReminderTime,
-    setQuickReminderTime,
-    quickReminderModes,
-    setQuickReminderModes,
-    pendingWidgetAlarmCtx,
-    setPendingWidgetAlarmCtx,
-    saveReminders,
-    scheduleNotification,
-    syncDismissedAlarms,
+  } = useNotesCtx();
+
+  const {
+    reminders, setReminders,
+    reminderNoteId, setReminderNoteId,
+    reminderTime, setReminderTime,
+    reminderModes, setReminderModes,
+    quickReminderTitle, setQuickReminderTitle,
+    quickReminderTime, setQuickReminderTime,
+    quickReminderModes, setQuickReminderModes,
+    pendingWidgetAlarmCtx, setPendingWidgetAlarmCtx,
+    saveReminders, scheduleNotification, syncDismissedAlarms,
     handleCancelReminder,
     handleSetReminder: handleSetReminderRaw,
-    handleCancelWidgetAlarm,
-    handleCreateWidgetAlarm,
-    handleCreateQuickReminder: handleCreateQuickReminderRaw
-  } = useAppLogic({
-    setConfirmDialog: (dialog) => setConfirmDialogRef.current?.(dialog),
-    setShowReminderModal: (show) => setShowReminderModalRef.current?.(show),
-    checkAndRequestNotificationPermission: async () => await checkAndRequestNotificationPermissionRef.current?.(),
-    deleteFromR2: (url) => deleteFromR2Ref.current?.(url),
-    requestBiometricAuth: requestBiometricAuth,
-  });
-
-  // Encryption removed — Supabase RLS handles data isolation.
-  // Data is stored as plain JSON in localStorage and Supabase.
-
-
-
-
+    handleCancelWidgetAlarm, handleCreateWidgetAlarm,
+    handleCreateQuickReminder: handleCreateQuickReminderRaw,
+  } = useRemindersCtx();
 
   const {
-    permissionStates,
-    updatePermissionStates,
-    requestAllPermissionsAtStartup,
+    partnerCodeInput, setPartnerCodeInput,
+    friends, setFriends, friendRequests, setFriendRequests,
+    selectedFriendCodes, setSelectedFriendCodes,
+    pendingShareRequests, isSendingRequest,
+    handleSendFriendRequest, handleAcceptFriendRequest,
+    handleRejectFriendRequest, handleCancelFriendRequest,
+    handleDisconnect, handleSendNudge, handleSendShareInvitation,
+    handleAcceptShare, handleRejectShare, handleLeaveShare,
+  } = useSharingCtx();
+
+  // --- Permissions ---
+  const {
+    permissionStates, updatePermissionStates, requestAllPermissionsAtStartup,
     checkAndRequestNotificationPermission,
-    handleRequestMicPermission,
-    handleRequestStoragePermission,
-    handleRequestAudioPermission,
-    handleRequestLocationPermission,
-    checkAndRequestPermission,
-    showPermissionDialog,
-    openSystemSettings
-  } = useAppPermissions({ setToast, lang, setConfirmDialog: (dialog) => setConfirmDialogRef.current?.(dialog) });
+    handleRequestMicPermission, handleRequestStoragePermission,
+    handleRequestAudioPermission, handleRequestLocationPermission,
+    checkAndRequestPermission, showPermissionDialog, openSystemSettings
+  } = useAppPermissions({ setToast, lang, setConfirmDialog: (d) => setConfirmDialogRef.current?.(d) });
 
   checkAndRequestNotificationPermissionRef.current = checkAndRequestNotificationPermission;
-
-
 
   const handleTabClick = async (tabName) => {
     if (tabName === 'reminders') {
       const granted = await checkAndRequestNotificationPermission();
       if (!granted) return;
     }
-    if (tabName === 'profile') {
-      updatePermissionStates();
-    }
+    if (tabName === 'profile') updatePermissionStates();
     setActiveTab(tabName);
   };
 
-  // --- STATE ───
+  // --- Local UI State ---
   const {
-    activeTodoItemId,
-    setActiveTodoItemId,
-    activeTab,
-    setActiveTab,
-    tabHistoryRef,
-    profileSubTab,
-    setProfileSubTab,
+    activeTodoItemId, setActiveTodoItemId,
+    activeTab, setActiveTab, tabHistoryRef,
+    profileSubTab, setProfileSubTab,
     getStorageUsageBytes,
-    showReminderModal,
-    setShowReminderModal,
-    showShareModal,
-    setShowShareModal,
-    confirmDialog,
-    setConfirmDialog,
-    activeMenuNoteId,
-    setActiveMenuNoteId,
-    activeShareNoteId,
-    setActiveShareNoteId,
-    blockFormStates,
-    setBlockFormStates,
-    showEditorMenu,
-    setShowEditorMenu,
-    focusedBlockRef,
-    fileInputRef,
-    lightboxUrl,
-    setLightboxUrl,
-    previewFileModal,
-    setPreviewFileModal,
-    showQuickReminderForm,
-    setShowQuickReminderForm,
-    pendingOpenNoteId,
-    setPendingOpenNoteId,
-    showFeedbackModal,
-    setShowFeedbackModal,
-    nudgeTargetNote,
-    setNudgeTargetNote,
-    theme,
-    setTheme,
-    now
+    showReminderModal, setShowReminderModal,
+    showShareModal, setShowShareModal,
+    confirmDialog, setConfirmDialog,
+    activeMenuNoteId, setActiveMenuNoteId,
+    activeShareNoteId, setActiveShareNoteId,
+    blockFormStates, setBlockFormStates,
+    showEditorMenu, setShowEditorMenu,
+    focusedBlockRef, fileInputRef,
+    lightboxUrl, setLightboxUrl,
+    previewFileModal, setPreviewFileModal,
+    showQuickReminderForm, setShowQuickReminderForm,
+    pendingOpenNoteId, setPendingOpenNoteId,
+    showFeedbackModal, setShowFeedbackModal,
+    nudgeTargetNote, setNudgeTargetNote,
+    theme, setTheme, now
   } = useAppLocalState({ notes });
 
   setShowReminderModalRef.current = setShowReminderModal;
   setConfirmDialogRef.current = setConfirmDialog;
 
-  // 📱 Platform Body Class & Safe Area Insets Initialization
-  // Android'de AppSettings.getSafeAreaInsets() ile gerçek status bar ve navigation bar yükseklikleri CSS'e atanır.
+  // 📱 Platform Body Class & Safe Area Insets
   const measuredNavBarHeightRef = useRef('48px');
-
   useEffect(() => {
     const plt = detectPlatform();
     document.body.classList.remove('platform-android', 'platform-ios', 'platform-web');
     document.body.classList.add(`platform-${plt}`);
-
     if (plt === 'android') {
-      // Android varsayılan güvenli değerler (Samsung 3-tuş çubuğu için 48px, status bar için 32px)
       document.documentElement.style.setProperty('--status-bar-height', '32px');
       document.documentElement.style.setProperty('--nav-bar-height', '48px');
       measuredNavBarHeightRef.current = '48px';
-
       if (Capacitor.isNativePlatform()) {
         try {
           AppSettings.getSafeAreaInsets().then((insets) => {
@@ -252,13 +155,12 @@ function App() {
         } catch (_) {}
       }
     } else {
-      // Web ve iOS varsayılan değerleri (iOS env() kullanır)
       document.documentElement.style.setProperty('--status-bar-height', '0px');
       document.documentElement.style.setProperty('--nav-bar-height', '0px');
     }
   }, []);
 
-  // 🎨 Status Bar Style & Background Sync with App Theme (Edge-to-Edge with Safe Area Insets)
+  // 🎨 Status Bar theme sync
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     try {
@@ -271,212 +173,102 @@ function App() {
     } catch (e) {}
   }, [theme]);
 
-  // 🎹 Keyboard Hide/Show Window Scroll Lock & Dynamic Inset Adjustments
+  // 🎹 Keyboard listeners
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-
     const resetWindowScroll = () => {
       window.scrollTo(0, 0);
       document.body.scrollTop = 0;
       document.documentElement.scrollTop = 0;
     };
-
     const handleKeyboardWillShow = () => {
       document.body.classList.add('keyboard-open');
-      // Klavye açıldığında alt tuş çubuğu klavyenin altına saklandığı için nav-bar-height sıfırlanır
       document.documentElement.style.setProperty('--nav-bar-height', '0px');
     };
-
     const handleKeyboardWillHide = () => {
       document.body.classList.remove('keyboard-open');
-      // Klavye kapandığında gerçek nav-bar yüksekliği geri yüklenir
       document.documentElement.style.setProperty('--nav-bar-height', measuredNavBarHeightRef.current);
       resetWindowScroll();
     };
-
-    let showSub = null;
-    let hideSub = null;
-    let didHideSub = null;
-
+    let showSub = null, hideSub = null, didHideSub = null;
     try {
-      Keyboard.addListener('keyboardWillShow', handleKeyboardWillShow).then(sub => { showSub = sub; });
-      Keyboard.addListener('keyboardWillHide', handleKeyboardWillHide).then(sub => { hideSub = sub; });
-      Keyboard.addListener('keyboardDidHide', resetWindowScroll).then(sub => { didHideSub = sub; });
+      Keyboard.addListener('keyboardWillShow', handleKeyboardWillShow).then(s => { showSub = s; });
+      Keyboard.addListener('keyboardWillHide', handleKeyboardWillHide).then(s => { hideSub = s; });
+      Keyboard.addListener('keyboardDidHide', resetWindowScroll).then(s => { didHideSub = s; });
     } catch (e) {}
-
     return () => {
-      if (showSub && typeof showSub.remove === 'function') showSub.remove();
-      if (hideSub && typeof hideSub.remove === 'function') hideSub.remove();
-      if (didHideSub && typeof didHideSub.remove === 'function') didHideSub.remove();
+      if (showSub?.remove) showSub.remove();
+      if (hideSub?.remove) hideSub.remove();
+      if (didHideSub?.remove) didHideSub.remove();
     };
   }, []);
 
-
-
-  // --- LOAD INITIAL STATE ---
+  // --- Initial data load ---
   useInitialDataLoad({
-    setMyCode,
-    setProfileName,
-    setFriends,
-    setFriendRequests,
-    setNotes,
-    setReminders,
-    syncDismissedAlarms,
-    updatePermissionStates,
-    requestAllPermissionsAtStartup,
-    getScopedStorageItem
+    setMyCode, setProfileName, setFriends, setFriendRequests,
+    setNotes, setReminders, syncDismissedAlarms,
+    updatePermissionStates, requestAllPermissionsAtStartup, getScopedStorageItem
   });
 
-  // Auto-refresh permissions when opening Profile tab
   useEffect(() => {
-    if (activeTab === 'profile') {
-      updatePermissionStates();
-    }
+    if (activeTab === 'profile') updatePermissionStates();
   }, [activeTab]);
 
-  const {
-    openEditingNote,
-    cleanupEmptyNote,
-    handleCloseEditor
-  } = useEditorLifecycle({
-    notes,
-    setNotes,
-    reminders,
-    user,
-    editingNote,
-    setEditingNote,
-    lastEditingNoteId,
-    setLastEditingNoteId,
-    persistNotes,
-    flushPersist,
+  // --- Editor Lifecycle ---
+  const { openEditingNote, cleanupEmptyNote, handleCloseEditor } = useEditorLifecycle({
+    notes, setNotes, reminders, user, editingNote, setEditingNote,
+    lastEditingNoteId, setLastEditingNoteId, persistNotes, flushPersist,
     enforceTrailingTextBlock,
     deleteFromR2: (...args) => deleteFromR2Ref.current?.(...args)
   });
 
-  // --- CROSS-TAB SYNC & NOTIFICATION LISTENER ---
-  // Global event listeners hook
+  // --- Global Event Listeners ---
   useGlobalEventListeners({
-    notes,
-    setNotes,
-    setReminders,
-    myCode,
-    user,
-    toast,
-    setToast,
-    setEditingNote,
-    setShowReminderModal,
-    setShowEditorMenu,
-    setActiveMenuNoteId,
-    openEditingNote,
-    persistNotes,
+    notes, setNotes, setReminders, myCode, user, toast, setToast,
+    setEditingNote, setShowReminderModal, setShowEditorMenu, setActiveMenuNoteId,
+    openEditingNote, persistNotes,
   });
 
   useAppLifecycleEvents({
-    notes,
-    editingNote,
-    activeTab,
-    setActiveTab,
-    confirmDialog,
-    setConfirmDialog,
-    showEditorMenu,
-    setShowEditorMenu,
-    showReminderModal,
-    setShowReminderModal,
-    handleCloseEditor,
-    tabHistoryRef,
-    setPendingOpenNoteId,
-    updatePermissionStates,
-    syncDismissedAlarms,
-    setEditingNote,
-    syncDeltaSharedNotes,
-    user
+    notes, editingNote, activeTab, setActiveTab,
+    confirmDialog, setConfirmDialog, showReminderModal, setShowReminderModal,
+    handleCloseEditor, tabHistoryRef, setPendingOpenNoteId,
+    updatePermissionStates, syncDismissedAlarms, setEditingNote,
+    syncDeltaSharedNotes, user
   });
-
 
   const handleShareNoteImage = async (note) => {
     await shareNoteImage(note, setToast);
   };
 
+  // --- Editor Handlers ---
   const {
-    handleUpdateBlock,
-    currentAudioRef,
-    isRecording,
-    recordingSeconds,
-    activeAudioPlayingId,
-    setActiveAudioPlayingId,
-    activeAudioProgress,
-    setActiveAudioProgress,
-    deleteFromR2,
-    handleFileChange,
-    startRecording,
-    stopRecording,
-    cancelRecording,
-    handlePlayPauseAudio,
-    handleOpenFile,
-    handleDeleteBlock,
-    handleInsertWidget,
-    handleAddDebtItem,
-    handleDeleteDebtItem,
-    handleAddExpenseItem,
-    handleDeleteExpenseItem,
-    handleExpenseTitleChange,
-    handleDeleteBillBlock,
-    handlePayBill,
-    handleDeleteBillPaymentItem,
-    handleDeleteExamBlock,
-    handleTextareaKeyDown,
-    handleTodoTitleChange,
-    handleAddTodoItem,
-    handleToggleTodoItem,
-    handleDeleteTodoItem,
-    handleSetupSplit,
-    handleAddSplitExpense,
-    handleDeleteSplitExpense,
-    handleSetReminder,
-    handleCreateQuickReminder
+    handleUpdateBlock, currentAudioRef, isRecording, recordingSeconds,
+    activeAudioPlayingId, setActiveAudioPlayingId, activeAudioProgress,
+    setActiveAudioProgress, deleteFromR2, handleFileChange,
+    startRecording, stopRecording, cancelRecording, handlePlayPauseAudio,
+    handleOpenFile, handleDeleteBlock, handleInsertWidget,
+    handleAddDebtItem, handleDeleteDebtItem,
+    handleAddExpenseItem, handleDeleteExpenseItem, handleExpenseTitleChange,
+    handleDeleteBillBlock, handlePayBill, handleDeleteBillPaymentItem,
+    handleDeleteExamBlock, handleTextareaKeyDown,
+    handleTodoTitleChange, handleAddTodoItem, handleToggleTodoItem, handleDeleteTodoItem,
+    handleSetupSplit, handleAddSplitExpense, handleDeleteSplitExpense,
+    handleSetReminder, handleCreateQuickReminder,
   } = useAppEditorHandlers({
-    editingNote,
-    setEditingNote,
-    focusedBlockRef,
-    user,
-    userPlan,
-    lang,
-    getStorageUsageBytes,
-    handleUpdateNote,
-    checkAndRequestPermission,
-    setToast,
-    setConfirmDialog,
-    setLightboxUrl,
-    setPreviewFileModal,
-    notes,
-    setNotes,
-    persistNotes,
-    deleteFromR2Ref,
-    blockFormStates,
-    setBlockFormStates,
-    reminders,
-    setShowEditorMenu,
-    checkAndRequestNotificationPermission,
-    handleCancelReminder,
-    saveReminders,
-    scheduleNotification,
-    handleSetReminderRaw,
-    handleCreateQuickReminderRaw,
-    setShowQuickReminderForm,
-    setActiveTab,
-    t
+    editingNote, setEditingNote, focusedBlockRef, user, userPlan, lang,
+    getStorageUsageBytes, handleUpdateNote, checkAndRequestPermission,
+    setToast, setConfirmDialog, setLightboxUrl, setPreviewFileModal,
+    notes, setNotes, persistNotes, deleteFromR2Ref, blockFormStates, setBlockFormStates,
+    reminders, setShowEditorMenu, checkAndRequestNotificationPermission,
+    handleCancelReminder, saveReminders, scheduleNotification,
+    handleSetReminderRaw, handleCreateQuickReminderRaw,
+    setShowQuickReminderForm, setActiveTab, t
   });
 
-  // --- RENDERS & SCREENS ---
+  deleteFromR2Ref.current = deleteFromR2;
 
-  // Dynamic filter for active tab & selection (personal notes only in main tab)
-  const getVisibleNotes = () => {
-    return notes.filter(n => !n.deletedAt && !n.sharedFrom); // Exclude deleted and received shared notes
-  };
-
-  const getDeletedNotes = () => {
-    return notes.filter(n => n.deletedAt);
-  };
+  const getVisibleNotes = () => notes.filter(n => !n.deletedAt && !n.sharedFrom);
 
   if (!user) {
     return <LoginScreen isLoggingIn={isLoggingIn} handleLogin={handleLogin} />;
@@ -484,11 +276,8 @@ function App() {
 
   return (
     <div className="app-container" data-theme={theme}>
-
-      {/* Toast Notification */}
       <ToastNotification toast={toast} setToast={setToast} />
 
-      {/* App Workspace Container (Editor or Tabs) */}
       <AppWorkspaceContainer
         editingNote={editingNote}
         setEditingNote={setEditingNote}
@@ -621,7 +410,6 @@ function App() {
         handleCreateNote={handleCreateNote}
       />
 
-      {/* --- MODALS --- */}
       <AppModalsContainer
         showReminderModal={showReminderModal}
         setShowReminderModal={setShowReminderModal}
@@ -678,10 +466,18 @@ function App() {
         t={t}
         triggerHaptic={triggerHaptic}
       />
-
-
-
     </div>
+  );
+}
+
+// ─── Outer App: sadece AppStateProvider sarar ─────────────────────────────────
+function App() {
+  const optionsRef = useRef({});
+
+  return (
+    <AppStateProvider optionsRef={optionsRef}>
+      <AppInner />
+    </AppStateProvider>
   );
 }
 
