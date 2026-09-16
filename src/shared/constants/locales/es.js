@@ -1,4 +1,4 @@
-const es = {
+﻿const es = {
   confirmDeleteTitle: 'Confirmar eliminación',
   pinnedBadge: 'Fijada',
   alarmSetTitle: 'Alarma establecida',
@@ -326,6 +326,13 @@ const es = {
   noSharedWithMeSub: 'Cuando tus amigos compartan notas contigo, aparecerán aquí.',
   onlyOwnerCanShareNotice: 'Dado que esta nota se compartió contigo, solo el propietario original puede compartirla.',
   ownerBadge: 'Propietario',
+  noFriendsShareTitle: 'Sin amigos aún',
+  pendingApproval: 'Pendiente',
+  addShareBtn: 'Agregar',
+  noFriendsShareSub: 'Añade amigos desde tu perfil para compartir notas juntos.',
+  removeShareBtn: 'Quitar',
+  sharedBadge: 'Compartido',
+  newInvite: 'Nueva invitación',
 };
 
 export default es;

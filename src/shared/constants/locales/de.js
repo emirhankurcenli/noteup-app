@@ -1,4 +1,4 @@
-const de = {
+﻿const de = {
   confirmDeleteTitle: 'Löschen bestätigen',
   pinnedBadge: 'Angeheftet',
   alarmSetTitle: 'Erinnerung gestellt',
@@ -326,6 +326,13 @@ const de = {
   noSharedWithMeSub: 'Wenn Freunde Notizen mit Ihnen teilen, erscheinen diese hier.',
   onlyOwnerCanShareNotice: 'Da diese Notiz mit Ihnen geteilt wurde, kann nur der Eigentümer sie weiter teilen.',
   ownerBadge: 'Eigentümer',
+  noFriendsShareTitle: 'Noch keine Freunde',
+  pendingApproval: 'Ausstehend',
+  addShareBtn: 'Hinzufügen',
+  noFriendsShareSub: 'Füge Freunde über den Profilbereich hinzu, um Notizen gemeinsam zu teilen.',
+  removeShareBtn: 'Entfernen',
+  sharedBadge: 'Geteilt',
+  newInvite: 'Neue Einladung',
 };
 
 export default de;

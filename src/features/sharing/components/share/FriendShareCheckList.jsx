@@ -85,109 +85,119 @@ export const FriendShareCheckList = ({
                 ? isLight ? '1.5px solid rgba(59, 130, 246, 0.4)' : '1.5px solid rgba(59, 130, 246, 0.3)'
                 : isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)',
               transition: 'all 0.15s ease',
+              gap: '10px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {f.photo_url ? (
-                <img
-                  src={f.photo_url}
-                  alt={f.name}
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: isSelected ? '2px solid #3B82F6' : '1px solid rgba(255, 255, 255, 0.2)',
-                    flexShrink: 0,
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #6366F1, #3B82F6)',
-                    color: '#FFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: '0.9rem',
-                    flexShrink: 0,
-                  }}
-                >
-                  {(f.name || 'A').charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.88rem', color: isLight ? '#0F172A' : '#F8FAFC' }}>
-                    {f.name}
-                  </span>
-                  {isSelected && (
-                    isAcceptedCollab ? (
-                      <span
-                        style={{
-                          fontSize: '0.65rem',
-                          fontWeight: 800,
-                          padding: '2px 6px',
-                          borderRadius: '6px',
-                          background: 'rgba(16, 185, 129, 0.15)',
-                          color: '#10B981',
-                          border: '1px solid rgba(16, 185, 129, 0.3)',
-                        }}
-                      >
-                        ● {t ? cleanText(t('sharedBadge')) : (lang === 'tr' ? 'Ortak' : 'Shared')}
-                      </span>
-                    ) : isPendingCollab ? (
-                      <span
-                        style={{
-                          fontSize: '0.65rem',
-                          fontWeight: 800,
-                          padding: '2px 6px',
-                          borderRadius: '6px',
-                          background: 'rgba(245, 158, 11, 0.15)',
-                          color: '#F59E0B',
-                          border: '1px solid rgba(245, 158, 11, 0.3)',
-                        }}
-                      >
-                        ⏳ {t ? (cleanText(t('pendingApproval')) || 'Onay Bekliyor') : 'Onay Bekliyor'}
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          fontSize: '0.65rem',
-                          fontWeight: 800,
-                          padding: '2px 6px',
-                          borderRadius: '6px',
-                          background: 'rgba(59, 130, 246, 0.15)',
-                          color: '#3B82F6',
-                          border: '1px solid rgba(59, 130, 246, 0.3)',
-                        }}
-                      >
-                        + {t ? cleanText(t('newInvite')) : (lang === 'tr' ? 'Yeni Davet' : 'New Invite')}
-                      </span>
-                    )
-                  )}
-                </div>
-                <span style={{ fontSize: '0.72rem', color: isLight ? '#64748B' : '#94A3B8' }}>
-                  Kod: {f.code}
-                </span>
+            {/* Avatar */}
+            {f.photo_url ? (
+              <img
+                src={f.photo_url}
+                alt={f.name}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: isSelected ? '2px solid #3B82F6' : '1px solid rgba(255, 255, 255, 0.2)',
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #6366F1, #3B82F6)',
+                  color: '#FFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  flexShrink: 0,
+                }}
+              >
+                {(f.name || 'A').charAt(0).toUpperCase()}
               </div>
+            )}
+
+            {/* Name + badge + code — flex:1 to fill space */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
+                <span style={{
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  color: isLight ? '#0F172A' : '#F8FAFC',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {f.name}
+                </span>
+                {isSelected && (
+                  isAcceptedCollab ? (
+                    <span style={{
+                      fontSize: '0.6rem',
+                      fontWeight: 800,
+                      padding: '2px 7px',
+                      borderRadius: '20px',
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      color: '#10B981',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}>
+                      ● {t ? cleanText(t('sharedBadge')) : (lang === 'tr' ? 'Ortak' : 'Shared')}
+                    </span>
+                  ) : isPendingCollab ? (
+                    <span style={{
+                      fontSize: '0.6rem',
+                      fontWeight: 800,
+                      padding: '2px 7px',
+                      borderRadius: '20px',
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      color: '#F59E0B',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}>
+                      ⏳ {t ? (cleanText(t('pendingApproval')) || 'Onay Bekliyor') : 'Onay Bekliyor'}
+                    </span>
+                  ) : (
+                    <span style={{
+                      fontSize: '0.6rem',
+                      fontWeight: 800,
+                      padding: '2px 7px',
+                      borderRadius: '20px',
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      color: '#3B82F6',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}>
+                      + {t ? cleanText(t('newInvite')) : (lang === 'tr' ? 'Yeni Davet' : 'New Invite')}
+                    </span>
+                  )
+                )}
+              </div>
+              <span style={{ fontSize: '0.72rem', color: isLight ? '#64748B' : '#94A3B8' }}>
+                Kod: {f.code}
+              </span>
             </div>
 
+            {/* Action button */}
             <button
               onClick={() => handleFriendToggle(f.code)}
               style={{
-                padding: '6px 12px',
+                padding: '7px 14px',
                 borderRadius: '10px',
                 border: isSelected ? '1px solid rgba(239, 68, 68, 0.3)' : 'none',
                 background: isSelected
                   ? 'rgba(239, 68, 68, 0.1)'
                   : 'linear-gradient(135deg, #3B82F6, #2563EB)',
                 color: isSelected ? '#EF4444' : '#FFFFFF',
-                fontSize: '0.75rem',
+                fontSize: '0.78rem',
                 fontWeight: 800,
                 cursor: 'pointer',
                 display: 'flex',
@@ -195,11 +205,13 @@ export const FriendShareCheckList = ({
                 gap: '5px',
                 boxShadow: isSelected ? 'none' : '0 2px 8px rgba(59, 130, 246, 0.3)',
                 transition: 'all 0.2s ease',
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
               }}
             >
               {isSelected ? <TrashIcon /> : <PlusIcon />}
-              {isSelected 
-                ? (t ? cleanText(t('removeShareBtn')) : (lang === 'tr' ? 'Çıkar' : 'Remove')) 
+              {isSelected
+                ? (t ? cleanText(t('removeShareBtn')) : (lang === 'tr' ? 'Çıkar' : 'Remove'))
                 : (t ? cleanText(t('addShareBtn')) : (lang === 'tr' ? 'Ekle' : 'Add'))}
             </button>
           </div>

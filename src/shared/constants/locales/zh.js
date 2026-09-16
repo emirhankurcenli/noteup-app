@@ -1,4 +1,4 @@
-const zh = {
+﻿const zh = {
   confirmDeleteTitle: '确认删除',
   pinnedBadge: '已置顶',
   alarmSetTitle: '闹钟已设置',
@@ -326,6 +326,13 @@ const zh = {
   noSharedWithMeSub: '当朋友与您共享笔记时，它们会显示在此处。',
   onlyOwnerCanShareNotice: '由于此笔记是与您共享的，因此只有原始所有者才能与其他人共享。',
   ownerBadge: '所有者',
+  noFriendsShareTitle: '尚未添加好友',
+  pendingApproval: '等待确认',
+  addShareBtn: '添加',
+  noFriendsShareSub: '通过个人资料页的好友码添加好友以共享笔记。',
+  removeShareBtn: '移除',
+  sharedBadge: '已共享',
+  newInvite: '新邀请',
 };
 
 export default zh;

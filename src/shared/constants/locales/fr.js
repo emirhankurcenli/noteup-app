@@ -326,6 +326,13 @@ const fr = {
   noSharedWithMeSub: 'Lorsque vos amis partagent des notes avec vous, elles apparaîtront ici.',
   onlyOwnerCanShareNotice: 'Cette note ayant été partagée avec vous, seul le propriétaire peut la partager.',
   ownerBadge: 'Propriétaire',
+  noFriendsShareTitle: 'Aucun ami ajouté',
+  pendingApproval: 'En attente',
+  addShareBtn: 'Ajouter',
+  noFriendsShareSub: "Ajoutez des amis via votre code d'ami dans le profil pour partager des notes.",
+  removeShareBtn: 'Supprimer',
+  sharedBadge: 'Partagé',
+  newInvite: 'Nouvelle invitation',
 };
 
 export default fr;

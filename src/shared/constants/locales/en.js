@@ -1,4 +1,4 @@
-const en = {
+﻿const en = {
   confirmDeleteTitle: 'Confirm Deletion',
   pinnedBadge: 'Pinned',
   alarmSetTitle: 'Alarm Set',
@@ -324,6 +324,13 @@ const en = {
   noSharedWithMeSub: 'When your friends share notes with you, they will appear here.',
   onlyOwnerCanShareNotice: 'Since this note was shared with you, only the original owner can share it with others.',
   ownerBadge: 'Owner',
+  noFriendsShareTitle: 'No Friends Added Yet',
+  pendingApproval: 'Pending Approval',
+  addShareBtn: 'Add',
+  noFriendsShareSub: 'Add friends using your friend code on the profile page to share notes together.',
+  removeShareBtn: 'Remove',
+  sharedBadge: 'Shared',
+  newInvite: 'New Invite',
 };
 
 export default en;

@@ -1,4 +1,4 @@
-const ar = {
+﻿const ar = {
   confirmDeleteTitle: 'تأكيد الحذف',
   pinnedBadge: 'مثبت',
   alarmSetTitle: 'تم ضبط المنبه',
@@ -326,6 +326,13 @@ const ar = {
   noSharedWithMeSub: 'عندما يشارك أصدقاؤك الملاحظات معك، ستظهر هنا.',
   onlyOwnerCanShareNotice: 'نظراً لمشاركة هذه الملاحظة معك، يمكن للمالك الأصلي فقط مشاركتها مع الآخرين.',
   ownerBadge: 'المالك',
+  noFriendsShareTitle: 'لم تُضف أصدقاء بعد',
+  pendingApproval: 'في انتظار الموافقة',
+  addShareBtn: 'إضافة',
+  noFriendsShareSub: 'أضف أصدقاء باستخدام رمز الصديق لمشاركة الملاحظات معاً.',
+  removeShareBtn: 'إزالة',
+  sharedBadge: 'مشترك',
+  newInvite: 'دعوة جديدة',
 };
 
 export default ar;
