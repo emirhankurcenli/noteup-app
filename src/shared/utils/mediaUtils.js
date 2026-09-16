@@ -1,5 +1,6 @@
 export {
   formatBytes,
   dataURLtoBlob,
-  compressImage
+  compressImage,
+  convertHeicToJpegIfNecessary
 } from './media/imageCompression';

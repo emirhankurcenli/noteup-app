@@ -5,7 +5,8 @@ import { uploadToR2 as uploadToR2Fn, deleteFromR2 as deleteFromR2Fn } from '@sha
 import {
   formatBytes,
   compressImage,
-  dataURLtoBlob
+  dataURLtoBlob,
+  convertHeicToJpegIfNecessary
 } from '@shared/utils/mediaUtils';
 import { sanitizeFilename } from '@shared/utils/securityUtils';
 import { MAX_STORAGE_BYTES } from '@features/notes/hooks/useAppLocalState';
@@ -109,7 +110,26 @@ const useR2Storage = ({
             blockType = 'audio';
           }
 
-          const publicUrl = await uploadToR2(finalBlob, finalName);
+          let publicUrl = '';
+          try {
+            publicUrl = await uploadToR2(finalBlob, finalName);
+          } catch (upErr) {
+            console.warn("Cloud upload failed, evaluating fallback:", upErr);
+            if (file.type.startsWith('image/')) {
+              try {
+                const dataUrl = await new Promise((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => resolve(ev.target?.result);
+                  reader.onerror = reject;
+                  reader.readAsDataURL(finalBlob);
+                });
+                if (dataUrl) {
+                  publicUrl = dataUrl;
+                }
+              } catch (_) {}
+            }
+            if (!publicUrl) throw upErr;
+          }
 
           handleInsertWidget(blockType, {
             url: publicUrl,
@@ -128,7 +148,7 @@ const useR2Storage = ({
         } else {
           setToast({
             title: "✅ Yükleme Başarılı",
-            msg: `${uploadedCount} adet dosya bulut alanına başarıyla yüklendi.`
+            msg: `${uploadedCount} adet dosya başarıyla eklendi.`
           });
         }
 
@@ -136,7 +156,7 @@ const useR2Storage = ({
         console.error("File upload failed:", err);
         setToast({
           title: "❌ Yükleme Hatası",
-          msg: "Dosyalar yüklenirken bir sorun oluştu."
+          msg: err?.message || "Dosyalar yüklenirken bir sorun oluştu."
         });
       } finally {
         e.target.value = '';

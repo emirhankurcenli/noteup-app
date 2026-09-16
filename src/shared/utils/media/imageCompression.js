@@ -146,3 +146,55 @@ export const compressImage = (file, options = {}) => {
       });
   });
 };
+
+/**
+ * Converts Apple HEIC/HEIF files to standard JPEG using native createImageBitmap or canvas.
+ * For other image formats (JPG, PNG, WEBP), returns the original file untouched.
+ */
+export const convertHeicToJpegIfNecessary = async (file) => {
+  if (!file) return file;
+  const name = file.name || '';
+  const isHeic = name.toLowerCase().endsWith('.heic') ||
+                 name.toLowerCase().endsWith('.heif') ||
+                 file.type === 'image/heic' ||
+                 file.type === 'image/heif';
+
+  if (!isHeic) return file;
+
+  try {
+    if (typeof createImageBitmap === 'function') {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      let width = bitmap.width;
+      let height = bitmap.height;
+      const maxDim = 1200;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      if (typeof bitmap.close === 'function') bitmap.close();
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+      if (blob) {
+        const dotIdx = name.lastIndexOf('.');
+        const newName = (dotIdx !== -1 ? name.substring(0, dotIdx) : name) + '.jpg';
+        return new File([blob], newName, { type: 'image/jpeg' });
+      }
+    }
+  } catch (err) {
+    console.warn("HEIC image decode fallback to original file:", err);
+  }
+
+  return file;
+};
