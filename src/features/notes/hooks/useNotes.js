@@ -6,6 +6,9 @@ import useNoteUndoRedo from '@features/notes/hooks/useNoteUndoRedo';
 import { sanitizeNoteContent, sanitizeSingleLine } from '@shared/utils/securityUtils';
 import { mergeNoteBlocks, ensureBlockTimestamps, enforceTrailingTextBlock } from '@shared/utils/blockMergeUtils';
 import { cleanText } from '@shared/utils/textUtils';
+import { isR2MediaUrl } from '@shared/utils/mediaUtils';
+import { STORAGE_KEYS } from '@shared/utils/storageKeys';
+import useNotesPersistence from '@features/notes/hooks/useNotesPersistence';
 
 export default function useNotes({
   user,
@@ -29,33 +32,13 @@ export default function useNotes({
   const [activeFormatBlockId, setActiveFormatBlockId] = useState(null);
   const [showFormatToolbar, setShowFormatToolbar] = useState(false);
 
-  // --- DEBOUNCE REF (Supabase yazma sıklığını azaltmak için) ---
-  // handleUpdateNote her tuş vuruşunda çağrılır. Bu ref sayesinde
-  // Supabase'e yazma işlemi kullanıcı 1500ms duraklatana kadar ertelenir.
-  const persistDebounceRef = useRef(null);
-  // pendingNotesRef: debounce beklerken en son notlar burada tutulur (flush için)
-  const pendingNotesRef = useRef(null);
+  // --- PERSISTENCE (Delegated to Single-Responsibility Hook) ---
+  const { persistNotes, debouncedPersistNotes, flushPersist, saveNotes } = useNotesPersistence({
+    user,
+    getUserScopedKey,
+    setNotes
+  });
 
-  const debouncedPersistNotes = useCallback((updatedNotes) => {
-    pendingNotesRef.current = updatedNotes; // Her zaman en güncel listeyi sakla
-    if (persistDebounceRef.current) clearTimeout(persistDebounceRef.current);
-    persistDebounceRef.current = setTimeout(() => {
-      persistNotes(pendingNotesRef.current);
-      pendingNotesRef.current = null;
-    }, 1500);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // flushPersist: Editör kapanmadan önce bekleyen kaydı anında yap
-  const flushPersist = useCallback(() => {
-    if (persistDebounceRef.current) {
-      clearTimeout(persistDebounceRef.current);
-      persistDebounceRef.current = null;
-    }
-    if (pendingNotesRef.current) {
-      persistNotes(pendingNotesRef.current);
-      pendingNotesRef.current = null;
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Realtime Live Synchronization for Editing Note and Share Statuses (Block-Level Merging)
 
@@ -74,7 +57,7 @@ export default function useNotes({
           const updated = [...prevNotes];
           updated[index] = { ...updated[index], deletedAt: updatedNote.deletedAt };
           try {
-            const key = getUserScopedKey('s23_notes');
+            const key = getUserScopedKey(STORAGE_KEYS.NOTES);
             localStorage.setItem(key, JSON.stringify(updated));
           } catch (_) {}
           return updated;
@@ -121,7 +104,7 @@ export default function useNotes({
         };
 
         try {
-          const key = getUserScopedKey('s23_notes');
+          const key = getUserScopedKey(STORAGE_KEYS.NOTES);
           localStorage.setItem(key, JSON.stringify(updated));
         } catch (_) {}
 
@@ -137,7 +120,7 @@ export default function useNotes({
       setNotes((prevNotes) => {
         const filtered = prevNotes.filter((n) => n.id !== noteId);
         try {
-          const key = getUserScopedKey('s23_notes');
+          const key = getUserScopedKey(STORAGE_KEYS.NOTES);
           localStorage.setItem(key, JSON.stringify(filtered));
         } catch (_) {}
         return filtered;
@@ -274,7 +257,7 @@ export default function useNotes({
 
         if (changed) {
           try {
-            const key = getUserScopedKey('s23_notes');
+            const key = getUserScopedKey(STORAGE_KEYS.NOTES);
             localStorage.setItem(key, JSON.stringify(updated));
           } catch (_) {}
           return updated;
@@ -321,7 +304,7 @@ export default function useNotes({
     setNotes(prevNotes => {
       const remaining = prevNotes.filter(n => !expiredIds.includes(n.id));
       try {
-        const key = getUserScopedKey('s23_notes');
+        const key = getUserScopedKey(STORAGE_KEYS.NOTES);
         localStorage.setItem(key, JSON.stringify(remaining));
       } catch (_) {}
       return remaining;
@@ -341,82 +324,7 @@ export default function useNotes({
 
   // --- HELPERS ---
 
-  // --- PERSISTENCE ---
-  const persistNotes = async (updatedNotes) => {
-    try {
-      const key = getUserScopedKey('s23_notes');
-      const cleanNotes = updatedNotes.map(n => ({
-        ...n,
-        blocks: (n.blocks || []).map(b => {
-          if (!b) return b;
-          const { localUrl, base64, ...cleanBlock } = b;
-          return cleanBlock;
-        })
-      }));
 
-      try {
-        localStorage.setItem(key, JSON.stringify(cleanNotes));
-      } catch (lsErr) {
-        console.warn("LocalStorage quota exceeded or unavailable:", lsErr);
-      }
-
-      if (user && user.uid) {
-        // 1. Separate owned notes from received shared notes
-        const ownedNotes = cleanNotes.filter(n => !n.sharedFrom);
-        const receivedNotes = cleanNotes.filter(n => Boolean(n.sharedFrom));
-
-        // 2. Upsert owned notes to Supabase notes table (Single Source of Truth)
-        if (ownedNotes.length > 0) {
-          const notesToUpsert = ownedNotes.map(n => ({
-            id: n.id,
-            user_id: user.uid,
-            title: n.title || '',
-            blocks: ensureBlockTimestamps(n.blocks || []),
-            is_shared: n.isShared || false,
-            is_locked: n.isLocked || false,
-            is_pinned: Boolean(n.isPinned),
-            deleted_at: n.deletedAt ? Number(n.deletedAt) : null,
-            updated_at: n.updatedAt ? new Date(n.updatedAt).toISOString() : new Date().toISOString()
-          }));
-
-          let { error } = await supabase
-            .from('notes')
-            .upsert(notesToUpsert);
-
-          if (error && error.message && error.message.toLowerCase().includes('is_pinned')) {
-            const fallbackToUpsert = notesToUpsert.map(({ is_pinned, ...rest }) => rest);
-            const res = await supabase.from('notes').upsert(fallbackToUpsert);
-            error = res.error;
-          }
-
-          if (error) console.error("Error upserting notes to Supabase:", error);
-        }
-
-        // 3. For received shared notes, update title & blocks on notes table (Single Source of Truth)
-        for (const rn of receivedNotes) {
-          try {
-            await supabase
-              .from('notes')
-              .update({
-                title: rn.title || '',
-                blocks: ensureBlockTimestamps(rn.blocks || []),
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', rn.id);
-          } catch (updateErr) {
-            console.warn("Shared note remote update error:", updateErr);
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Notes persistence error:", err);
-    }
-  };
-
-  const saveNotes = async (updatedNotes) => {
-    setNotes(updatedNotes);
-    await persistNotes(updatedNotes);
-  };
 
   // --- SUB-HOOKS ---
   const undoRedo = useNoteUndoRedo({
@@ -626,7 +534,7 @@ export default function useNotes({
         if (noteReminders.length > 0) {
           const updatedReminders = reminders.filter(r => r.noteId !== noteId);
           setReminders(updatedReminders);
-          const remindersKey = getUserScopedKey('s23_reminders');
+          const remindersKey = getUserScopedKey(STORAGE_KEYS.REMINDERS);
           localStorage.setItem(remindersKey, JSON.stringify(updatedReminders));
           if (user && user.uid) {
             try {
@@ -712,7 +620,7 @@ export default function useNotes({
           const urls = new Set();
           const addIfUrl = (val) => {
             if (typeof val === 'string' && val.trim().length > 0) {
-              if (val.includes('workers.dev') || val.includes('/users/') || val.startsWith('http://') || val.startsWith('https://')) {
+              if (isR2MediaUrl(val)) {
                 urls.add(val.trim());
               }
             }
@@ -780,13 +688,13 @@ export default function useNotes({
         const remainingReminders = reminders.filter(r => !allDeletedIds.includes(r.noteId));
         if (remainingReminders.length !== reminders.length) {
           setReminders(remainingReminders);
-          const remindersKey = getUserScopedKey('s23_reminders');
+          const remindersKey = getUserScopedKey(STORAGE_KEYS.REMINDERS);
           localStorage.setItem(remindersKey, JSON.stringify(remainingReminders));
         }
 
         setNotes(prevNotes => {
           const updatedNotes = prevNotes.filter(n => !allDeletedIds.includes(n.id));
-          const key = getUserScopedKey('s23_notes');
+          const key = getUserScopedKey(STORAGE_KEYS.NOTES);
           localStorage.setItem(key, JSON.stringify(updatedNotes));
           return updatedNotes;
         });

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import { DEFAULT_AVATARS } from '@shared/constants/avatars';
 import { supabase } from '@src/supabaseClient';
@@ -6,8 +6,8 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import useSupabaseSync from '@shared/hooks/useSupabaseSync';
-import useUserProfile from '@features/auth/hooks/useUserProfile';
 import { sanitizeSingleLine } from '@shared/utils/securityUtils';
+
 
 const isMockMode = false;
 
@@ -86,6 +86,7 @@ export default function useAuth() {
       }
 
       const userData = {
+        id: u.id,
         uid: u.id,
         name: nameCandidate,
         email: u.email || '',
@@ -99,8 +100,8 @@ export default function useAuth() {
 
       // Load user-scoped local cache immediately for 0ms UI latency
       try {
-        const storedN = sync.getScopedStorageItem('s23_notes', u.id);
-        const storedR = sync.getScopedStorageItem('s23_reminders', u.id);
+        const storedN = sync.getScopedStorageItem(STORAGE_KEYS.NOTES, u.id);
+        const storedR = sync.getScopedStorageItem(STORAGE_KEYS.REMINDERS, u.id);
         setNotes(storedN ? JSON.parse(storedN) : []);
         setReminders(storedR ? JSON.parse(storedR) : []);
       } catch (e) {
@@ -173,8 +174,8 @@ export default function useAuth() {
 
       // Load guest cache if present
       try {
-        const storedN = sync.getScopedStorageItem('s23_notes', 'guest');
-        const storedR = sync.getScopedStorageItem('s23_reminders', 'guest');
+        const storedN = sync.getScopedStorageItem(STORAGE_KEYS.NOTES, 'guest');
+        const storedR = sync.getScopedStorageItem(STORAGE_KEYS.REMINDERS, 'guest');
         setNotes(storedN ? JSON.parse(storedN) : []);
         setReminders(storedR ? JSON.parse(storedR) : []);
       } catch (e) {
@@ -323,14 +324,16 @@ export default function useAuth() {
     if (isMockMode) {
       setUser(null);
       localStorage.removeItem(STORAGE_KEYS.USER);
-      localStorage.removeItem('s23_notes');
+      localStorage.removeItem(STORAGE_KEYS.NOTES);
+      localStorage.removeItem(STORAGE_KEYS.REMINDERS);
       setToast({ title: "🚪 Oturum Kapatıldı", msg: "Simüle oturum sonlandırıldı." });
     } else {
       try {
         await supabase.auth.signOut();
         setUser(null);
         localStorage.removeItem(STORAGE_KEYS.USER);
-        localStorage.removeItem('s23_notes');
+        localStorage.removeItem(STORAGE_KEYS.NOTES);
+        localStorage.removeItem(STORAGE_KEYS.REMINDERS);
         setToast({ title: "🚪 Oturum Kapatıldı", msg: "Başarıyla çıkış yapıldı." });
       } catch (error) {
         console.error("Çıkış hatası:", error);

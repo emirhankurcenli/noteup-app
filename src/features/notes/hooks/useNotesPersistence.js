@@ -1,4 +1,4 @@
-﻿/**
+/**
  * useNotesPersistence — Single Responsibility: only handles saving/syncing notes.
  *
  * Extracted from useNotes.js (SRP violation fix).
@@ -9,7 +9,7 @@ import { supabase } from '@src/supabaseClient';
 import { ensureBlockTimestamps } from '@shared/utils/blockMergeUtils';
 import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 
-export default function useNotesPersistence({ user, getUserScopedKey }) {
+export default function useNotesPersistence({ user, getUserScopedKey, setNotes }) {
   const persistDebounceRef = useRef(null);
   const pendingNotesRef = useRef(null);
 
@@ -99,10 +99,14 @@ export default function useNotesPersistence({ user, getUserScopedKey }) {
     }
   }, [persistNotes]);
 
-  const saveNotes = useCallback(async (setNotes, updatedNotes) => {
-    setNotes(updatedNotes);
-    await persistNotes(updatedNotes);
-  }, [persistNotes]);
+  const saveNotes = useCallback(async (arg1, arg2) => {
+    const targetNotes = arg2 !== undefined ? arg2 : arg1;
+    const targetSetNotes = arg2 !== undefined ? arg1 : setNotes;
+    if (typeof targetSetNotes === 'function') {
+      targetSetNotes(targetNotes);
+    }
+    await persistNotes(targetNotes);
+  }, [persistNotes, setNotes]);
 
   return { persistNotes, debouncedPersistNotes, flushPersist, saveNotes };
 }

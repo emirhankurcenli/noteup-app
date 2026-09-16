@@ -1,7 +1,8 @@
-﻿import { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { supabase } from '@src/supabaseClient';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { scheduleLocalNotification, cancelLocalNotification } from '@shared/services/notificationService';
+import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 
 const useReminderService = ({
   user,
@@ -17,7 +18,7 @@ const useReminderService = ({
 
   const saveReminders = async (updatedReminders) => {
     setReminders(updatedReminders);
-    const key = getUserScopedKey('s23_reminders');
+    const key = getUserScopedKey(STORAGE_KEYS.REMINDERS);
     localStorage.setItem(key, JSON.stringify(updatedReminders));
 
     if (user && user.uid) {
@@ -109,7 +110,7 @@ const useReminderService = ({
       }
       if (changed) {
         setReminders(updated);
-        const remindersKey = getUserScopedKey('s23_reminders');
+        const remindersKey = getUserScopedKey(STORAGE_KEYS.REMINDERS);
         localStorage.setItem(remindersKey, JSON.stringify(updated));
       }
     } catch (e) {
@@ -144,7 +145,7 @@ const useReminderService = ({
 
     const updated = reminders.filter(r => r.id !== reminder.id && r.id !== preId);
     setReminders(updated);
-    const key = getUserScopedKey('s23_reminders');
+    const key = getUserScopedKey(STORAGE_KEYS.REMINDERS);
     localStorage.setItem(key, JSON.stringify(updated));
 
     if (user && user.uid) {

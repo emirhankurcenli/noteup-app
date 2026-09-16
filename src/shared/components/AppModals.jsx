@@ -8,20 +8,68 @@ import WidgetAlarmModal from '@shared/components/WidgetAlarmModal';
 import ReminderModal from '@features/reminders/modals/ReminderModal';
 import SelectFriendsShareModal from '@features/sharing/modals/SelectFriendsShareModal';
 import FeedbackModal from '@features/settings/modals/FeedbackModal';
+import { DEFAULT_AVATARS } from '@shared/constants/avatars';
+
+import {
+  useLanguageCtx,
+  useAuthCtx,
+  useNotesCtx,
+  useRemindersCtx,
+  useSharingCtx
+} from '@shared/context/AppStateContext';
 
 const AppModals = ({
-  notes,
-  showReminderModal, setShowReminderModal, reminderTime, setReminderTime, reminderModes, setReminderModes, handleSetReminder,
-  activeShareNoteId, setActiveShareNoteId, friends, selectedFriendCodes, setSelectedFriendCodes, handleSendShareInvitation,
+  showReminderModal, setShowReminderModal,
+  activeShareNoteId, setActiveShareNoteId,
   lightboxUrl, setLightboxUrl,
   previewFileModal, setPreviewFileModal,
-  showShareModal, setShowShareModal, editingNote, handleShareNoteImage,
+  showShareModal, setShowShareModal, handleShareNoteImage,
   confirmDialog, setConfirmDialog,
-  showAvatarPicker, setShowAvatarPicker, user, setToast, handleSelectAvatar, DEFAULT_AVATARS, checkAndRequestNotificationPermission,
-  pendingWidgetAlarmCtx, handleCancelWidgetAlarm, quickReminderTitle, setQuickReminderTitle, quickReminderTime, setQuickReminderTime, quickReminderModes, setQuickReminderModes, handleCreateWidgetAlarm,
-  showFeedbackModal, setShowFeedbackModal, myCode, profileName,
-  theme, lang, t, triggerHaptic
+  showFeedbackModal, setShowFeedbackModal,
+  checkAndRequestNotificationPermission,
+  theme = 'dark',
+  triggerHaptic
 }) => {
+  const langCtx = useLanguageCtx() || {};
+  const authCtx = useAuthCtx() || {};
+  const notesCtx = useNotesCtx() || {};
+  const remindersCtx = useRemindersCtx() || {};
+  const sharingCtx = useSharingCtx() || {};
+
+  const lang = langCtx.lang || 'tr';
+  const t = langCtx.t || ((k) => k);
+
+  const user = authCtx.user;
+  const setToast = authCtx.setToast;
+  const myCode = authCtx.myCode;
+  const profileName = authCtx.profileName;
+  const showAvatarPicker = authCtx.showAvatarPicker;
+  const setShowAvatarPicker = authCtx.setShowAvatarPicker;
+  const handleSelectAvatar = authCtx.handleSelectAvatar;
+
+  const notes = notesCtx.notes;
+  const editingNote = notesCtx.editingNote;
+
+  const reminderTime = remindersCtx.reminderTime;
+  const setReminderTime = remindersCtx.setReminderTime;
+  const reminderModes = remindersCtx.reminderModes;
+  const setReminderModes = remindersCtx.setReminderModes;
+  const handleSetReminder = remindersCtx.handleSetReminder;
+  const pendingWidgetAlarmCtx = remindersCtx.pendingWidgetAlarmCtx;
+  const handleCancelWidgetAlarm = remindersCtx.handleCancelWidgetAlarm;
+  const quickReminderTitle = remindersCtx.quickReminderTitle;
+  const setQuickReminderTitle = remindersCtx.setQuickReminderTitle;
+  const quickReminderTime = remindersCtx.quickReminderTime;
+  const setQuickReminderTime = remindersCtx.setQuickReminderTime;
+  const quickReminderModes = remindersCtx.quickReminderModes;
+  const setQuickReminderModes = remindersCtx.setQuickReminderModes;
+  const handleCreateWidgetAlarm = remindersCtx.handleCreateWidgetAlarm;
+
+  const friends = sharingCtx.friends;
+  const selectedFriendCodes = sharingCtx.selectedFriendCodes;
+  const setSelectedFriendCodes = sharingCtx.setSelectedFriendCodes;
+  const handleSendShareInvitation = sharingCtx.handleSendShareInvitation;
+
   return (
     <>
       {/* 2. Add Reminder Modal */}

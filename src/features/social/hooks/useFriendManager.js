@@ -4,8 +4,7 @@ import { supabase } from '@src/supabaseClient';
 import { triggerHaptic } from '@shared/services/haptics';
 import { playChime } from '@shared/services/soundService';
 import { useFriendRealtimeChannel } from '@features/social/hooks/useFriendRealtimeChannel';
-import { useFriendRequestActions } from '@features/social/hooks/useFriendRequestActions';
-import { useFriendListActions } from '@features/social/hooks/useFriendListActions';
+
 
 const useFriendManager = ({
   myCode,

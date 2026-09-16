@@ -12,7 +12,7 @@ import useAppEditorHandlers from '@features/editor/hooks/useAppEditorHandlers';
 import useAppLocalState from '@features/notes/hooks/useAppLocalState';
 import useGlobalEventListeners from '@shared/hooks/useGlobalEventListeners';
 import AppWorkspaceContainer from '@layout/AppWorkspaceContainer';
-import AppModalsContainer from '@shared/components/AppModalsContainer';
+import AppModals from '@shared/components/AppModals';
 import { DEFAULT_AVATARS } from '@shared/constants/avatars';
 import { requestBiometricAuth } from '@shared/services/biometricService';
 import { shareNoteImage } from '@features/sharing/utils/shareUtils';
@@ -414,62 +414,27 @@ function AppInner({ optionsRef }) {
         handleCreateNote={handleCreateNote}
       />
 
-      <AppModalsContainer
+      <AppModals
         showReminderModal={showReminderModal}
         setShowReminderModal={setShowReminderModal}
-        reminderTime={reminderTime}
-        setReminderTime={setReminderTime}
-        reminderModes={reminderModes}
-        setReminderModes={setReminderModes}
-        handleSetReminder={handleSetReminder}
-        setReminderNoteId={setReminderNoteId}
         activeShareNoteId={activeShareNoteId}
         setActiveShareNoteId={setActiveShareNoteId}
-        friends={friends}
-        selectedFriendCodes={selectedFriendCodes}
-        setSelectedFriendCodes={setSelectedFriendCodes}
-        handleSendShareInvitation={handleSendShareInvitation}
-        handleAcceptShare={handleAcceptShare}
-        handleRejectShare={handleRejectShare}
         lightboxUrl={lightboxUrl}
         setLightboxUrl={setLightboxUrl}
         previewFileModal={previewFileModal}
         setPreviewFileModal={setPreviewFileModal}
         showShareModal={showShareModal}
         setShowShareModal={setShowShareModal}
-        editingNote={editingNote}
         handleShareNoteImage={handleShareNoteImage}
         confirmDialog={confirmDialog}
         setConfirmDialog={setConfirmDialog}
-        showAvatarPicker={showAvatarPicker}
-        setShowAvatarPicker={setShowAvatarPicker}
-        user={user}
-        setToast={setToast}
-        handleSelectAvatar={handleSelectAvatar}
-        DEFAULT_AVATARS={DEFAULT_AVATARS}
-        checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
-        pendingWidgetAlarmCtx={pendingWidgetAlarmCtx}
-        handleCancelWidgetAlarm={handleCancelWidgetAlarm}
-        quickReminderTitle={quickReminderTitle}
-        setQuickReminderTitle={setQuickReminderTitle}
-        quickReminderTime={quickReminderTime}
-        setQuickReminderTime={setQuickReminderTime}
-        quickReminderModes={quickReminderModes}
-        setQuickReminderModes={setQuickReminderModes}
-        handleCreateWidgetAlarm={handleCreateWidgetAlarm}
-        notes={notes}
         showFeedbackModal={showFeedbackModal}
         setShowFeedbackModal={setShowFeedbackModal}
-        nudgeTargetNote={nudgeTargetNote}
-        setNudgeTargetNote={setNudgeTargetNote}
-        handleSendNudge={handleSendNudge}
-        myCode={myCode}
-        profileName={profileName}
+        checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
         theme={theme}
-        lang={lang}
-        t={t}
         triggerHaptic={triggerHaptic}
       />
+
     </div>
   );
 }

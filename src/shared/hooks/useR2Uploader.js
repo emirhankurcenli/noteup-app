@@ -88,6 +88,14 @@ export const uploadToR2 = async (fileBlob, originalName, user) => {
  */
 export const deleteFromR2 = async (fileUrl) => {
   if (!fileUrl || typeof fileUrl !== 'string') return false;
+  // Sadece R2 kaynaklı medyalar için silme işlemi yap (harici web linklerini koru)
+  const isR2 = fileUrl.includes('workers.dev') ||
+               fileUrl.includes('r2.dev') ||
+               fileUrl.includes('r2.cloudflarestorage.com') ||
+               fileUrl.includes('/r2-proxy') ||
+               (!fileUrl.startsWith('http://') && !fileUrl.startsWith('https://') && !fileUrl.startsWith('data:'));
+  if (!isR2) return false;
+
   try {
     let filename = '';
     if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
