@@ -62,17 +62,22 @@ export const FriendShareCheckList = ({
     );
   }
 
+  const isCodeEqual = (a, b) => String(a || '').trim().toUpperCase() === String(b || '').trim().toUpperCase();
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '240px', overflowY: 'auto', paddingRight: '2px' }}>
       {friends.map((f) => {
-        const isSelected = selectedFriendCodes.includes(f.code);
-        const isAcceptedCollab = (targetNote?.sharedWith || []).includes(f.code);
-        const isPendingCollab = (targetNote?.pendingShares || []).includes(f.code);
+        const friendCode = f.code || f.friend_code || f.friendCode || f.id;
+        const isSelected = (selectedFriendCodes || []).some(c => isCodeEqual(c, friendCode));
+        const isAcceptedCollab = (targetNote?.sharedWith || []).some(c => isCodeEqual(c, friendCode));
+        const isPendingCollab = (targetNote?.pendingShares || []).some(c => isCodeEqual(c, friendCode));
 
         return (
           <div
-            key={f.code}
+            key={friendCode || f.name}
+            onClick={() => handleFriendToggle(friendCode)}
             style={{
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -86,6 +91,8 @@ export const FriendShareCheckList = ({
                 : isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)',
               transition: 'all 0.15s ease',
               gap: '10px',
+              userSelect: 'none',
+              touchAction: 'manipulation',
             }}
           >
             {/* Avatar */}
@@ -100,6 +107,7 @@ export const FriendShareCheckList = ({
                   objectFit: 'cover',
                   border: isSelected ? '2px solid #3B82F6' : '1px solid rgba(255, 255, 255, 0.2)',
                   flexShrink: 0,
+                  pointerEvents: 'none',
                 }}
               />
             ) : (
@@ -116,6 +124,7 @@ export const FriendShareCheckList = ({
                   fontWeight: 800,
                   fontSize: '1rem',
                   flexShrink: 0,
+                  pointerEvents: 'none',
                 }}
               >
                 {(f.name || 'A').charAt(0).toUpperCase()}
@@ -123,7 +132,7 @@ export const FriendShareCheckList = ({
             )}
 
             {/* Name + badge + code — flex:1 to fill space */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1, minWidth: 0, pointerEvents: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
                 <span style={{
                   fontWeight: 700,
@@ -182,13 +191,17 @@ export const FriendShareCheckList = ({
                 )}
               </div>
               <span style={{ fontSize: '0.72rem', color: isLight ? '#64748B' : '#94A3B8' }}>
-                Kod: {f.code}
+                Kod: {friendCode}
               </span>
             </div>
 
             {/* Action button */}
             <button
-              onClick={() => handleFriendToggle(f.code)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleFriendToggle(friendCode);
+              }}
               style={{
                 padding: '7px 14px',
                 borderRadius: '10px',
@@ -207,6 +220,7 @@ export const FriendShareCheckList = ({
                 transition: 'all 0.2s ease',
                 flexShrink: 0,
                 whiteSpace: 'nowrap',
+                touchAction: 'manipulation',
               }}
             >
               {isSelected ? <TrashIcon /> : <PlusIcon />}

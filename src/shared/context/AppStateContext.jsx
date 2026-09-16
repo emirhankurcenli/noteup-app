@@ -121,7 +121,16 @@ export const AppStateProvider = ({ children, optionsRef }) => {
     handleCreateWidgetAlarm: logic.handleCreateWidgetAlarm,
     handleCreateQuickReminder: logic.handleCreateQuickReminder,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [logic.reminders, logic.reminderNoteId, logic.pendingWidgetAlarmCtx]);
+  }), [
+    logic.reminders,
+    logic.reminderNoteId,
+    logic.reminderTime,
+    logic.reminderModes,
+    logic.quickReminderTitle,
+    logic.quickReminderTime,
+    logic.quickReminderModes,
+    logic.pendingWidgetAlarmCtx
+  ]);
 
   const sharingValue = React.useMemo(() => ({
     partnerCodeInput: logic.partnerCodeInput,
@@ -146,7 +155,14 @@ export const AppStateProvider = ({ children, optionsRef }) => {
     handleRejectShare: logic.handleRejectShare,
     handleLeaveShare: logic.handleLeaveShare,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [logic.friends, logic.friendRequests, logic.pendingShareRequests, logic.isSendingRequest]);
+  }), [
+    logic.partnerCodeInput,
+    logic.friends,
+    logic.friendRequests,
+    logic.selectedFriendCodes,
+    logic.pendingShareRequests,
+    logic.isSendingRequest
+  ]);
 
   return (
     <LanguageCtx.Provider value={langValue}>

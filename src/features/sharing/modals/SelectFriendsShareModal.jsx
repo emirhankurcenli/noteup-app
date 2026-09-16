@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FriendShareCheckList } from '@features/sharing/components/share/FriendShareCheckList';
 import { cleanText } from '@shared/utils/textUtils';
 
@@ -14,7 +14,8 @@ const SelectFriendsShareModal = ({
   lang = 'tr',
   t,
 }) => {
-  const targetNote = Array.isArray(notes) ? notes.find(n => n.id === activeShareNoteId) : null;
+  const targetNote = Array.isArray(notes) ? notes.find(n => String(n?.id) === String(activeShareNoteId)) : null;
+  const [selectedCodes, setSelectedCodes] = useState([]);
 
   useEffect(() => {
     if (activeShareNoteId) {
@@ -23,25 +24,38 @@ const SelectFriendsShareModal = ({
           ...(Array.isArray(targetNote.sharedWith) ? targetNote.sharedWith : []),
           ...(Array.isArray(targetNote.pendingShares) ? targetNote.pendingShares : []),
         ];
-        setSelectedFriendCodes(selected);
+        setSelectedCodes(selected);
+        if (typeof setSelectedFriendCodes === 'function') {
+          setSelectedFriendCodes(selected);
+        }
+      } else {
+        setSelectedCodes(Array.isArray(selectedFriendCodes) ? selectedFriendCodes : []);
       }
+    } else {
+      setSelectedCodes([]);
     }
-  }, [activeShareNoteId, targetNote]);
+  }, [activeShareNoteId, targetNote?.id]);
 
   if (!activeShareNoteId) return null;
 
   const isLight = theme === 'light';
 
   const handleFriendToggle = (friendCode) => {
-    const isSelected = selectedFriendCodes.includes(friendCode);
-    if (isSelected) {
-      setSelectedFriendCodes(prev => prev.filter(c => c !== friendCode));
-    } else {
-      setSelectedFriendCodes(prev => [...prev, friendCode]);
-    }
+    if (!friendCode) return;
+    const targetStr = String(friendCode).trim().toUpperCase();
+    setSelectedCodes(prev => {
+      const isSelected = prev.some(c => String(c || '').trim().toUpperCase() === targetStr);
+      const next = isSelected
+        ? prev.filter(c => String(c || '').trim().toUpperCase() !== targetStr)
+        : [...prev, friendCode];
+      if (typeof setSelectedFriendCodes === 'function') {
+        setSelectedFriendCodes(next);
+      }
+      return next;
+    });
   };
 
-  const isPaylasDisabled = selectedFriendCodes.length === 0;
+  const isPaylasDisabled = selectedCodes.length === 0;
 
   return (
     <div
@@ -113,8 +127,8 @@ const SelectFriendsShareModal = ({
           <button
             onClick={() => {
               setActiveShareNoteId(null);
-              setSelectedFriendCodes([]);
-              setBonusSlots(0);
+              setSelectedCodes([]);
+              if (typeof setSelectedFriendCodes === 'function') setSelectedFriendCodes([]);
             }}
             style={{
               background: isLight ? 'rgba(241, 245, 249, 0.9)' : 'rgba(255, 255, 255, 0.08)',
@@ -149,20 +163,20 @@ const SelectFriendsShareModal = ({
           fontSize: '0.75rem',
         }}>
           <span style={{ color: isLight ? '#64748B' : '#94A3B8', fontWeight: 600 }}>
-            {t?.('selectedInvites')}
+            {t?.('selectedInvites') || (lang === 'tr' ? 'Davet Edilecekler' : 'Selected')}
           </span>
           <span style={{
             fontWeight: 800,
             color: isLight ? '#2563EB' : '#60A5FA',
           }}>
-            {selectedFriendCodes.length} / {friends.length}
+            {selectedCodes.length} / {friends.length}
           </span>
         </div>
 
         {/* Body: Friends List or Empty State */}
         <FriendShareCheckList
           friends={friends}
-          selectedFriendCodes={selectedFriendCodes}
+          selectedFriendCodes={selectedCodes}
           handleFriendToggle={handleFriendToggle}
           isLight={isLight}
           lang={lang}
@@ -175,7 +189,8 @@ const SelectFriendsShareModal = ({
           <button
             onClick={() => {
               setActiveShareNoteId(null);
-              setSelectedFriendCodes([]);
+              setSelectedCodes([]);
+              if (typeof setSelectedFriendCodes === 'function') setSelectedFriendCodes([]);
             }}
             style={{
               flex: 1,
@@ -195,9 +210,10 @@ const SelectFriendsShareModal = ({
           {friends && friends.length > 0 && (
             <button
               onClick={() => {
-                handleSendShareInvitation(activeShareNoteId, selectedFriendCodes);
+                handleSendShareInvitation(activeShareNoteId, selectedCodes);
                 setActiveShareNoteId(null);
-                setSelectedFriendCodes([]);
+                setSelectedCodes([]);
+                if (typeof setSelectedFriendCodes === 'function') setSelectedFriendCodes([]);
               }}
               style={{
                 flex: 1.5,
