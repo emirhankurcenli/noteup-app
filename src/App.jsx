@@ -98,6 +98,7 @@ function App() {
     editorUndoStack,
     editorRedoStack,
     persistNotes,
+    flushPersist,
     saveNotes,
     handleUndo,
     handleRedo,
@@ -347,6 +348,7 @@ function App() {
     lastEditingNoteId,
     setLastEditingNoteId,
     persistNotes,
+    flushPersist,
     enforceTrailingTextBlock,
     deleteFromR2: (...args) => deleteFromR2Ref.current?.(...args)
   });

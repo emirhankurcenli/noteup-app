@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '@src/supabaseClient';
 
 export default function useEditorLifecycle({
@@ -11,6 +11,7 @@ export default function useEditorLifecycle({
   lastEditingNoteId,
   setLastEditingNoteId,
   persistNotes,
+  flushPersist,
   enforceTrailingTextBlock,
   deleteFromR2,
   gc
@@ -104,6 +105,9 @@ export default function useEditorLifecycle({
   };
 
   const handleCloseEditor = () => {
+    // Bekleyen debounced kayıt varsa hemen persist et (not kaybolmasın!)
+    if (flushPersist) flushPersist();
+
     // Flush any pending active input to prevent race conditions when closing fast
     try {
       const activeEl = document.activeElement;

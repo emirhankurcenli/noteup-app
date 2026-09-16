@@ -32,12 +32,28 @@ export default function useNotes({
   // handleUpdateNote her tuş vuruşunda çağrılır. Bu ref sayesinde
   // Supabase'e yazma işlemi kullanıcı 1500ms duraklatana kadar ertelenir.
   const persistDebounceRef = useRef(null);
+  // pendingNotesRef: debounce beklerken en son notlar burada tutulur (flush için)
+  const pendingNotesRef = useRef(null);
 
   const debouncedPersistNotes = useCallback((updatedNotes) => {
+    pendingNotesRef.current = updatedNotes; // Her zaman en güncel listeyi sakla
     if (persistDebounceRef.current) clearTimeout(persistDebounceRef.current);
     persistDebounceRef.current = setTimeout(() => {
-      persistNotes(updatedNotes);
+      persistNotes(pendingNotesRef.current);
+      pendingNotesRef.current = null;
     }, 1500);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // flushPersist: Editör kapanmadan önce bekleyen kaydı anında yap
+  const flushPersist = useCallback(() => {
+    if (persistDebounceRef.current) {
+      clearTimeout(persistDebounceRef.current);
+      persistDebounceRef.current = null;
+    }
+    if (pendingNotesRef.current) {
+      persistNotes(pendingNotesRef.current);
+      pendingNotesRef.current = null;
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Realtime Live Synchronization for Editing Note and Share Statuses (Block-Level Merging)
@@ -825,6 +841,7 @@ export default function useNotes({
     editorUndoStack: undoRedo.editorUndoStack,
     editorRedoStack: undoRedo.editorRedoStack,
     persistNotes,
+    flushPersist,
     saveNotes,
     handleUndo: undoRedo.handleUndo,
     handleRedo: undoRedo.handleRedo,
