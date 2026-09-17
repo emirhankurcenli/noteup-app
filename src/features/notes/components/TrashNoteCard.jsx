@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { getDaysLeft } from '@shared/utils/textUtils';
+import { noteHasPasswordVault } from '@shared/utils/securityUtils';
 import { getNoteSnippet } from './NoteCard';
 
 const TrashNoteCard = ({
@@ -19,6 +20,7 @@ const TrashNoteCard = ({
   const daysLeft = getDaysLeft(note.deletedAt);
   const snippet = getNoteSnippet(note, t);
   const isUrgent = daysLeft <= 3;
+  const hasVault = noteHasPasswordVault(note);
 
   const handleCardClick = () => {
     if (isSelectMode) {
@@ -131,6 +133,27 @@ const TrashNoteCard = ({
       }}>
         {dayLabel}
       </div>
+
+      {/* Password Vault Badge */}
+      {hasVault && (
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '0.62rem',
+          fontWeight: 800,
+          padding: '2px 6px',
+          borderRadius: '6px',
+          background: isLight ? 'rgba(234, 179, 8, 0.15)' : 'rgba(234, 179, 8, 0.22)',
+          color: isLight ? '#B45309' : '#FCD34D',
+          border: isLight ? '1px solid rgba(234, 179, 8, 0.3)' : '1px solid rgba(234, 179, 8, 0.35)',
+          marginBottom: '5px',
+          width: 'fit-content'
+        }}>
+          <span>🔑</span>
+          <span>{lang === 'tr' ? 'Şifre Kasası' : 'Şifreler'}</span>
+        </div>
+      )}
 
       {/* Note Title */}
       <h3 style={{

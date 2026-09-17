@@ -3,7 +3,7 @@ import { supabase } from '@src/supabaseClient';
 import { cancelLocalNotification } from '@shared/services/notificationService';
 import { registerPlugin } from '@capacitor/core';
 import useNoteUndoRedo from '@features/notes/hooks/useNoteUndoRedo';
-import { sanitizeNoteContent, sanitizeSingleLine } from '@shared/utils/securityUtils';
+import { sanitizeNoteContent, sanitizeSingleLine, noteHasPasswordVault } from '@shared/utils/securityUtils';
 import { mergeNoteBlocks, ensureBlockTimestamps, enforceTrailingTextBlock } from '@shared/utils/blockMergeUtils';
 import { cleanText } from '@shared/utils/textUtils';
 import { isR2MediaUrl } from '@shared/utils/mediaUtils';
@@ -482,21 +482,33 @@ export default function useNotes({
     }
 
     // Standard trash logic for owned notes...
-    if (targetNote.isLocked && typeof requestBiometricAuth === 'function') {
-      const ok = await requestBiometricAuth(
-        lang === 'tr' ? 'Kilitli Notu Sil' : 'Delete Locked Note',
-        lang === 'tr' ? 'Kilitli notu silmek için parmak izi, yüz tanıma veya telefon şifrenizi girin' : 'Authenticate to delete locked note'
-      );
+    const hasPasswordVault = noteHasPasswordVault(targetNote);
+    const requiresBiometric = targetNote.isLocked || hasPasswordVault;
+
+    if (requiresBiometric && typeof requestBiometricAuth === 'function') {
+      const authTitle = hasPasswordVault
+        ? (lang === 'tr' ? '🔑 Şifre Kasası Güvenliği' : '🔑 Password Vault Security')
+        : (lang === 'tr' ? '🔒 Kilitli Notu Sil' : '🔒 Delete Locked Note');
+
+      const authSub = hasPasswordVault
+        ? (lang === 'tr' ? 'Bu not kayıtlı hesap şifreleri içermektedir. Notu silmek için parmak izinizi veya telefon şifrenizi doğrulayın.' : 'This note contains saved passwords. Authenticate to delete.')
+        : (lang === 'tr' ? 'Kilitli notu silmek için parmak izi, yüz tanıma veya telefon şifrenizi girin.' : 'Authenticate to delete locked note.');
+
+      const ok = await requestBiometricAuth(authTitle, authSub);
       if (!ok) {
-        if (typeof setToast === 'function') setToast({ title: '⚠️', msg: t('authFailed') });
+        if (typeof setToast === 'function') setToast({ title: '⚠️', msg: t('authFailed') || (lang === 'tr' ? 'Doğrulama Başarısız' : 'Authentication Failed') });
         return;
       }
     }
 
+    const trashMessage = hasPasswordVault
+      ? (lang === 'tr' ? '⚠️ Bu not kayıtlı hesap şifreleri (Şifre Kasası) içermektedir. Çöp kutusuna taşımak istediğinize emin misiniz?' : '⚠️ This note contains saved passwords (Password Vault). Are you sure you want to move it to trash?')
+      : '';
+
     setConfirmDialog({
       title: t('confirmMoveTrashTitle'),
-      message: '',
-      icon: '🗑️',
+      message: trashMessage,
+      icon: hasPasswordVault ? '🔑' : '🗑️',
       confirmText: t('confirmMoveTrashBtn'),
       cancelText: t('confirmCancel'),
       danger: true,
@@ -589,27 +601,40 @@ export default function useNotes({
     const notesToDelete = (notes || []).filter(n => noteIds.includes(n.id));
 
     const count = noteIds.length;
+    const hasVault = notesToDelete.some(noteHasPasswordVault);
+    const hasLocked = notesToDelete.some(n => n.isLocked);
+
     const rawMsg = getValidText('confirmPermanentDeleteMsg', lang === 'tr' ? `${count} notu kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.` : `Are you sure you want to permanently delete ${count} note(s)? This action cannot be undone.`);
-    const formattedMsg = (rawMsg && rawMsg.includes('{count}'))
+    let formattedMsg = (rawMsg && rawMsg.includes('{count}'))
       ? rawMsg.replace('{count}', count)
       : (lang === 'tr' ? `${count} notu kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.` : `Are you sure you want to permanently delete ${count} note(s)? This action cannot be undone.`);
+
+    if (hasVault) {
+      formattedMsg += (lang === 'tr'
+        ? '\n\n⚠️ DİKKAT: Silinecek notlar arasında Şifre Kasası bulunmaktadır. Bu işlem geri alınamaz ve tüm hesap şifreleriniz kalıcı olarak yok edilir!'
+        : '\n\n⚠️ WARNING: Selected notes include Password Vaults. Permanent deletion will permanently erase your saved credentials!');
+    }
 
     setConfirmDialog({
       title: getValidText('confirmPermanentDeleteTitle', lang === 'tr' ? 'Kalıcı Olarak Sil' : 'Delete Permanently'),
       message: formattedMsg,
-      icon: '🗑️',
+      icon: hasVault ? '🔑' : '🗑️',
       confirmText: getValidText('confirmPermanentDeleteBtn', lang === 'tr' ? 'Kalıcı Olarak Sil' : 'Delete Permanently'),
       cancelText: getValidText('confirmCancel', lang === 'tr' ? 'İptal' : 'Cancel'),
       danger: true,
       onConfirm: async () => {
-        const hasLocked = notesToDelete.some(n => n.isLocked);
-        if (hasLocked && typeof requestBiometricAuth === 'function') {
-          const ok = await requestBiometricAuth(
-            lang === 'tr' ? 'Kilitli Notları Sil' : 'Delete Locked Notes',
-            lang === 'tr' ? 'Kilitli notları kalıcı olarak silmek için doğrulama yapın' : 'Authenticate to permanently delete locked notes'
-          );
+        if ((hasVault || hasLocked) && typeof requestBiometricAuth === 'function') {
+          const authTitle = hasVault
+            ? (lang === 'tr' ? '🔑 Şifre Kasası Güvenliği' : '🔑 Password Vault Security')
+            : (lang === 'tr' ? '🔒 Kilitli Notları Sil' : '🔒 Delete Locked Notes');
+
+          const authSub = hasVault
+            ? (lang === 'tr' ? 'Seçilen notlar kayıtlı hesap şifreleri içermektedir. Kalıcı olarak silmek için doğrulama yapın.' : 'Selected notes contain saved passwords. Authenticate to permanently delete.')
+            : (lang === 'tr' ? 'Kilitli notları kalıcı olarak silmek için doğrulama yapın.' : 'Authenticate to permanently delete locked notes.');
+
+          const ok = await requestBiometricAuth(authTitle, authSub);
           if (!ok) {
-            if (typeof setToast === 'function') setToast({ title: '⚠️', msg: t('authFailed') });
+            if (typeof setToast === 'function') setToast({ title: '⚠️', msg: t('authFailed') || (lang === 'tr' ? 'Doğrulama Başarısız' : 'Authentication Failed') });
             return;
           }
         }

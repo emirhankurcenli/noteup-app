@@ -1,5 +1,6 @@
 import React from 'react';
 import { htmlToPlainText, getDaysLeft } from '@shared/utils/textUtils';
+import { noteHasPasswordVault } from '@shared/utils/securityUtils';
 
 const TrashPreviewModal = ({
   note,
@@ -15,6 +16,7 @@ const TrashPreviewModal = ({
 
   // FIX: use shared getDaysLeft utility — no more duplicated formula
   const daysLeft = getDaysLeft(note.deletedAt);
+  const hasVault = noteHasPasswordVault(note);
 
   const handleRestoreAndOpen = () => {
     // FIX: close modal FIRST, then restore, then open in editor
@@ -105,6 +107,22 @@ const TrashPreviewModal = ({
               }}>
                 {daysLeft > 0 ? `${daysLeft} ${t('daysRemaining') || 'gün kaldı'}` : (t('willBeDeletedToday') || 'Bugün silinecek')}
               </span>
+              {hasVault && (
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '3px 8px',
+                  borderRadius: '12px',
+                  background: isLight ? 'rgba(234, 179, 8, 0.15)' : 'rgba(234, 179, 8, 0.25)',
+                  color: isLight ? '#B45309' : '#FCD34D',
+                  border: isLight ? '1px solid rgba(234, 179, 8, 0.35)' : '1px solid rgba(234, 179, 8, 0.4)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  🔑 {lang === 'tr' ? 'Şifre Kasası' : 'Vault'}
+                </span>
+              )}
               <span style={{ fontSize: '0.72rem', color: isLight ? '#94A3B8' : 'rgba(255,255,255,0.4)' }}>
                 {note.deletedAt ? new Date(note.deletedAt).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
               </span>
@@ -199,6 +217,31 @@ const TrashPreviewModal = ({
             </p>
           )}
         </div>
+
+        {/* Vault Warning Banner if note contains password vault */}
+        {hasVault && (
+          <div style={{
+            padding: '10px 14px',
+            borderRadius: '12px',
+            background: isLight ? '#FEF3C7' : 'rgba(245, 158, 11, 0.16)',
+            border: isLight ? '1.5px solid #F59E0B' : '1.5px solid rgba(245, 158, 11, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <span style={{ fontSize: '1.1rem' }}>🔑</span>
+            <span style={{
+              fontSize: '0.8rem',
+              color: isLight ? '#92400E' : '#FDE68A',
+              fontWeight: 700,
+              lineHeight: '1.35'
+            }}>
+              {lang === 'tr' 
+                ? 'Bu not Şifre Kasası içermektedir. Kalıcı olarak silerseniz kayıtlı hesap şifreleriniz geri getirilemez şekilde yok olur!' 
+                : 'This note contains a Password Vault. Permanent deletion will permanently destroy your saved passwords!'}
+            </span>
+          </div>
+        )}
 
         {/* Warning Banner */}
         <div style={{

@@ -171,3 +171,14 @@ export const sanitizeMoneyInput = (amountStr) => {
   if (typeof amountStr !== 'string') return '';
   return amountStr.replace(/[^0-9.,-]/g, '').substring(0, 20);
 };
+
+/**
+ * Checks if a note contains any password vault widgets or encrypted credentials.
+ * @param {object} note
+ * @returns {boolean}
+ */
+export const noteHasPasswordVault = (note) => {
+  if (!note || !Array.isArray(note.blocks)) return false;
+  return note.blocks.some(b => b && b.type === 'password');
+};
+
