@@ -136,11 +136,19 @@ const NotesGrid = ({
 }) => {
   const isLight = theme === 'light';
   const [now, setNow] = useState(Date.now());
+  const [menuDirection, setMenuDirection] = useState('down');
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!activeMenuNoteId) return;
+    const handleScroll = () => setActiveMenuNoteId(null);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [activeMenuNoteId, setActiveMenuNoteId]);
 
   const sortedNotes = [...(visibleNotes || [])].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
@@ -164,7 +172,7 @@ const NotesGrid = ({
               <div
                 key={note.id}
                 className="glass-panel-interactive note-card"
-                style={{ position: 'relative', zIndex: activeMenuNoteId === note.id ? 10 : 1 }}
+                style={{ position: 'relative', zIndex: activeMenuNoteId === note.id ? 100 : 1 }}
                 onClick={async () => {
                   if (note.isLocked) {
                     const ok = await requestBiometricAuth(
@@ -247,7 +255,14 @@ const NotesGrid = ({
                     style={{ marginLeft: '12px', alignSelf: 'flex-start', padding: '6px' }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setActiveMenuNoteId(activeMenuNoteId === note.id ? null : note.id);
+                      if (activeMenuNoteId === note.id) {
+                        setActiveMenuNoteId(null);
+                      } else {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const spaceBelow = window.innerHeight - rect.bottom;
+                        setMenuDirection(spaceBelow < 300 ? 'up' : 'down');
+                        setActiveMenuNoteId(note.id);
+                      }
                     }}
                   >
                     <ThreeDotsIcon />
@@ -255,7 +270,7 @@ const NotesGrid = ({
 
                   {/* Floating Context Menu */}
                   {activeMenuNoteId === note.id && (
-                    <div className="context-menu-dropdown">
+                    <div className={`context-menu-dropdown ${menuDirection === 'up' ? 'open-upward' : ''}`}>
                       <button
                         className="context-menu-btn"
                         onClick={async (e) => {

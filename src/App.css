@@ -2520,6 +2520,8 @@ body.platform-ios .bottom-nav {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  max-height: 70vh;
+  overflow-y: auto;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border-color);
   border-radius: 16px;
@@ -2529,10 +2531,28 @@ body.platform-ios .bottom-nav {
   animation: contextMenuFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.context-menu-dropdown.open-upward {
+  top: auto;
+  bottom: 36px;
+  transform-origin: bottom right;
+  animation: contextMenuFadeInUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @keyframes contextMenuFadeIn {
   from {
     opacity: 0;
     transform: scale(0.95) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes contextMenuFadeInUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(6px);
   }
   to {
     opacity: 1;
