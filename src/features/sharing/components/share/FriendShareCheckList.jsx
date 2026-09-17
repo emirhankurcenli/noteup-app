@@ -144,51 +144,35 @@ export const FriendShareCheckList = ({
                 }}>
                   {f.name}
                 </span>
-                {isSelected && (
-                  isAcceptedCollab ? (
-                    <span style={{
-                      fontSize: '0.6rem',
-                      fontWeight: 800,
-                      padding: '2px 7px',
-                      borderRadius: '20px',
-                      background: 'rgba(16, 185, 129, 0.15)',
-                      color: '#10B981',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                    }}>
-                      ● {t ? cleanText(t('sharedBadge')) : (lang === 'tr' ? 'Ortak' : 'Shared')}
-                    </span>
-                  ) : isPendingCollab ? (
-                    <span style={{
-                      fontSize: '0.6rem',
-                      fontWeight: 800,
-                      padding: '2px 7px',
-                      borderRadius: '20px',
-                      background: 'rgba(245, 158, 11, 0.15)',
-                      color: '#F59E0B',
-                      border: '1px solid rgba(245, 158, 11, 0.3)',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                    }}>
-                      ⏳ {t ? (cleanText(t('pendingApproval')) || 'Onay Bekliyor') : 'Onay Bekliyor'}
-                    </span>
-                  ) : (
-                    <span style={{
-                      fontSize: '0.6rem',
-                      fontWeight: 800,
-                      padding: '2px 7px',
-                      borderRadius: '20px',
-                      background: 'rgba(59, 130, 246, 0.15)',
-                      color: '#3B82F6',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                    }}>
-                      + {t ? cleanText(t('newInvite')) : (lang === 'tr' ? 'Yeni Davet' : 'New Invite')}
-                    </span>
-                  )
-                )}
+                {isAcceptedCollab ? (
+                  <span style={{
+                    fontSize: '0.6rem',
+                    fontWeight: 800,
+                    padding: '2px 7px',
+                    borderRadius: '20px',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    color: '#10B981',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}>
+                    ● {t ? cleanText(t('sharedBadge')) : (lang === 'tr' ? 'Ortak' : 'Shared')}
+                  </span>
+                ) : isPendingCollab ? (
+                  <span style={{
+                    fontSize: '0.6rem',
+                    fontWeight: 800,
+                    padding: '2px 7px',
+                    borderRadius: '20px',
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    color: '#F59E0B',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}>
+                    ⏳ {t ? (cleanText(t('pendingApproval')) || 'Onay Bekliyor') : 'Onay Bekliyor'}
+                  </span>
+                ) : null}
               </div>
               <span style={{ fontSize: '0.72rem', color: isLight ? '#64748B' : '#94A3B8' }}>
                 Kod: {friendCode}
