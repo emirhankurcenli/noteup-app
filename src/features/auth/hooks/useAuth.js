@@ -22,8 +22,8 @@ export default function useAuth() {
     return localUser ? JSON.parse(localUser) : null;
   });
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [myCode, setMyCode] = useState('');
-  const [profileName, setProfileName] = useState('');
+  const [myCode, setMyCode] = useState(() => localStorage.getItem('s23_my_code') || '');
+  const [profileName, setProfileName] = useState(() => localStorage.getItem('s23_profile_name') || '');
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   // --- PLAN STATE (All users have full unmetered access) ---

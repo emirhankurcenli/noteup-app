@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import NotesGrid from '@features/notes/components/NotesGrid';
 import { sanitizeText } from '@shared/utils/securityUtils';
 
@@ -30,6 +30,11 @@ const SharedNotesTab = ({
   handleRejectShare,
 }) => {
   const isLight = theme === 'light';
+
+  // Immediately refresh incoming pending shares and accepted shares when user views this tab
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('noteup_refresh_shares'));
+  }, []);
 
   // All active and pending shared notes
   const allSharedNotes = useMemo(() => {

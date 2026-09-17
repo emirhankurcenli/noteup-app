@@ -122,12 +122,23 @@ export default function useSharing({
     });
 
     // 2. Send invitations to newly checked friends via Supabase
-    newlyAddedCodes.forEach(async (code) => {
+    const codesToInvite = selectedCodes.filter(code => !activeSharedWith.includes(code));
+    codesToInvite.forEach(async (code) => {
+      const normalizedToCode = String(code).trim().toUpperCase();
+      const normalizedFromCode = String(myCode).trim().toUpperCase();
       try {
+        // Delete any existing row first to guarantee a clean state and trigger Realtime INSERT
+        await supabase
+          .from('note_shares')
+          .delete()
+          .eq('from_code', normalizedFromCode)
+          .eq('to_code', normalizedToCode)
+          .eq('note_id', noteToShare.id);
+
         await supabase.from('note_shares').insert([{
-          from_code: myCode,
-          from_name: profileName || ('Arkadaş (' + myCode.substring(9) + ')'),
-          to_code: code,
+          from_code: normalizedFromCode,
+          from_name: profileName || ('Arkadaş (' + normalizedFromCode.substring(9) + ')'),
+          to_code: normalizedToCode,
           note_id: noteToShare.id,
           note_title: noteToShare.title || 'Paylaşılan Not',
           note_blocks: noteToShare.blocks || [],

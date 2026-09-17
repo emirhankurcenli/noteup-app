@@ -309,6 +309,7 @@ export default function AppWorkspaceContainer({
         activeTab={activeTab}
         handleTabClick={handleTabClick}
         handleCreateNote={handleCreateNote}
+        pendingShareCount={Array.isArray(pendingShareRequests) ? pendingShareRequests.length : 0}
         t={t}
       />
     </>

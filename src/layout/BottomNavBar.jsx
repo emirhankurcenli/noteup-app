@@ -1,10 +1,11 @@
-﻿import React from 'react';
+import React from 'react';
 import Icons from '@shared/components/Icons';
 
 const BottomNavBar = ({
   activeTab,
   handleTabClick,
   handleCreateNote,
+  pendingShareCount = 0,
   t,
 }) => {
   return (
@@ -41,7 +42,33 @@ const BottomNavBar = ({
           className={`nav-item ${activeTab === 'shared' ? 'active' : ''}`}
           onClick={() => handleTabClick('shared')}
         >
-          <Icons.Users />
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icons.Users />
+            {pendingShareCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-8px',
+                  background: '#EF4444',
+                  color: '#FFFFFF',
+                  fontSize: '0.62rem',
+                  fontWeight: 800,
+                  minWidth: '15px',
+                  height: '15px',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 3px',
+                  boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)',
+                  lineHeight: 1
+                }}
+              >
+                {pendingShareCount}
+              </span>
+            )}
+          </div>
           <span>{t('sharedNotes')}</span>
         </button>
         <button

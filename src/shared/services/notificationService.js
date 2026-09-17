@@ -28,6 +28,18 @@ export const createNotificationChannels = async () => {
       lights: true,
       lightColor: '#4A7FA5'
     });
+
+    // Create social and shared notes invitation channel (Android)
+    await LocalNotifications.createChannel({
+      id: 'social_share_channel',
+      name: 'Paylaşılan Notlar & Davetler',
+      description: 'Not paylaşım davetleri ve arkadaşlık bildirimleri',
+      importance: 5,        // IMPORTANCE_HIGH
+      visibility: 1,        // VISIBILITY_PUBLIC
+      vibration: true,
+      lights: true,
+      lightColor: '#3B82F6'
+    });
   } catch (e) {
     console.warn("Notification channel creation failed:", e);
   }
@@ -122,3 +134,22 @@ export const requestNotificationPermissionRaw = async () => {
   }
   return { display: 'unknown' };
 };
+
+export const sendShareInviteNotification = async ({ fromName, noteTitle, noteId }) => {
+  try {
+    const permGranted = await checkNotificationPermission();
+    if (!permGranted) return false;
+    return await scheduleLocalNotification({
+      id: Math.floor(Math.random() * 1000000),
+      title: '📩 Paylaşılan Not Daveti',
+      body: `"${fromName || 'Bir arkadaşınız'}" sizinle "${noteTitle || 'Not'}" notunu paylaştı. Kabul etmek için dokunun.`,
+      at: new Date(Date.now() + 200),
+      channelId: 'social_share_channel',
+      extra: { type: 'share_invite', noteId }
+    });
+  } catch (e) {
+    console.warn("Failed to send share invite notification:", e);
+    return false;
+  }
+};
+

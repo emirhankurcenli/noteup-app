@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@src/supabaseClient';
 import { playChime } from '@shared/services/soundService';
+import { sendShareInviteNotification } from '@shared/services/notificationService';
 import { App as CapApp } from '@capacitor/app';
 
 export const useSharedNotesSync = ({
@@ -19,38 +20,57 @@ export const useSharedNotesSync = ({
   const acceptedSharedNoteIdsRef = useRef([]);
   const pollingIntervalRef = useRef(null);
 
+  // 1. Reusable & resilient fetch for pending incoming note share invitations
+  const syncIncomingPendingShares = useCallback(async (isInitial = false) => {
+    if (!myCode) return;
+    try {
+      const myCodeUpper = String(myCode).trim().toUpperCase();
+      const { data, error } = await supabase
+        .from('note_shares')
+        .select('*')
+        .or(`to_code.eq.${myCodeUpper},to_code.eq.${myCode}`)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && Array.isArray(data)) {
+        const formatted = data.map((item) => ({
+          id: item.id,
+          fromCode: item.from_code,
+          fromName: item.from_name || 'Arkadaş',
+          toCode: item.to_code,
+          noteId: item.note_id,
+          noteTitle: item.note_title,
+          noteBlocks: item.note_blocks,
+          timestamp: new Date(item.created_at).getTime(),
+          processed: false,
+        }));
+
+        setPendingShareRequests(formatted);
+
+        // Notify user for newly discovered pending invitations
+        data.forEach((item) => {
+          if (!processedRequestIdsRef.current.has(item.id)) {
+            processedRequestIdsRef.current.add(item.id);
+            setToast?.({
+              title: '🔔 Paylaşılan Not Daveti',
+              msg: `"${item.from_name || 'Arkadaşınız'}" sizinle "${item.note_title || 'Not'}" notunu paylaştı. Paylaşılanlar sekmesinden kabul edebilirsiniz.`,
+            });
+            playChime();
+            sendShareInviteNotification({
+              fromName: item.from_name || 'Arkadaşınız',
+              noteTitle: item.note_title || 'Paylaşılan Not',
+              noteId: item.note_id,
+            });
+          }
+        });
+      }
+    } catch (err) {
+      console.warn('Error syncing incoming pending shares:', err);
+    }
+  }, [myCode, setToast, setPendingShareRequests]);
+
   useEffect(() => {
     if (!myCode) return;
-
-    // 1. Fetch pending incoming note share invitations from Supabase
-    const fetchIncomingNoteShares = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('note_shares')
-          .select('*')
-          .eq('to_code', myCode)
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false });
-
-        if (!error && data && Array.isArray(data)) {
-          const formatted = data.map((item) => ({
-            id: item.id,
-            fromCode: item.from_code,
-            fromName: item.from_name || 'Arkadaş',
-            toCode: item.to_code,
-            noteId: item.note_id,
-            noteTitle: item.note_title,
-            noteBlocks: item.note_blocks,
-            timestamp: new Date(item.created_at).getTime(),
-            processed: false,
-          }));
-
-          setPendingShareRequests(formatted);
-        }
-      } catch (err) {
-        console.warn('Error fetching note shares from Supabase:', err);
-      }
-    };
 
     // 2. Fetch outgoing note share statuses from Supabase (to sync pending vs accepted)
     const fetchOutgoingNoteShares = async () => {
@@ -72,7 +92,7 @@ export const useSharedNotesSync = ({
       }
     };
 
-    fetchIncomingNoteShares();
+    syncIncomingPendingShares(true);
     fetchOutgoingNoteShares();
 
     // 3. Supabase Realtime channel for instant note share alerts and shared notes sync
@@ -103,38 +123,16 @@ export const useSharedNotesSync = ({
           const recOld = payload.old;
 
           // A. Incoming share invitation (INSERT to_code == myCode)
+          const toCodeMatches = recNew && (
+            String(recNew.to_code).trim().toUpperCase() === String(myCode).trim().toUpperCase()
+          );
+
           if (
             payload.eventType === 'INSERT' &&
-            recNew &&
-            recNew.to_code === myCode &&
+            toCodeMatches &&
             recNew.status === 'pending'
           ) {
-            const newReq = {
-              id: recNew.id,
-              fromCode: recNew.from_code,
-              fromName: recNew.from_name || 'Arkadaş',
-              toCode: recNew.to_code,
-              noteId: recNew.note_id,
-              noteTitle: recNew.note_title,
-              noteBlocks: recNew.note_blocks,
-              timestamp: new Date(recNew.created_at).getTime(),
-              processed: false,
-            };
-
-            setPendingShareRequests((prev) => {
-              const existing = prev.some((r) => r.id === newReq.id);
-              if (existing) return prev;
-              return [newReq, ...prev];
-            });
-
-            if (!processedRequestIdsRef.current.has(recNew.id)) {
-              processedRequestIdsRef.current.add(recNew.id);
-              setToast?.({
-                title: '🔔 Paylaşılan Not Daveti',
-                msg: `"${recNew.from_name || 'Arkadaşınız'}" sizinle "${recNew.note_title || 'Not'}" notunu paylaştı. Paylaşılanlar sekmesinden kabul edebilirsiniz.`,
-              });
-              playChime();
-            }
+            syncIncomingPendingShares(false);
           }
 
           // B. Share response alert (UPDATE from_code == myCode) - Realtime status transitions
@@ -385,12 +383,17 @@ export const useSharedNotesSync = ({
 
       // Tüm .on() listener'ları eklendikten sonra tek seferde subscribe et
       shareChannel.subscribe((status, err) => {
-        if (err) {
+        if (err || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           console.warn(`[Realtime] note_shares status: ${status}`, err);
+          // Fallback on error: poll immediately so no shares are missed
+          syncIncomingPendingShares(false);
+          pollSharedNotes();
         }
       });
     } catch (e) {
       console.warn('[Realtime] Failed to initialize note_shares channel:', e);
+      syncIncomingPendingShares(false);
+      pollSharedNotes();
     }
 
     return () => {
@@ -400,21 +403,25 @@ export const useSharedNotesSync = ({
         } catch (e) {}
       }
     };
-  }, [myCode]);
+  }, [myCode, syncIncomingPendingShares]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // POLLING FALLBACK + FOREGROUND SYNC
   // Realtime bağlantısı koptuğunda veya paket kaçırdığında devreye girer.
-  // Her 30 saniyede bir paylaşımlı notların güncel halini Supabase'den çeker.
+  // Her 10 saniyede bir paylaşımlı notların ve gelen davetlerin güncel halini Supabase'den çeker.
   // ─────────────────────────────────────────────────────────────────────────────
   const pollSharedNotes = useCallback(async () => {
     if (!myCode) return;
     try {
-      // 1. Hangi notları takip ettiğimizi öğren
+      // 1. Bekleyen davetleri tazele
+      await syncIncomingPendingShares(false);
+
+      // 2. Hangi notları takip ettiğimizi öğren
+      const myCodeUpper = String(myCode).trim().toUpperCase();
       const { data: shares } = await supabase
         .from('note_shares')
         .select('note_id, from_code, from_name')
-        .or(`to_code.eq.${myCode},from_code.eq.${myCode}`)
+        .or(`to_code.eq.${myCodeUpper},to_code.eq.${myCode},from_code.eq.${myCodeUpper},from_code.eq.${myCode}`)
         .eq('status', 'accepted');
 
       const acceptedShares = Array.isArray(shares) ? shares : [];
@@ -425,7 +432,7 @@ export const useSharedNotesSync = ({
 
       if (sharedNoteIds.length === 0) return;
 
-      // 2. Bu notların güncel hallerini çek
+      // 3. Bu notların güncel hallerini çek
       const { data: notesData } = await supabase
         .from('notes')
         .select('*')
@@ -473,26 +480,37 @@ export const useSharedNotesSync = ({
         }
       });
     } catch (err) {
-      // Polling sessizce başarısız olabilir — Realtime devrededir
+      // Polling sessizce başarısız olabilir
     }
-  }, [myCode]);
+  }, [myCode, syncIncomingPendingShares]);
 
   useEffect(() => {
     if (!myCode) return;
 
     // İlk yüklemede hemen çalıştır
+    syncIncomingPendingShares(true);
     pollSharedNotes();
 
-    // Her 30 saniyede bir polling (Realtime fallback)
-    pollingIntervalRef.current = setInterval(pollSharedNotes, 30_000);
+    // Her 10 saniyede bir periyodik polling
+    pollingIntervalRef.current = setInterval(() => {
+      syncIncomingPendingShares(false);
+      pollSharedNotes();
+    }, 10_000);
+
+    // Sekme geçişi veya manuel yenileme eventi dinleyicisi
+    const handleManualRefresh = () => {
+      syncIncomingPendingShares(false);
+      pollSharedNotes();
+    };
+    window.addEventListener('noteup_refresh_shares', handleManualRefresh);
 
     // Uygulama arka plandan öne geldiğinde hemen sync et
     let appStateListener = null;
     try {
       CapApp.addListener('appStateChange', ({ isActive }) => {
         if (isActive) {
-          // Ön plana gelindiğinde lastDispatchedMap'i sıfırla → zorla güncelleme
           lastDispatchedMapRef.current.clear();
+          syncIncomingPendingShares(false);
           pollSharedNotes();
         }
       }).then((listener) => {
@@ -503,6 +521,7 @@ export const useSharedNotesSync = ({
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           lastDispatchedMapRef.current.clear();
+          syncIncomingPendingShares(false);
           pollSharedNotes();
         }
       });
@@ -513,9 +532,10 @@ export const useSharedNotesSync = ({
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
       }
+      window.removeEventListener('noteup_refresh_shares', handleManualRefresh);
       if (appStateListener) {
         try { appStateListener.remove(); } catch (_) {}
       }
     };
-  }, [myCode, pollSharedNotes]);
+  }, [myCode, pollSharedNotes, syncIncomingPendingShares]);
 };
