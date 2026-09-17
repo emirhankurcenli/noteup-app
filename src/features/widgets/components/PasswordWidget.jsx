@@ -1,6 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CryptoService } from '@shared/services/cryptoService';
-import PasswordStrengthBar from './password/PasswordStrengthBar';
 
 const PasswordWidget = ({
   block,
@@ -277,7 +276,6 @@ const PasswordWidget = ({
                 )}
               </button>
             </div>
-            <PasswordStrengthBar password={decryptedPassword} />
           </div>
         </div>
       </div>
