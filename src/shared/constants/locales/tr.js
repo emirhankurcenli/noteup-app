@@ -329,6 +329,7 @@ const tr = {
   sharedBadge: 'Ortak',
   pendingApproval: 'Onay Bekliyor',
   newInvite: 'Yeni Davet',
+  pendingShareRequests: 'Gelen Davetler',
   addShareBtn: 'Ekle',
   removeShareBtn: 'Çıkar',
   noFriendsShareTitle: 'Henüz Arkadaşınız Yok',

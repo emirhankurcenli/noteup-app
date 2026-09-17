@@ -1,4 +1,4 @@
-﻿const en = {
+const en = {
   confirmDeleteTitle: 'Confirm Deletion',
   pinnedBadge: 'Pinned',
   alarmSetTitle: 'Alarm Set',
@@ -327,6 +327,7 @@
   noFriendsShareTitle: 'No Friends Added Yet',
   pendingApproval: 'Pending Approval',
   addShareBtn: 'Add',
+  pendingShareRequests: 'Incoming Invitations',
   noFriendsShareSub: 'Add friends using your friend code on the profile page to share notes together.',
   removeShareBtn: 'Remove',
   sharedBadge: 'Shared',
