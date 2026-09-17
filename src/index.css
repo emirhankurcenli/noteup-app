@@ -84,9 +84,9 @@
   --accent-glow: rgba(232, 80, 26, 0.20);
 
   /* MIDNIGHT NAVY TEXT COLOR PALETTE FOR LIGHT THEME */
-  --text-primary: #0F172A;   /* Midnight Navy */
-  --text-secondary: #1E293B; /* Deep Navy */
-  --text-muted: #334155;     /* Medium Navy */
+  --text-primary: #090E1A;   /* Midnight Obsidian - Max Contrast & Crispness */
+  --text-secondary: #1E293B; /* Deep Navy Slate */
+  --text-muted: #475569;     /* Midnight Steel */
 
   /* Glassmorphism for Light Mode */
   --glass-bg: rgba(255, 255, 255, 0.85);
@@ -101,11 +101,11 @@
   --nav-bg: #FFFFFF; /* Fully solid white to block text leak */
   --nav-border: rgba(74, 127, 165, 0.18);
 
-  /* Inputs for Light Theme */
-  --input-bg: rgba(74, 127, 165, 0.08);
-  --input-border: rgba(74, 127, 165, 0.25);
+  /* Inputs for Light Theme - Crisp White & Midnight Navy */
+  --input-bg: #FFFFFF;
+  --input-border: #CBD5E1;
   --input-focus-bg: #FFFFFF;
-  --input-focus-shadow: rgba(74, 127, 165, 0.15);
+  --input-focus-shadow: rgba(59, 130, 246, 0.18);
 
   /* Gradients */
   --body-bg-color: #E2E8F0;
@@ -290,14 +290,21 @@ p {
 /* Input Styles */
 .input-field {
   background: var(--input-bg);
-  border: 1px solid var(--input-border);
+  border: 1.5px solid var(--input-border);
   color: var(--text-primary);
   padding: 12px 16px;
   border-radius: 12px;
   font-family: var(--font-family);
   font-size: 0.95rem;
+  font-weight: 600;
   width: 100%;
   transition: var(--transition-smooth);
+}
+
+.input-field::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+  opacity: 0.75;
 }
 
 .input-field:focus {

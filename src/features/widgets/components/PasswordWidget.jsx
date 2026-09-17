@@ -221,11 +221,11 @@ const PasswordWidget = ({
 
       <div className="password-fields" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div className="password-field-group">
-          <label className="password-field-label" style={{ fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', display: 'block' }}>{t('pwdUser')}</label>
+          <label className="password-field-label" style={{ fontSize: '0.76rem', fontWeight: 800, marginBottom: '5px', display: 'block', letterSpacing: '0.04em' }}>{t('pwdUser')}</label>
           <div className="password-input-wrapper">
             <input
               className="password-field-input"
-              style={{ fontSize: '0.85rem', padding: '10px 12px', borderRadius: '10px' }}
+              style={{ fontSize: '0.92rem', fontWeight: 600, padding: '9px 4px' }}
               placeholder={t('pwdUserPlaceholder')}
               value={username}
               onChange={e => handleUpdateBlock(block.id, { username: e.target.value })}
@@ -244,11 +244,11 @@ const PasswordWidget = ({
         </div>
 
         <div className="password-field-group">
-          <label className="password-field-label" style={{ fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', display: 'block' }}>{t('pwdPass')}</label>
+          <label className="password-field-label" style={{ fontSize: '0.76rem', fontWeight: 800, marginBottom: '5px', display: 'block', letterSpacing: '0.04em' }}>{t('pwdPass')}</label>
           <div className="password-input-wrapper">
             <input
               className="password-field-input"
-              style={{ fontSize: '0.85rem', padding: '10px 12px', borderRadius: '10px' }}
+              style={{ fontSize: isVisible ? '0.92rem' : '1.05rem', fontWeight: isVisible ? 600 : 800, letterSpacing: isVisible ? 'normal' : '0.12em', padding: '9px 4px' }}
               type={isVisible ? "text" : "password"}
               placeholder={t('pwdPass')}
               value={decryptedPassword}

@@ -146,7 +146,7 @@ const NoteCard = ({
           fontSize: '0.98rem',
           fontWeight: 800,
           margin: 0,
-          color: isLight ? '#0F172A' : '#FFFFFF',
+          color: isLight ? '#090E1A' : '#FFFFFF',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -184,7 +184,8 @@ const NoteCard = ({
 
       <p style={{
         fontSize: '0.82rem',
-        color: isLight ? '#475569' : 'rgba(255, 255, 255, 0.6)',
+        fontWeight: 500,
+        color: isLight ? '#334155' : 'rgba(255, 255, 255, 0.7)',
         margin: 0,
         overflow: 'hidden',
         textOverflow: 'ellipsis',

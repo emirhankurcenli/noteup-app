@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { formatTurkishMoneyInput, formatTurkishMoneyDisplay } from '@shared/utils/money';
 import DebtDetailModal from '@shared/components/DebtDetailModal';
 
@@ -132,7 +132,7 @@ const DebtWidget = ({
         {/* Setup Form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               KİŞİ ADI
             </label>
             <input

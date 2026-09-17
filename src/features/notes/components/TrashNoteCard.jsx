@@ -135,9 +135,9 @@ const TrashNoteCard = ({
       {/* Note Title */}
       <h3 style={{
         fontSize: '0.88rem',
-        fontWeight: 700,
+        fontWeight: 800,
         margin: '0 0 5px 0',
-        color: isLight ? '#0F172A' : '#F1F5F9',
+        color: isLight ? '#090E1A' : '#F1F5F9',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         display: '-webkit-box',
@@ -154,7 +154,8 @@ const TrashNoteCard = ({
       {snippet && (
         <p style={{
           fontSize: '0.76rem',
-          color: isLight ? '#64748B' : 'rgba(255,255,255,0.5)',
+          fontWeight: 500,
+          color: isLight ? '#334155' : 'rgba(255,255,255,0.6)',
           margin: '0 0 8px 0',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -179,14 +180,15 @@ const TrashNoteCard = ({
           width="11" height="11" viewBox="0 0 24 24"
           fill="none" stroke="currentColor"
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          style={{ color: isLight ? '#94A3B8' : 'rgba(255,255,255,0.3)', flexShrink: 0 }}
+          style={{ color: isLight ? '#475569' : 'rgba(255,255,255,0.3)', flexShrink: 0 }}
         >
           <circle cx="12" cy="12" r="10" />
           <polyline points="12 6 12 12 16 14" />
         </svg>
         <span style={{
           fontSize: '0.68rem',
-          color: isLight ? '#94A3B8' : 'rgba(255,255,255,0.35)',
+          fontWeight: 600,
+          color: isLight ? '#475569' : 'rgba(255,255,255,0.4)',
           letterSpacing: '0.01em',
         }}>
           {note.deletedAt
