@@ -32,7 +32,6 @@
   tabSettings: 'Настройки',
   shared: 'Общий доступ',
   sharedNotes: 'Общие',
-  sharedNotesTab: 'Общие заметки',
   pendingApproval: 'Ожидает подтверждения',
   friendsCount: 'Друзья',
   newNote: 'Новая заметка',
@@ -326,12 +325,6 @@
   noSharedWithMeSub: 'Когда друзья поделятся с вами заметками, они появятся здесь.',
   onlyOwnerCanShareNotice: 'Так как эта заметка была вам отправлена, только владелец может делиться ею.',
   ownerBadge: 'Владелец',
-  noFriendsShareTitle: 'Нет друзей',
-  pendingApproval: 'Ожидание',
-  addShareBtn: 'Добавить',
-  noFriendsShareSub: 'Добавьте друзей по коду в профиле для совместного редактирования заметок.',
-  removeShareBtn: 'Удалить',
-  sharedBadge: 'Общий',
   newInvite: 'Новое приглашение',
 };
 

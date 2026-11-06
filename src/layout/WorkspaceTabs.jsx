@@ -80,6 +80,8 @@ const WorkspaceTabs = ({
         <SearchTab
           notes={notes}
           openEditingNote={openEditingNote}
+          requestBiometricAuth={requestBiometricAuth}
+          setToast={setToast}
           theme={theme}
           lang={lang}
           t={t}

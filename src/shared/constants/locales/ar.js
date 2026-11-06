@@ -32,7 +32,6 @@
   tabSettings: 'الإعدادات',
   shared: 'مشترك',
   sharedNotes: 'المشتركة',
-  sharedNotesTab: 'الملاحظات المشتركة',
   pendingApproval: 'بانتظار قبول المشاركة',
   friendsCount: 'أصدقاء',
   newNote: 'ملاحظة جديدة',
@@ -326,12 +325,6 @@
   noSharedWithMeSub: 'عندما يشارك أصدقاؤك الملاحظات معك، ستظهر هنا.',
   onlyOwnerCanShareNotice: 'نظراً لمشاركة هذه الملاحظة معك، يمكن للمالك الأصلي فقط مشاركتها مع الآخرين.',
   ownerBadge: 'المالك',
-  noFriendsShareTitle: 'لم تُضف أصدقاء بعد',
-  pendingApproval: 'في انتظار الموافقة',
-  addShareBtn: 'إضافة',
-  noFriendsShareSub: 'أضف أصدقاء باستخدام رمز الصديق لمشاركة الملاحظات معاً.',
-  removeShareBtn: 'إزالة',
-  sharedBadge: 'مشترك',
   newInvite: 'دعوة جديدة',
 };
 

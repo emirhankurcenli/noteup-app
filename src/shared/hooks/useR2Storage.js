@@ -1,4 +1,5 @@
-import { registerPlugin } from '@capacitor/core';
+import { registerPlugin, Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { supabase } from '@src/supabaseClient';
 import useMediaGarbageCollector from '@features/editor/hooks/useMediaGarbageCollector';
 import { uploadToR2 as uploadToR2Fn, deleteFromR2 as deleteFromR2Fn } from '@shared/hooks/useR2Uploader';
@@ -116,17 +117,49 @@ const useR2Storage = ({
           } catch (upErr) {
             console.warn("Cloud upload failed, evaluating fallback:", upErr);
             if (file.type.startsWith('image/')) {
-              try {
-                const dataUrl = await new Promise((resolve, reject) => {
+              // 1. Android Native: Cihazın yerel depolama alanına kaydet (LocalStorage 5MB kotasını çökertmez)
+              if (Capacitor.isNativePlatform()) {
+                try {
                   const reader = new FileReader();
-                  reader.onload = (ev) => resolve(ev.target?.result);
-                  reader.onerror = reject;
-                  reader.readAsDataURL(finalBlob);
-                });
-                if (dataUrl) {
-                  publicUrl = dataUrl;
+                  const base64Data = await new Promise((resolve, reject) => {
+                    reader.onload = () => {
+                      const res = reader.result;
+                      const b64 = typeof res === 'string' ? res.split(',')[1] : '';
+                      resolve(b64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(finalBlob);
+                  });
+
+                  if (base64Data) {
+                    const localFileName = `offline_${Date.now()}_${finalName}`;
+                    const savedFile = await Filesystem.writeFile({
+                      path: `media/${localFileName}`,
+                      data: base64Data,
+                      directory: Directory.Data,
+                      recursive: true,
+                    });
+                    publicUrl = Capacitor.convertFileSrc(savedFile.uri);
+                  }
+                } catch (fsErr) {
+                  console.warn("Filesystem local save fallback error:", fsErr);
                 }
-              } catch (_) {}
+              }
+
+              // 2. Web fallback: Eğer native değilse veya FS başarısız olduysa
+              if (!publicUrl) {
+                try {
+                  const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => resolve(ev.target?.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(finalBlob);
+                  });
+                  if (dataUrl) {
+                    publicUrl = dataUrl;
+                  }
+                } catch (_) {}
+              }
             }
             if (!publicUrl) throw upErr;
           }

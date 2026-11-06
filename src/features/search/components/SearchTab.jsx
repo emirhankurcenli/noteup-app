@@ -81,6 +81,8 @@ function getSearchableStrings(note) {
 const SearchTab = ({
   notes = [],
   openEditingNote,
+  requestBiometricAuth,
+  setToast,
   theme,
   lang: propLang,
   t: propT,
@@ -117,15 +119,27 @@ const SearchTab = ({
     const q = normalizeTurkish(debouncedQuery.trim());
     if (!q || q.length < 1) return [];
 
-    // Locked notes and deleted notes are excluded to protect private content
-    const activeNotes = notes.filter(n => n && !n.deletedAt && !n.isLocked);
+    // Deleted notes are excluded
+    const activeNotes = notes.filter((n) => n && !n.deletedAt);
     const matched = [];
 
     for (const note of activeNotes) {
-      const strings = getSearchableStrings(note);
-      const matchedStrings = strings.filter(s => normalizeTurkish(s.text).includes(q));
-      if (matchedStrings.length > 0) {
-        matched.push({ note, matchedStrings });
+      if (note.isLocked) {
+        // Kilitli not: ASLA içerik metinlerini aramaya dahil etme! Yalnızca başlık eşleşirse listele
+        const cleanTitle = htmlToPlainText(note.title || '');
+        if (cleanTitle && normalizeTurkish(cleanTitle).includes(q)) {
+          matched.push({
+            note,
+            matchedStrings: [{ text: cleanTitle, type: 'title' }],
+            isLocked: true,
+          });
+        }
+      } else {
+        const strings = getSearchableStrings(note);
+        const matchedStrings = strings.filter((s) => normalizeTurkish(s.text).includes(q));
+        if (matchedStrings.length > 0) {
+          matched.push({ note, matchedStrings, isLocked: false });
+        }
       }
     }
 
@@ -153,6 +167,8 @@ const SearchTab = ({
       <SearchResultsList
         results={results}
         openEditingNote={openEditingNote}
+        requestBiometricAuth={requestBiometricAuth}
+        setToast={setToast}
         debouncedQuery={debouncedQuery}
         isLight={isLight}
       />

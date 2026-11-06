@@ -9,13 +9,30 @@ const RemindersTab = ({
   lang,
   t
 }) => {
-  // Local state for live countdown ticking
+  // Canlı geri sayım için akıllı durum (Yalnızca aktif gelecek hatırlatıcı varsa çalışır)
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    const tick = setInterval(() => setNow(Date.now()), 1000);
+    const reminderList = Array.isArray(reminders) ? reminders : [];
+    const upcoming = reminderList.filter((r) => r && r.active && new Date(r.time).getTime() > Date.now());
+    if (upcoming.length === 0) return;
+
+    const checkAndUpdate = () => {
+      const curTime = Date.now();
+      const currentUpcoming = reminderList.filter((r) => r && r.active && new Date(r.time).getTime() > curTime);
+      if (currentUpcoming.length > 0) {
+        setNow(curTime);
+      }
+    };
+
+    const minDiff = Math.min(
+      ...upcoming.map((r) => new Date(r.time).getTime() - Date.now())
+    );
+    const intervalMs = minDiff <= 60_000 ? 1000 : 15_000;
+
+    const tick = setInterval(checkAndUpdate, intervalMs);
     return () => clearInterval(tick);
-  }, []);
+  }, [reminders]);
 
   const formatReminderDate = (dateStr) => {
     const date = new Date(dateStr);

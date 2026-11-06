@@ -24,8 +24,9 @@ export default function useAppLocalState({ notes }) {
     (notes || []).forEach(n => {
       (n.blocks || []).forEach(b => {
         if (b && (b.type === 'image' || b.type === 'file' || b.type === 'audio')) {
-          if (b.size && typeof b.size === 'number') {
-            totalBytes += b.size;
+          const s = typeof b.size === 'number' ? b.size : (typeof b.fileSize === 'number' ? b.fileSize : null);
+          if (s) {
+            totalBytes += s;
           } else if (b.url && b.url.startsWith('data:')) {
             totalBytes += Math.round((b.url.length - 22) * 3 / 4);
           } else {

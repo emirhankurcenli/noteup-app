@@ -32,7 +32,6 @@
   tabSettings: 'Impostazioni',
   shared: 'Condivisa',
   sharedNotes: 'Condivise',
-  sharedNotesTab: 'Note condivise',
   pendingApproval: 'Condivisione in sospeso',
   friendsCount: 'Amici',
   newNote: 'Nuova nota',
@@ -326,12 +325,6 @@
   noSharedWithMeSub: 'Quando gli amici condivideranno note con te, appariranno qui.',
   onlyOwnerCanShareNotice: 'Poiché questa nota è stata condivisa con te, solo il proprietario può condividerla.',
   ownerBadge: 'Proprietario',
-  noFriendsShareTitle: 'Nessun amico aggiunto',
-  pendingApproval: 'In attesa',
-  addShareBtn: 'Aggiungi',
-  noFriendsShareSub: 'Aggiungi amici tramite il codice amico nel profilo per condividere note.',
-  removeShareBtn: 'Rimuovi',
-  sharedBadge: 'Condiviso',
   newInvite: 'Nuovo invito',
 };
 

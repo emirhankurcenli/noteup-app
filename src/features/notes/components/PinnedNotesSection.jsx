@@ -20,7 +20,6 @@ export const PinnedNotesSection = ({
   setNudgeTargetNote,
   checkAndRequestNotificationPermission,
   reminders,
-  now,
   lang,
   t,
 }) => {
@@ -57,7 +56,6 @@ export const PinnedNotesSection = ({
             setNudgeTargetNote={setNudgeTargetNote}
             checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
             reminders={reminders}
-            now={now}
             lang={lang}
             t={t}
           />

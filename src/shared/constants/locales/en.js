@@ -32,7 +32,6 @@ const en = {
   tabSettings: 'Settings',
   shared: 'Shared',
   sharedNotes: 'Shared',
-  sharedNotesTab: 'Shared Notes',
   pendingApproval: 'Share Pending',
   friendsCount: 'Friends',
   newNote: 'New Note',
@@ -324,13 +323,7 @@ const en = {
   noSharedWithMeSub: 'When your friends share notes with you, they will appear here.',
   onlyOwnerCanShareNotice: 'Since this note was shared with you, only the original owner can share it with others.',
   ownerBadge: 'Owner',
-  noFriendsShareTitle: 'No Friends Added Yet',
-  pendingApproval: 'Pending Approval',
-  addShareBtn: 'Add',
   pendingShareRequests: 'Incoming Invitations',
-  noFriendsShareSub: 'Add friends using your friend code on the profile page to share notes together.',
-  removeShareBtn: 'Remove',
-  sharedBadge: 'Shared',
   newInvite: 'New Invite',
 };
 

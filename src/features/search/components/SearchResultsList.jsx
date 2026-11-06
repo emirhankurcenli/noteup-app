@@ -61,7 +61,16 @@ const TYPE_LABELS = {
   image: { tr: 'Görsel', en: 'Image', de: 'Bild', es: 'Imagen', fr: 'Image', it: 'Immagine', ru: 'Изображение', ar: 'صورة', ja: '画像', zh: '图片', color: '#F43F5E' },
 };
 
-export const SearchResultsList = ({ results, openEditingNote, debouncedQuery, isLight, t: propT, lang: propLang }) => {
+export const SearchResultsList = ({
+  results,
+  openEditingNote,
+  requestBiometricAuth,
+  setToast,
+  debouncedQuery,
+  isLight,
+  t: propT,
+  lang: propLang
+}) => {
   const ctx = useLanguage();
   const t = propT || ctx?.t || ((k) => k);
   const lang = propLang || ctx?.lang || 'tr';
@@ -77,12 +86,27 @@ export const SearchResultsList = ({ results, openEditingNote, debouncedQuery, is
     );
   }
 
+  const handleItemClick = async (note) => {
+    if (note.isLocked) {
+      if (typeof requestBiometricAuth === 'function') {
+        const ok = await requestBiometricAuth(t('noteLocked') || 'Kilitli Not', t('authToOpenNote') || 'Notu açmak için kimliğinizi doğrulayın');
+        if (!ok) {
+          if (typeof setToast === 'function') {
+            setToast({ title: '🔒', msg: t('authFailed') || 'Doğrulama Başarısız' });
+          }
+          return;
+        }
+      }
+    }
+    openEditingNote(note);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {results.map(({ note, matchedStrings }) => (
         <div
           key={note.id}
-          onClick={() => openEditingNote(note)}
+          onClick={() => handleItemClick(note)}
           style={{
             padding: '14px 16px',
             borderRadius: '16px',
@@ -95,44 +119,57 @@ export const SearchResultsList = ({ results, openEditingNote, debouncedQuery, is
             gap: '8px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-              <HighlightText text={note.title || t('untitledNote') || 'Başlıksız Not'} query={debouncedQuery} />
-            </h3>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <HighlightText text={note.title || t('untitledNote') || 'Başlıksız Not'} query={debouncedQuery} />
+              </h3>
+              {note.isLocked && (
+                <span style={{ fontSize: '0.68rem', color: '#EF4444', fontWeight: 800, background: 'rgba(239, 68, 68, 0.12)', padding: '2px 6px', borderRadius: '6px', flexShrink: 0 }}>
+                  🔒 {t('locked') || 'Kilitli'}
+                </span>
+              )}
+            </div>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', flexShrink: 0 }}>
               {new Date(note.updatedAt || Date.now()).toLocaleDateString()}
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {matchedStrings.slice(0, 3).map((match, i) => {
-              const meta = TYPE_LABELS[match.type] || TYPE_LABELS.text;
-              const snippet = getSearchSnippet(match.text, debouncedQuery, 13);
-              return (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '8px',
-                    padding: '6px 10px',
-                    borderRadius: '10px',
-                    background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.05)',
-                    fontSize: '0.80rem',
-                    lineHeight: 1.45,
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  <span style={{ color: meta.color, fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>
-                    {meta[lang] || meta.tr || meta.en}:
-                  </span>
-                  <span style={{ color: 'var(--text-secondary)' }}>
-                    <HighlightText text={snippet} query={debouncedQuery} />
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+          {note.isLocked ? (
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '4px 0' }}>
+              🔒 {t('lockedContent') || 'İçerik kilitli - Açmak için dokunun'}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {matchedStrings.slice(0, 3).map((match, i) => {
+                const meta = TYPE_LABELS[match.type] || TYPE_LABELS.text;
+                const snippet = getSearchSnippet(match.text, debouncedQuery, 13);
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '8px',
+                      padding: '6px 10px',
+                      borderRadius: '10px',
+                      background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.05)',
+                      fontSize: '0.80rem',
+                      lineHeight: 1.45,
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    <span style={{ color: meta.color, fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>
+                      {meta[lang] || meta.tr || meta.en}:
+                    </span>
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                      <HighlightText text={snippet} query={debouncedQuery} />
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       ))}
     </div>

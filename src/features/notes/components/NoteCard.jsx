@@ -35,6 +35,50 @@ export const getBadgeCountdown = (targetTimeMs, nowMs) => {
   }
 };
 
+export const ReminderBadge = React.memo(({ activeRem, t }) => {
+  const targetMs = useMemo(() => (activeRem ? new Date(activeRem.time).getTime() : 0), [activeRem?.time]);
+  const [nowMs, setNowMs] = useState(Date.now());
+
+  useEffect(() => {
+    if (!activeRem || !targetMs) return;
+    const checkDiff = targetMs - Date.now();
+    if (checkDiff <= 0) return;
+
+    // Fast 1s tick only when <= 60s; 10s tick when <= 1 hour; 30s otherwise
+    const intervalMs = checkDiff <= 60_000 ? 1000 : (checkDiff <= 3600_000 ? 10_000 : 30_000);
+    const timer = setInterval(() => {
+      const cur = Date.now();
+      setNowMs(cur);
+      if (targetMs - cur <= 0) {
+        clearInterval(timer);
+      }
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [activeRem, targetMs]);
+
+  if (!activeRem) return null;
+
+  const countdownStr = getBadgeCountdown(targetMs, nowMs);
+  const isNotif = activeRem.modes?.notification;
+  const isAlarm = activeRem.modes?.alarm;
+  let modeLabel = cleanText(t('reminderLabel'));
+  if (isNotif && isAlarm) {
+    modeLabel += `: ${cleanText(t('notificationAndAlarm'))}`;
+  } else if (isAlarm) {
+    modeLabel += `: ${cleanText(t('alarmType'))}`;
+  } else if (isNotif) {
+    modeLabel += `: ${cleanText(t('notificationType'))}`;
+  }
+  const fullText = countdownStr ? `${modeLabel} (${countdownStr})` : modeLabel;
+
+  return (
+    <span className="badge badge-reminder" style={{ display: 'inline-flex', alignItems: 'center' }}>
+      <ClockIcon /> {fullText}
+    </span>
+  );
+});
+
 export const getNoteSnippet = (note, t = (k) => k) => {
   if (note.isLocked) {
     return (
@@ -130,7 +174,7 @@ const NoteCardComponent = ({
 
   const netDebt = (note.debts || []).reduce((acc, curr) => acc + (curr?.amount || 0), 0);
   const activeRem = (reminders || []).find(
-    (r) => r.noteId === note.id && r.active && new Date(r.time).getTime() > now
+    (r) => r && r.noteId === note.id && r.active && new Date(r.time).getTime() > Date.now()
   );
 
   const handleCardClick = async () => {
@@ -224,27 +268,7 @@ const NoteCardComponent = ({
                   <OwnerIcon /> {cleanText(t('ownerBadge') || 'Not Sahibi')}
                 </span>
               ))}
-            {activeRem &&
-              (() => {
-                const targetMs = new Date(activeRem.time).getTime();
-                const countdownStr = getBadgeCountdown(targetMs, now);
-                const isNotif = activeRem.modes?.notification;
-                const isAlarm = activeRem.modes?.alarm;
-                let modeLabel = cleanText(t('reminderLabel'));
-                if (isNotif && isAlarm) {
-                  modeLabel += `: ${cleanText(t('notificationAndAlarm'))}`;
-                } else if (isAlarm) {
-                  modeLabel += `: ${cleanText(t('alarmType'))}`;
-                } else if (isNotif) {
-                  modeLabel += `: ${cleanText(t('notificationType'))}`;
-                }
-                const fullText = countdownStr ? `${modeLabel} (${countdownStr})` : modeLabel;
-                return (
-                  <span className="badge badge-reminder" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                    <ClockIcon /> {fullText}
-                  </span>
-                );
-              })()}
+            {activeRem && <ReminderBadge activeRem={activeRem} t={t} />}
             {note.debts && note.debts.length > 0 && (
               <span
                 className={`badge ${netDebt >= 0 ? 'badge-shared' : 'trash-btn-delete'}`}
@@ -469,5 +493,16 @@ const NoteCardComponent = ({
   );
 };
 
-export const NoteCard = React.memo(NoteCardComponent);
+export const NoteCard = React.memo(NoteCardComponent, (prevProps, nextProps) => {
+  if (prevProps.note !== nextProps.note) return false;
+  if (prevProps.activeMenuNoteId !== nextProps.activeMenuNoteId) {
+    if (prevProps.activeMenuNoteId === prevProps.note.id || nextProps.activeMenuNoteId === nextProps.note.id) {
+      return false;
+    }
+  }
+  if (prevProps.theme !== nextProps.theme) return false;
+  if (prevProps.lang !== nextProps.lang) return false;
+  if (prevProps.reminders !== nextProps.reminders) return false;
+  return true;
+});
 export default NoteCard;

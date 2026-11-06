@@ -32,7 +32,6 @@ const tr = {
   tabSettings: 'Ayarlar',
   shared: 'Paylaşıldı',
   sharedNotes: 'Paylaşılanlar',
-  sharedNotesTab: 'Paylaşılan Notlar',
   pendingApproval: 'Paylaşım Bekliyor',
   friendsCount: 'Arkadaş',
   newNote: 'Yeni Not',
@@ -326,14 +325,8 @@ const tr = {
   noSharedWithMeSub: 'Arkadaşlarınız sizinle bir not paylaştığında burada görünecektir.',
   onlyOwnerCanShareNotice: 'Bu not sizinle paylaşıldığı için yalnızca asıl sahibi başkalarıyla paylaşabilir.',
   ownerBadge: 'Not Sahibi',
-  sharedBadge: 'Ortak',
-  pendingApproval: 'Onay Bekliyor',
   newInvite: 'Yeni Davet',
   pendingShareRequests: 'Gelen Davetler',
-  addShareBtn: 'Ekle',
-  removeShareBtn: 'Çıkar',
-  noFriendsShareTitle: 'Henüz Arkadaşınız Yok',
-  noFriendsShareSub: 'Notu ortak paylaşabilmek için profil sayfasından arkadaş kodunu kullanarak arkadaş ekleyin.',
 };
 
 export default tr;

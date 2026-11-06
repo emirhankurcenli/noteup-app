@@ -4,7 +4,7 @@
  * Extracted from useNotes.js (SRP violation fix).
  * Handles: localStorage write, Supabase upsert, debounce, flush.
  */
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { supabase } from '@src/supabaseClient';
 import { ensureBlockTimestamps } from '@shared/utils/blockMergeUtils';
 import { STORAGE_KEYS } from '@shared/utils/storageKeys';
@@ -135,6 +135,31 @@ export default function useNotesPersistence({ user, getUserScopedKey, setNotes }
     }
     await persistNotes(targetNotes);
   }, [persistNotes, setNotes]);
+
+  // Otomatik Çevrimdışı -> Çevrimiçi Yeniden Senkronizasyon (Auto Online Re-sync)
+  useEffect(() => {
+    const handleOnline = async () => {
+      flushPersist();
+
+      try {
+        const key = getUserScopedKey(STORAGE_KEYS.NOTES);
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const storedNotes = JSON.parse(raw);
+          if (Array.isArray(storedNotes) && storedNotes.length > 0) {
+            await persistNotes(storedNotes, false);
+          }
+        }
+      } catch (err) {
+        console.warn('[Online Re-sync] Error checking offline notes:', err);
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [flushPersist, getUserScopedKey, persistNotes]);
 
   return { persistNotes, debouncedPersistNotes, flushPersist, saveNotes };
 }

@@ -32,7 +32,6 @@
   tabSettings: '设置',
   shared: '已共享',
   sharedNotes: '共享笔记',
-  sharedNotesTab: '共享笔记',
   pendingApproval: '等待共享确认',
   friendsCount: '好友',
   newNote: '新笔记',
@@ -326,12 +325,6 @@
   noSharedWithMeSub: '当朋友与您共享笔记时，它们会显示在此处。',
   onlyOwnerCanShareNotice: '由于此笔记是与您共享的，因此只有原始所有者才能与其他人共享。',
   ownerBadge: '所有者',
-  noFriendsShareTitle: '尚未添加好友',
-  pendingApproval: '等待确认',
-  addShareBtn: '添加',
-  noFriendsShareSub: '通过个人资料页的好友码添加好友以共享笔记。',
-  removeShareBtn: '移除',
-  sharedBadge: '已共享',
   newInvite: '新邀请',
 };
 

@@ -1,4 +1,4 @@
-﻿const ja = {
+const ja = {
   confirmDeleteTitle: '削除の確認',
   pinnedBadge: 'ピン留め済み',
   alarmSetTitle: 'アラーム設定完了',
@@ -32,7 +32,6 @@
   tabSettings: '設定',
   shared: '共有済み',
   sharedNotes: '共有メモ',
-  sharedNotesTab: '共有メモ',
   pendingApproval: '共有承認待ち',
   friendsCount: '友達',
   newNote: '新規メモ',
@@ -326,12 +325,6 @@
   noSharedWithMeSub: '友達がノートを共有すると、ここに表示されます。',
   onlyOwnerCanShareNotice: 'このノートは共有されたもののため、作成者のみが他の人と共有できます。',
   ownerBadge: '作成者',
-  noFriendsShareTitle: '友達がいません',
-  pendingApproval: '承認待ち',
-  addShareBtn: '追加',
-  noFriendsShareSub: 'プロフィールページから友達コードを使って友達を追加してください。',
-  removeShareBtn: '削除',
-  sharedBadge: '共有済み',
   newInvite: '新しい招待',
 };
 

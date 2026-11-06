@@ -32,7 +32,6 @@
   tabSettings: 'Einstellungen',
   shared: 'Geteilt',
   sharedNotes: 'Geteilt',
-  sharedNotesTab: 'Geteilte Notizen',
   pendingApproval: 'Freigabe ausstehend',
   friendsCount: 'Freunde',
   newNote: 'Neue Notiz',
@@ -326,12 +325,6 @@
   noSharedWithMeSub: 'Wenn Freunde Notizen mit Ihnen teilen, erscheinen diese hier.',
   onlyOwnerCanShareNotice: 'Da diese Notiz mit Ihnen geteilt wurde, kann nur der Eigentümer sie weiter teilen.',
   ownerBadge: 'Eigentümer',
-  noFriendsShareTitle: 'Noch keine Freunde',
-  pendingApproval: 'Ausstehend',
-  addShareBtn: 'Hinzufügen',
-  noFriendsShareSub: 'Füge Freunde über den Profilbereich hinzu, um Notizen gemeinsam zu teilen.',
-  removeShareBtn: 'Entfernen',
-  sharedBadge: 'Geteilt',
   newInvite: 'Neue Einladung',
 };
 

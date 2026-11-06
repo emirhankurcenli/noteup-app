@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import NoteCard from './NoteCard';
 import { cleanText } from '@shared/utils/textUtils';
 
@@ -24,30 +24,6 @@ const NotesGrid = ({
   lang = 'tr',
   t = (k) => k,
 }) => {
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const reminderEntries = reminders ? Object.values(reminders) : [];
-    const hasUpcoming = reminderEntries.some((r) => r && r.time > Date.now());
-    if (!hasUpcoming) return;
-
-    const checkAndUpdate = () => {
-      const curTime = Date.now();
-      const currentUpcoming = reminderEntries.filter((r) => r && r.time > curTime);
-      if (currentUpcoming.length > 0) {
-        setNow(curTime);
-      }
-    };
-
-    const minDiff = Math.min(
-      ...reminderEntries.filter((r) => r && r.time > Date.now()).map((r) => r.time - Date.now())
-    );
-    const intervalMs = minDiff <= 60_000 ? 1000 : 15_000;
-
-    const timer = setInterval(checkAndUpdate, intervalMs);
-    return () => clearInterval(timer);
-  }, [reminders]);
-
   useEffect(() => {
     if (!activeMenuNoteId) return;
     const handleScroll = () => setActiveMenuNoteId(null);
@@ -94,7 +70,6 @@ const NotesGrid = ({
               setNudgeTargetNote={setNudgeTargetNote}
               checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
               reminders={reminders}
-              now={now}
               theme={theme}
               lang={lang}
               t={t}
