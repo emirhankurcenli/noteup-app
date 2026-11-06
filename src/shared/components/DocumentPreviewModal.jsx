@@ -30,7 +30,26 @@ const CloseIcon = () => (
 );
 
 export const DocumentPreviewModal = ({ previewFileModal, setPreviewFileModal }) => {
+  React.useEffect(() => {
+    return () => {
+      if (previewFileModal?.onClose) {
+        try { previewFileModal.onClose(); } catch (e) {}
+      } else if (previewFileModal?.objectUrl) {
+        try { URL.revokeObjectURL(previewFileModal.objectUrl); } catch (e) {}
+      }
+    };
+  }, [previewFileModal]);
+
   if (!previewFileModal) return null;
+
+  const handleClose = () => {
+    if (previewFileModal?.onClose) {
+      try { previewFileModal.onClose(); } catch (e) { console.warn(e); }
+    } else if (previewFileModal?.objectUrl) {
+      try { URL.revokeObjectURL(previewFileModal.objectUrl); } catch (e) { console.warn(e); }
+    }
+    setPreviewFileModal(null);
+  };
 
   const openFile = async () => {
     try {
@@ -46,7 +65,7 @@ export const DocumentPreviewModal = ({ previewFileModal, setPreviewFileModal }) 
   return (
     <div 
       className="modal-overlay" 
-      onClick={() => setPreviewFileModal(null)}
+      onClick={handleClose}
       style={{ zIndex: 100000 }}
     >
       <div 
@@ -97,7 +116,7 @@ export const DocumentPreviewModal = ({ previewFileModal, setPreviewFileModal }) 
             <button
               className="btn-secondary"
               style={{ width: '34px', height: '34px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onClick={() => setPreviewFileModal(null)}
+              onClick={handleClose}
             >
               <CloseIcon />
             </button>

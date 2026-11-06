@@ -1,5 +1,43 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { triggerHaptic } from '@shared/services/haptics';
+
+// Hafif ve hızlı blok klonlayıcı (JSON.parse(JSON.stringify(...)) yerine)
+const cloneBlock = (b) => {
+  if (!b) return b;
+  const cloned = { ...b };
+  if (Array.isArray(b.items)) cloned.items = b.items.map(it => ({ ...it }));
+  if (Array.isArray(b.payments)) cloned.payments = b.payments.map(p => ({ ...p }));
+  return cloned;
+};
+
+// JSON stringify yapmadan blokların eşitliğini hızlıca test eden fonksiyon
+const areBlocksEqual = (blocksA, blocksB) => {
+  if (blocksA === blocksB) return true;
+  if (!blocksA || !blocksB || blocksA.length !== blocksB.length) return false;
+  for (let i = 0; i < blocksA.length; i++) {
+    const a = blocksA[i];
+    const b = blocksB[i];
+    if (a === b) continue;
+    if (!a || !b) return false;
+    if (a.id !== b.id || a.type !== b.type || a.content !== b.content) return false;
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    if (keysA.length !== keysB.length) return false;
+    for (const key of keysA) {
+      if (key === 'content' || key === 'id' || key === 'type') continue;
+      const valA = a[key];
+      const valB = b[key];
+      if (valA !== valB) {
+        if (typeof valA === 'object' && valA !== null && typeof valB === 'object' && valB !== null) {
+          if (JSON.stringify(valA) !== JSON.stringify(valB)) return false;
+        } else {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+};
 
 const useNoteUndoRedo = ({
   editingNote,
@@ -18,12 +56,12 @@ const useNoteUndoRedo = ({
     if (!note) return;
     const clone = {
       title: note.title,
-      blocks: JSON.parse(JSON.stringify(note.blocks || []))
+      blocks: (note.blocks || []).map(cloneBlock)
     };
     setEditorUndoStack(prev => {
       if (prev.length > 0) {
         const last = prev[prev.length - 1];
-        if (last.title === clone.title && JSON.stringify(last.blocks) === JSON.stringify(clone.blocks)) {
+        if (last.title === clone.title && areBlocksEqual(last.blocks, clone.blocks)) {
           return prev;
         }
       }
@@ -39,7 +77,7 @@ const useNoteUndoRedo = ({
     triggerHaptic('light');
     const currentClone = {
       title: editingNote.title,
-      blocks: JSON.parse(JSON.stringify(editingNote.blocks || []))
+      blocks: (editingNote.blocks || []).map(cloneBlock)
     };
     setEditorRedoStack(prev => [...prev, currentClone]);
     const nextUndoStack = [...editorUndoStack];
@@ -62,7 +100,7 @@ const useNoteUndoRedo = ({
     triggerHaptic('light');
     const currentClone = {
       title: editingNote.title,
-      blocks: JSON.parse(JSON.stringify(editingNote.blocks || []))
+      blocks: (editingNote.blocks || []).map(cloneBlock)
     };
     setEditorUndoStack(prev => [...prev, currentClone]);
     const nextRedoStack = [...editorRedoStack];

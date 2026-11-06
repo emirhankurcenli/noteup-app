@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { formatBytes } from '@shared/utils/mediaUtils';
 import { MAX_STORAGE_BYTES } from '@features/notes/hooks/useAppLocalState';
 
@@ -30,6 +30,33 @@ const useAudioRecorderHandler = ({
       recordingIntervalRef.current = null;
     }
   };
+
+  useEffect(() => {
+    return () => {
+      cleanupRecordingTimer();
+
+      if (mediaRecorderRef.current) {
+        try {
+          if (mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+          }
+          if (mediaRecorderRef.current.stream) {
+            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+          }
+        } catch (_) {}
+        mediaRecorderRef.current = null;
+      }
+
+      if (currentAudioRef.current) {
+        try {
+          currentAudioRef.current.pause();
+          currentAudioRef.current.src = '';
+          currentAudioRef.current.load();
+        } catch (_) {}
+        currentAudioRef.current = null;
+      }
+    };
+  }, []);
 
   const preSplitForRecording = () => {
     if (!editingNote || !focusedBlockRef?.current) return;

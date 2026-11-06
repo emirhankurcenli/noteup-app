@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const ImageBlock = ({ block, setLightboxUrl, handleDeleteBlock }) => {
+const ImageBlockComponent = ({ block, setLightboxUrl, handleDeleteBlock }) => {
   return (
     <div className="image-block-wrapper" style={{ position: 'relative', margin: '10px 0' }}>
       <img
@@ -37,4 +37,5 @@ export const ImageBlock = ({ block, setLightboxUrl, handleDeleteBlock }) => {
   );
 };
 
+export const ImageBlock = React.memo(ImageBlockComponent);
 export default ImageBlock;

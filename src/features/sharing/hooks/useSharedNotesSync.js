@@ -378,6 +378,12 @@ export const useSharedNotesSync = ({
           if (payload.eventType === 'UPDATE' && recNew && recNew.to_code === myCode && recNew.status !== 'pending') {
             setFriendRequests((prev) => prev.filter((r) => r.id !== recNew.id));
           }
+
+          // Arkadaş yöneticisini (useFriendManager) bilgilendir
+          if ((recNew && (recNew.to_code === myCode || recNew.from_code === myCode)) ||
+              (recOld && (recOld.to_code === myCode || recOld.from_code === myCode))) {
+            window.dispatchEvent(new CustomEvent('noteup_friend_requests_changed'));
+          }
         }
       );
 
@@ -488,44 +494,39 @@ export const useSharedNotesSync = ({
     if (!myCode) return;
 
     // İlk yüklemede hemen çalıştır
-    syncIncomingPendingShares(true);
     pollSharedNotes();
 
     // Her 10 saniyede bir periyodik polling
     pollingIntervalRef.current = setInterval(() => {
-      syncIncomingPendingShares(false);
       pollSharedNotes();
     }, 10_000);
 
     // Sekme geçişi veya manuel yenileme eventi dinleyicisi
     const handleManualRefresh = () => {
-      syncIncomingPendingShares(false);
       pollSharedNotes();
     };
     window.addEventListener('noteup_refresh_shares', handleManualRefresh);
 
-    // Uygulama arka plandan öne geldiğinde hemen sync et
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        lastDispatchedMapRef.current.clear();
+        pollSharedNotes();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Uygulama arka plandan öne geldiğinde hemen sync et (Native Capacitor)
     let appStateListener = null;
     try {
       CapApp.addListener('appStateChange', ({ isActive }) => {
         if (isActive) {
           lastDispatchedMapRef.current.clear();
-          syncIncomingPendingShares(false);
           pollSharedNotes();
         }
       }).then((listener) => {
         appStateListener = listener;
       });
-    } catch (_) {
-      // Web ortamında CapApp çalışmaz — sessizce geç
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          lastDispatchedMapRef.current.clear();
-          syncIncomingPendingShares(false);
-          pollSharedNotes();
-        }
-      });
-    }
+    } catch (_) {}
 
     return () => {
       if (pollingIntervalRef.current) {
@@ -533,6 +534,7 @@ export const useSharedNotesSync = ({
         pollingIntervalRef.current = null;
       }
       window.removeEventListener('noteup_refresh_shares', handleManualRefresh);
+      document.removeEventListener('visibilitychange', handleVisibility);
       if (appStateListener) {
         try { appStateListener.remove(); } catch (_) {}
       }

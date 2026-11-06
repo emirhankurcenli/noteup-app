@@ -78,6 +78,14 @@ export const sanitizeNoteContent = (content, maxLength = 50000) => {
     .replace(/vbscript\s*:/gi, '')
     .replace(/data\s*:\s*text\/html/gi, '');
 
+  // Hızlı Geçiş (Fast Path): Eğer içerikte tehlikeli etiket, inline handler (on*=) veya şüpheli protokol
+  // bulunmuyorsa ve yalnızca güvenli biçimlendirme etiketleri (b, i, u, s, p, div, br, ul, ol, li, span, font)
+  // varsa, pahalı DOMParser ayağa kaldırmadan anında döndür (klavye yazma gecikmesini sıfırlar).
+  const hasSuspiciousPattern = /<(?!(?:\/?(b|i|u|s|p|div|br|ul|ol|li|span|font)\b))[\w/]|on\w+\s*=|javascript:|vbscript:|data\s*:\s*text\/html/i.test(clean);
+  if (!hasSuspiciousPattern) {
+    return clean.substring(0, maxLength);
+  }
+
   // 2. Comprehensive DOMParser sanitization to strip inline handlers, malicious attributes, and disallowed tags
   try {
     if (typeof window !== 'undefined' && window.DOMParser) {

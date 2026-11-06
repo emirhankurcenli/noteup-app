@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const AudioBlock = ({
+const AudioBlockComponent = ({
   block,
   activeAudioPlayingId,
   activeAudioProgress,
@@ -77,4 +77,5 @@ export const AudioBlock = ({
   );
 };
 
+export const AudioBlock = React.memo(AudioBlockComponent);
 export default AudioBlock;

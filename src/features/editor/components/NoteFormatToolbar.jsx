@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FONTS, ToolbarFontSelector } from '@features/editor/components/toolbar/ToolbarFontSelector';
 import { ToolbarTextStyleButtons } from '@features/editor/components/toolbar/ToolbarTextStyleButtons';
 import { COLORS, ToolbarColorPickerRow } from '@features/editor/components/toolbar/ToolbarColorPickerRow';
@@ -63,17 +63,26 @@ const NoteFormatToolbar = ({
   };
 
   useEffect(() => {
+    // Sadece format toolbar açıkken ve geçerli bir blok seçiliyken selectionchange dinle
+    // (Toolbar kapalıyken tarayıcının her harfte getComputedStyle / layout thrashing yapmasını önler)
+    if (!showFormatToolbar || !targetBlockId || editingNote?.deletedAt) return;
+
     updateActiveFormatStates();
 
+    let rafId = null;
     const handleSelectionChange = () => {
-      updateActiveFormatStates();
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        updateActiveFormatStates();
+      });
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       document.removeEventListener('selectionchange', handleSelectionChange);
     };
-  }, [targetBlockId, activeBlock?.content]);
+  }, [showFormatToolbar, targetBlockId, activeBlock?.content, editingNote?.deletedAt]);
 
   useEffect(() => {
     if (activeBlock) {

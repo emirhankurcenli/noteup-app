@@ -364,9 +364,15 @@ export default function useNotes({
       if (field === 'title' && typeof value === 'string') {
         cleanValue = sanitizeSingleLine(value, 150, false);
       } else if (field === 'blocks' && Array.isArray(value)) {
-        cleanValue = value.map(b => {
+        const prevBlocks = prevEditingNote.blocks || [];
+        cleanValue = value.map((b, i) => {
           if (!b) return b;
           if (b.type === 'text' && typeof b.content === 'string') {
+            const prevB = prevBlocks[i];
+            // Değişmeyen blokların nesne referansını koru (React.memo gereksiz render'ı engellesin)
+            if (prevB && prevB.id === b.id && prevB.content === b.content && prevB.bullet === b.bullet && prevB.fontFamily === b.fontFamily) {
+              return prevB;
+            }
             return { ...b, content: sanitizeNoteContent(b.content) };
           }
           return b;

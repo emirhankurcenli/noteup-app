@@ -1,8 +1,8 @@
-﻿import React from 'react';
+import React from 'react';
 import { saveCurrentSelection } from '@shared/utils/selectionUtils';
 import { sanitizeNoteContent } from '@shared/utils/securityUtils';
 
-export const TextBlock = ({
+export const TextBlock = React.memo(({
   block,
   idx,
   t,
@@ -55,18 +55,19 @@ export const TextBlock = ({
       onSelect={handleSaveSelection}
       onKeyDown={(e) => handleTextareaKeyDown(e, block, idx)}
       onInput={(e) => {
-        handleSaveSelection();
         const html = e.currentTarget.innerHTML;
         const hasList = html.toLowerCase().includes('<ul') || html.toLowerCase().includes('<li');
-        handleUpdateBlock(block.id, { content: html, ...(hasList ? {} : { bullet: false }) }, true);
+        // instantHistory = false: Her karakterde değil, kelime/zaman sınırında snapshot alarak klavye gecikmesini sıfırla
+        handleUpdateBlock(block.id, { content: html, ...(hasList ? {} : { bullet: false }) }, false);
       }}
       onBlur={(e) => {
         const html = e.currentTarget.innerHTML;
         const hasList = html.toLowerCase().includes('<ul') || html.toLowerCase().includes('<li');
-        handleUpdateBlock(block.id, { content: html, ...(hasList ? {} : { bullet: false }) });
+        // instantHistory = true: Odaktan çıkıldığında son hali kesin snapshot olarak kaydet
+        handleUpdateBlock(block.id, { content: html, ...(hasList ? {} : { bullet: false }) }, true);
       }}
     />
   );
-};
+});
 
 export default TextBlock;

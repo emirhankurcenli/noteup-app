@@ -1,7 +1,7 @@
 import React from 'react';
 import { getFileIconInfo } from '../fileIconUtils';
 
-export const FileBlock = ({ block, handleOpenFile, handleDeleteBlock }) => {
+const FileBlockComponent = ({ block, handleOpenFile, handleDeleteBlock }) => {
   const iconInfo = getFileIconInfo(block.fileName);
 
   return (
@@ -43,4 +43,5 @@ export const FileBlock = ({ block, handleOpenFile, handleDeleteBlock }) => {
   );
 };
 
+export const FileBlock = React.memo(FileBlockComponent);
 export default FileBlock;

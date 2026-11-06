@@ -8,7 +8,7 @@ import ParkingWidget from '@features/widgets/components/ParkingWidget';
 import ExamWidget from '@features/widgets/components/ExamWidget';
 import ExpenseWidget from '@features/widgets/components/ExpenseWidget';
 
-export const WidgetBlock = ({
+export const WidgetBlockComponent = ({
   block,
   idx,
   theme,
@@ -215,4 +215,5 @@ export const WidgetBlock = ({
   }
 };
 
+export const WidgetBlock = React.memo(WidgetBlockComponent);
 export default WidgetBlock;

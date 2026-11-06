@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import NoteCard from './NoteCard';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PinnedNotesSection } from './PinnedNotesSection';
 import { FolderTabBar } from './FolderTabBar';
 import { cleanText, htmlToPlainText } from '@shared/utils/textUtils';
@@ -139,9 +138,26 @@ const NotesGrid = ({
   const [menuDirection, setMenuDirection] = useState('down');
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    const reminderEntries = reminders ? Object.values(reminders) : [];
+    const hasUpcoming = reminderEntries.some(r => r && r.time > Date.now());
+    if (!hasUpcoming) return;
+
+    const checkAndUpdate = () => {
+      const curTime = Date.now();
+      const currentUpcoming = reminderEntries.filter(r => r && r.time > curTime);
+      if (currentUpcoming.length > 0) {
+        setNow(curTime);
+      }
+    };
+
+    const minDiff = Math.min(
+      ...reminderEntries.filter(r => r && r.time > Date.now()).map(r => r.time - Date.now())
+    );
+    const intervalMs = minDiff <= 60_000 ? 1000 : 15_000;
+
+    const timer = setInterval(checkAndUpdate, intervalMs);
     return () => clearInterval(timer);
-  }, []);
+  }, [reminders]);
 
   useEffect(() => {
     if (!activeMenuNoteId) return;
@@ -150,11 +166,13 @@ const NotesGrid = ({
     return () => window.removeEventListener('scroll', handleScroll, true);
   }, [activeMenuNoteId, setActiveMenuNoteId]);
 
-  const sortedNotes = [...(visibleNotes || [])].sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
-    return (b.updatedAt || 0) - (a.updatedAt || 0);
-  });
+  const sortedNotes = useMemo(() => {
+    return [...(visibleNotes || [])].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return (b.updatedAt || 0) - (a.updatedAt || 0);
+    });
+  }, [visibleNotes]);
 
   return (
     <div className="animate-slide-up">

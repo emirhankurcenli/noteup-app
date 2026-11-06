@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Keyboard } from '@capacitor/keyboard';
 import { formatTurkishMoneyInput, parseTurkishMoneyToFloat, formatTurkishMoneyDisplay } from '@shared/utils/money';
@@ -247,16 +247,25 @@ const NoteEditor = ({
     }
   }, [editingNote?.id]);
 
-  const totalChars = (editingNote.blocks || [])
-    .filter(b => b && b.type === 'text')
-    .reduce((acc, b) => {
-      const rawHtml = b.content || '';
-      const cleanText = rawHtml
-        .replace(/<[^>]*>/g, '')
-        .replace(/&nbsp;/gi, ' ')
-        .replace(/[\u200B\u8203\r\n]/g, '');
-      return acc + cleanText.length;
-    }, 0);
+  const totalChars = useMemo(() => {
+    const blocks = editingNote?.blocks || [];
+    let count = 0;
+    for (let i = 0; i < blocks.length; i++) {
+      const b = blocks[i];
+      if (b && b.type === 'text') {
+        const raw = b.content || '';
+        if (!raw.includes('<') && !raw.includes('&')) {
+          count += raw.length;
+        } else {
+          count += raw
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/[\u200B\u8203\r\n]/g, '').length;
+        }
+      }
+    }
+    return count;
+  }, [editingNote?.blocks]);
 
   const updateBlockForm = (blockId, fields) => {
     setBlockFormStates(prev => ({
@@ -265,7 +274,7 @@ const NoteEditor = ({
     }));
   };
 
-  const editorContextValue = {
+  const editorContextValue = useMemo(() => ({
     editingNote,
     setEditingNote,
     handleCloseEditor,
@@ -305,7 +314,46 @@ const NoteEditor = ({
     reminders,
     handleCancelReminder,
     setConfirmDialog,
-  };
+  }), [
+    editingNote,
+    setEditingNote,
+    handleCloseEditor,
+    editorUndoStack,
+    editorRedoStack,
+    handleUndo,
+    handleRedo,
+    showFormatToolbar,
+    setShowFormatToolbar,
+    activeFormatBlockId,
+    setActiveFormatBlockId,
+    showEditorMenu,
+    setShowEditorMenu,
+    lang,
+    t,
+    requestBiometricAuth,
+    setNotes,
+    persistNotes,
+    setToast,
+    friends,
+    handleSendNudge,
+    checkAndRequestNotificationPermission,
+    setReminderNoteId,
+    setReminderTime,
+    setShowReminderModal,
+    handleInsertWidget,
+    permissionStates,
+    checkAndRequestPermission,
+    fileInputRef,
+    startRecording,
+    setShowShareModal,
+    handleMoveToTrash,
+    userPlan,
+    notes,
+    theme,
+    reminders,
+    handleCancelReminder,
+    setConfirmDialog,
+  ]);
 
   return (
     <EditorProvider value={editorContextValue}>

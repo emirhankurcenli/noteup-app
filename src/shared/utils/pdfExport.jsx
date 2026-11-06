@@ -1,11 +1,11 @@
 import React from 'react';
-import { jsPDF } from "jspdf";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { Capacitor } from "@capacitor/core";
 
 export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", setConfirmDialog) => {
-  const generatePDFDoc = () => {
+  const generatePDFDoc = async () => {
+    const { jsPDF } = await import("jspdf");
     const doc = new jsPDF();
     
     // Add premium header / brand styling
@@ -202,7 +202,7 @@ export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", set
         msg: lang === 'tr' ? "Lütfen bekleyin." : "Please wait."
       });
       
-      const doc = generatePDFDoc();
+      const doc = await generatePDFDoc();
       const pdfBase64 = doc.output('datauristring').split(',')[1];
       
       await Filesystem.writeFile({
@@ -233,7 +233,7 @@ export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", set
         msg: lang === 'tr' ? "Lütfen bekleyin." : "Please wait."
       });
 
-      const doc = generatePDFDoc();
+      const doc = await generatePDFDoc();
       const pdfBase64 = doc.output('datauristring').split(',')[1];
 
       const fileResult = await Filesystem.writeFile({
@@ -295,7 +295,7 @@ export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", set
     });
   } else {
     // Web Browser fallback
-    const doc = generatePDFDoc();
+    const doc = await generatePDFDoc();
     doc.save(pdfFileName);
     setToast({
       title: lang === 'tr' ? "✅ PDF İndirildi" : "✅ PDF Downloaded",
