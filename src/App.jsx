@@ -233,7 +233,12 @@ function AppInner({ optionsRef }) {
     confirmDialog, setConfirmDialog, showReminderModal, setShowReminderModal,
     handleCloseEditor, tabHistoryRef, setPendingOpenNoteId,
     updatePermissionStates, syncDismissedAlarms, setEditingNote,
-    syncDeltaSharedNotes, user
+    syncDeltaSharedNotes, user,
+    lightboxUrl, setLightboxUrl,
+    previewFileModal, setPreviewFileModal,
+    showShareModal, setShowShareModal,
+    activeShareNoteId, setActiveShareNoteId,
+    showFeedbackModal, setShowFeedbackModal,
   });
 
   const handleShareNoteImage = async (note) => {

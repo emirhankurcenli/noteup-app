@@ -143,4 +143,4 @@ const ParkingWidget = ({
   );
 };
 
-export default ParkingWidget;
+export default React.memo(ParkingWidget);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { formatTurkishMoneyInput, formatTurkishMoneyDisplay } from '@shared/utils/money';
 import DebtDetailModal from '@shared/components/DebtDetailModal';
 
@@ -36,7 +36,7 @@ const DebtWidget = ({
   const [showDetailModal, setShowDetailModal] = useState(false);
   const fs = blockFormStates[block.id] || { direction: 'plus' };
   const items = block.items || [];
-  const netTotal = items.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
+  const netTotal = useMemo(() => items.reduce((acc, i) => acc + (Number(i.amount) || 0), 0), [items]);
   const isEditing = fs.isEditing || !block.setupDone;
 
   const getTr = (key, fallback) => {
@@ -388,4 +388,4 @@ const DebtWidget = ({
   );
 };
 
-export default DebtWidget;
+export default React.memo(DebtWidget);

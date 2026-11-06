@@ -161,10 +161,35 @@ const useFriendManager = ({
 
     // Realtime WebSocket kanalı zaten friend_requests tablosunu anlık dinliyor.
     // Polling sadece WebSocket bağlantı kopması durumunda yedek olarak çalışır (60s).
-    pollingRef.current = setInterval(pollFriendRequests, 60_000);
+    // Pil tasarrufu: Uygulama arka plana geçtiğinde polling durdurulur, öne gelince anında tazelenir.
+    const startPolling = () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      pollingRef.current = setInterval(pollFriendRequests, 60_000);
+    };
+
+    const stopPolling = () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+
+    startPolling();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        pollFriendRequests();
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [myCode, userPlan, setUserPlan, pollFriendRequests]);
 

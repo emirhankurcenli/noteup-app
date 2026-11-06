@@ -84,8 +84,6 @@ export default function useReminders({
     setReminderModes({ notification: true, alarm: false });
     setShowReminderModal(false);
 
-    setShowReminderModal(false);
-
     const modeLabel = capturedModes.notification && capturedModes.alarm
       ? getTr('notificationAndAlarm', 'Bildirim + Alarm')
       : capturedModes.alarm ? getTr('alarmType', 'Alarm') : getTr('notificationType', 'Bildirim');

@@ -3,7 +3,7 @@ import { getDaysLeft } from '@shared/utils/textUtils';
 import { noteHasPasswordVault } from '@shared/utils/securityUtils';
 import { getNoteSnippet } from './NoteCard';
 
-const TrashNoteCard = ({
+const TrashNoteCardComponent = ({
   note,
   isSelected,
   isSelectMode,
@@ -226,4 +226,5 @@ const TrashNoteCard = ({
   );
 };
 
+export const TrashNoteCard = React.memo(TrashNoteCardComponent);
 export default TrashNoteCard;

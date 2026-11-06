@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react';
+import { useEffect } from 'react';
 import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import { registerPlugin } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
@@ -46,6 +46,16 @@ export default function useAppLifecycleEvents({
   setEditingNote,
   syncDeltaSharedNotes,
   user,
+  lightboxUrl,
+  setLightboxUrl,
+  previewFileModal,
+  setPreviewFileModal,
+  showShareModal,
+  setShowShareModal,
+  activeShareNoteId,
+  setActiveShareNoteId,
+  showFeedbackModal,
+  setShowFeedbackModal,
 }) {
   // 1. Initial notification channels & foreground listener + Foreground Delta Re-Sync
   useEffect(() => {
@@ -175,17 +185,38 @@ export default function useAppLifecycleEvents({
   // 4. Android Hardware Back Button listener
   useEffect(() => {
     const handleBackButton = async () => {
+      // Topmost overlays dismissed first
+      if (lightboxUrl) {
+        if (setLightboxUrl) setLightboxUrl(null);
+        return;
+      }
+      if (previewFileModal) {
+        if (setPreviewFileModal) setPreviewFileModal(null);
+        return;
+      }
       if (confirmDialog) {
         if (confirmDialog.onCancel) confirmDialog.onCancel();
-        setConfirmDialog(null);
+        if (setConfirmDialog) setConfirmDialog(null);
+        return;
+      }
+      if (showFeedbackModal) {
+        if (setShowFeedbackModal) setShowFeedbackModal(false);
+        return;
+      }
+      if (showShareModal) {
+        if (setShowShareModal) setShowShareModal(false);
+        return;
+      }
+      if (activeShareNoteId) {
+        if (setActiveShareNoteId) setActiveShareNoteId(null);
         return;
       }
       if (showEditorMenu) {
-        setShowEditorMenu(false);
+        if (setShowEditorMenu) setShowEditorMenu(false);
         return;
       }
       if (showReminderModal) {
-        setShowReminderModal(false);
+        if (setShowReminderModal) setShowReminderModal(false);
         return;
       }
 
@@ -215,6 +246,11 @@ export default function useAppLifecycleEvents({
     editingNote,
     showEditorMenu,
     showReminderModal,
-    activeTab
+    activeTab,
+    lightboxUrl,
+    previewFileModal,
+    showShareModal,
+    activeShareNoteId,
+    showFeedbackModal
   ]);
 }

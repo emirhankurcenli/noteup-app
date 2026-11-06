@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React, { useMemo } from 'react';
 import { formatTurkishMoneyInput, formatTurkishMoneyDisplay } from '@shared/utils/money';
 import { calculateSettlements } from '@shared/utils/settlementUtils';
 import { SplitParticipantInput } from './split/SplitParticipantInput';
@@ -20,8 +20,8 @@ const SplitWidget = ({
   const participants = block.participants || [];
   const expenses = block.expenses || [];
   const isSetup = participants.length < 2;
-  const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
-  const settlements = !isSetup ? calculateSettlements(participants, expenses) : [];
+  const totalSpent = useMemo(() => expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0), [expenses]);
+  const settlements = useMemo(() => (!isSetup ? calculateSettlements(participants, expenses) : []), [isSetup, participants, expenses]);
 
   const getTr = (key, fallback) => {
     if (typeof t === 'function') {
@@ -204,4 +204,4 @@ const SplitWidget = ({
   );
 };
 
-export default SplitWidget;
+export default React.memo(SplitWidget);

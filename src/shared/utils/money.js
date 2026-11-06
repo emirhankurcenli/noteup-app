@@ -25,6 +25,8 @@ export const parseTurkishMoneyToFloat = (formattedStr) => {
 };
 
 export const formatTurkishMoneyDisplay = (val) => {
-  if (val === undefined || val === null || isNaN(val)) return '0';
-  return Number(val).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  if (val === undefined || val === null || val === '') return '0';
+  let num = typeof val === 'number' ? val : parseTurkishMoneyToFloat(val);
+  if (isNaN(num)) return '0';
+  return num.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 };

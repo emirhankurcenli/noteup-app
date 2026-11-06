@@ -285,8 +285,15 @@ export default function useNotes({
 
   // --- OTOMATİK ÇÖPKUTUSU TEMİZLEME ---
   // Çöp kutusunda 30 günden fazla kalan notları kalıcı olarak sil.
-  // Uygulama açılışında bir kez çalışır (user veya notes değiştiğinde de tetiklenir).
+  // Notlar asenkron yüklendiğinde bir kez çalışır (user değiştiğinde bayrak sıfırlanır).
+  const hasCleanedTrashRef = useRef(false);
+
   useEffect(() => {
+    hasCleanedTrashRef.current = false;
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (hasCleanedTrashRef.current) return;
     if (!user || !user.uid || !notes || notes.length === 0) return;
 
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -295,6 +302,8 @@ export default function useNotes({
     const expiredNotes = notes.filter(
       n => n.deletedAt && (now - n.deletedAt) >= THIRTY_DAYS_MS
     );
+
+    hasCleanedTrashRef.current = true;
 
     if (expiredNotes.length === 0) return;
 
@@ -320,7 +329,7 @@ export default function useNotes({
       }
     })();
 
-  }, [user?.uid]); // Sadece user değişince tetikle — notes'u dep'e almak döngü yaratır
+  }, [user?.uid, notes]);
 
   // --- HELPERS ---
 

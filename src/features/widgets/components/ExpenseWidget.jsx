@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { formatTurkishMoneyDisplay, formatTurkishMoneyInput } from '@shared/utils/money';
 import ExpenseDetailModal from '@shared/components/ExpenseDetailModal';
 import { ExpenseFormInput } from './expense/ExpenseFormInput';
@@ -20,7 +20,7 @@ const ExpenseWidget = ({
   const [showDetailModal, setShowDetailModal] = useState(false);
   const fs = blockFormStates[block.id] || {};
   const items = block.items || [];
-  const total = items.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+  const total = useMemo(() => items.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0), [items]);
 
   const onDeleteBlock = () => {
     if (triggerHaptic) triggerHaptic('warning');
@@ -303,4 +303,4 @@ const ExpenseWidget = ({
   );
 };
 
-export default ExpenseWidget;
+export default React.memo(ExpenseWidget);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import TrashHeaderBar from './TrashHeaderBar';
 import TrashNoteCard from './TrashNoteCard';
 import TrashPreviewModal from './TrashPreviewModal';
@@ -17,7 +17,7 @@ const TrashTab = ({
   t
 }) => {
   const isLight = theme === 'light';
-  const allDeletedNotes = (notes || []).filter(n => n && n.deletedAt);
+  const allDeletedNotes = useMemo(() => (notes || []).filter(n => n && n.deletedAt), [notes]);
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [isSelectMode, setIsSelectMode] = useState(false);
@@ -30,14 +30,16 @@ const TrashTab = ({
     if (scrollContainer) scrollContainer.scrollTop = 0;
   }, []);
 
-  const deletedNotes = allDeletedNotes.filter(note => {
-    if (!searchQuery.trim()) return true;
+  const deletedNotes = useMemo(() => {
+    if (!searchQuery.trim()) return allDeletedNotes;
     const query = normalizeTurkish(searchQuery.trim());
-    const titleMatch = normalizeTurkish(note.title || '').includes(query);
-    const contentText = (note.blocks || []).map(b => b.content || '').join(' ') + ' ' + (note.content || '');
-    const contentMatch = normalizeTurkish(htmlToPlainText(contentText)).includes(query);
-    return titleMatch || contentMatch;
-  });
+    return allDeletedNotes.filter(note => {
+      const titleMatch = normalizeTurkish(note.title || '').includes(query);
+      if (titleMatch) return true;
+      const contentText = (note.blocks || []).map(b => b.content || '').join(' ') + ' ' + (note.content || '');
+      return normalizeTurkish(htmlToPlainText(contentText)).includes(query);
+    });
+  }, [allDeletedNotes, searchQuery]);
 
   const toggleSelectNote = (noteId) => {
     setSelectedIds(prev => {

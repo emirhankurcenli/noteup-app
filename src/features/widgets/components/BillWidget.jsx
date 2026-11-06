@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { formatTurkishMoneyInput, formatTurkishMoneyDisplay, parseTurkishMoneyToFloat } from '@shared/utils/money';
 import BillDetailModal from '@shared/components/BillDetailModal';
 import { getNowLocalDateTimeString } from '@shared/utils/dateUtils';
@@ -32,7 +32,7 @@ const BillWidget = ({
 
   const paymentCount = (block.paymentHistory && block.paymentHistory.length) || (block.history && block.history.length) || 0;
 
-  const getRemainingDaysText = () => {
+  const remainingDaysText = useMemo(() => {
     if (!block.nextPaymentTime) return '';
     const diffTime = new Date(block.nextPaymentTime).getTime() - Date.now();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -41,7 +41,7 @@ const BillWidget = ({
     if (diffDays === 0) return t('billToday');
     if (diffDays === 1) return t('billTomorrow');
     return `${t('billRemaining')}: ${diffDays} ${t('days')}`;
-  };
+  }, [block.nextPaymentTime, t]);
 
   if (isEditing) {
     return (
@@ -308,9 +308,9 @@ const BillWidget = ({
             <span style={{ 
               fontSize: '0.75rem', 
               fontWeight: 700, 
-              color: getRemainingDaysText() === t('billToday') ? '#EF4444' : '#8B5CF6' 
+              color: remainingDaysText === t('billToday') ? '#EF4444' : '#8B5CF6' 
             }}>
-              {getRemainingDaysText()}
+              {remainingDaysText}
             </span>
           )}
         </div>
@@ -451,4 +451,4 @@ const BillWidget = ({
   );
 };
 
-export default BillWidget;
+export default React.memo(BillWidget);

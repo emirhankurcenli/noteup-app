@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { getNowLocalDateTimeString } from '@shared/utils/dateUtils';
 
 const ExamWidget = ({
@@ -24,7 +24,7 @@ const ExamWidget = ({
   const course = efs.tempCourse !== undefined ? efs.tempCourse : (block.course || '');
   const isEditing = efs.isEditing || !block.setupDone;
 
-  const getExamStatus = () => {
+  const status = useMemo(() => {
     if (!block.examMs) return null;
     const diffMs = block.examMs - Date.now();
     if (diffMs < 0) return { text: t('examPassed'), color: 'var(--text-muted)', urgent: false };
@@ -34,9 +34,7 @@ const ExamWidget = ({
     if (diffHours < 24) return { text: `${Math.floor(diffHours)} ${t('examHoursLeft')} ⚡`, color: '#EF4444', urgent: true };
     if (diffDays === 0) return { text: t('examToday'), color: '#EF4444', urgent: true };
     return { text: `${diffDays} ${t('examDaysLeft')}`, color: diffDays <= 3 ? '#F59E0B' : '#6366F1', urgent: diffDays <= 3 };
-  };
-
-  const status = getExamStatus();
+  }, [block.examMs, t]);
 
   if (isEditing) {
     return (
@@ -215,4 +213,4 @@ const ExamWidget = ({
   );
 };
 
-export default ExamWidget;
+export default React.memo(ExamWidget);

@@ -283,4 +283,4 @@ const PasswordWidget = ({
   );
 };
 
-export default PasswordWidget;
+export default React.memo(PasswordWidget);

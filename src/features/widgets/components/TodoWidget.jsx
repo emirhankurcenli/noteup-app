@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 
 const TodoWidget = ({
   block,
@@ -18,11 +18,19 @@ const TodoWidget = ({
   const textareaRef = useRef(null);
   const fs = blockFormStates[block.id] || {};
   const items = block.items || [];
-  const taskItems = items.filter(i => !i.isHeader);
-  const doneCount = taskItems.filter(i => i.done).length;
-  const total = taskItems.length;
-  const progress = total === 0 ? 0 : Math.round((doneCount / total) * 100);
-  const isAllDone = total > 0 && doneCount === total;
+  const { taskItems, doneCount, total, progress, isAllDone } = useMemo(() => {
+    const tasks = items.filter(i => !i.isHeader);
+    const done = tasks.filter(i => i.done).length;
+    const tot = tasks.length;
+    const prog = tot === 0 ? 0 : Math.round((done / tot) * 100);
+    return {
+      taskItems: tasks,
+      doneCount: done,
+      total: tot,
+      progress: prog,
+      isAllDone: tot > 0 && done === tot
+    };
+  }, [items]);
 
   const onToggleItem = (e, item) => {
     e.stopPropagation();
@@ -641,4 +649,4 @@ const TodoWidget = ({
   );
 };
 
-export default TodoWidget;
+export default React.memo(TodoWidget);
