@@ -1,40 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { cleanText, htmlToPlainText } from '@shared/utils/textUtils';
-import { LockIcon, OwnerIcon, CollabIcon } from '@shared/components/Icons';
+import {
+  ThreeDotsIcon,
+  LockIcon,
+  PinIcon,
+  ClockIcon,
+  WalletIcon,
+  OwnerIcon,
+  SharedWithMeIcon,
+  PendingShareIcon,
+  SnippetIcon,
+} from '@shared/components/Icons';
 
-const PendingShareIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: '4px' }}>
-    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-    <polyline points="16 6 12 2 8 6" />
-    <line x1="12" y1="2" x2="12" y2="15" />
-  </svg>
-);
+export const getBadgeCountdown = (targetTimeMs, nowMs) => {
+  const diffMs = targetTimeMs - nowMs;
+  if (diffMs <= 0) return null;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
 
-const SnippetIcon = ({ type }) => {
-  const style = { flexShrink: 0, marginRight: '6px', verticalAlign: '-2px' };
-  switch (type) {
-    case 'debt':
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /></svg>;
-    case 'todo':
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}><polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>;
-    case 'bill':
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>;
-    case 'split':
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><polyline points="17 8 20 11 23 8" /></svg>;
-    case 'password':
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EAB308" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}><circle cx="7.5" cy="15.5" r="5.5" /><path d="M21 2l-9.6 9.6" /><path d="M15.5 7.5l3 3" /></svg>;
-    case 'parking':
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.0 10.9 2 11.5 2 11.5V16c0 .6.4 1 1 1h2" /><circle cx="7" cy="17" r="2" /><circle cx="17" cy="17" r="2" /></svg>;
-    case 'exam':
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>;
-    case 'image':
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>;
-    case 'audio':
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /></svg>;
-    case 'file':
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>;
-    default:
-      return null;
+  const hours = diffHour % 24;
+  const mins = diffMin % 60;
+  const secs = diffSec % 60;
+
+  if (diffDay > 0) {
+    return `${diffDay}g ${hours}sa`;
+  } else if (diffHour > 0) {
+    return `${diffHour}sa ${mins}dk`;
+  } else if (diffMin > 0) {
+    return `${diffMin}dk ${secs}s`;
+  } else {
+    return `${diffSec}s`;
   }
 };
 
@@ -48,8 +45,8 @@ export const getNoteSnippet = (note, t = (k) => k) => {
   }
 
   const blocks = note.blocks || [];
-  
-  const textBlock = blocks.find(b => {
+
+  const textBlock = blocks.find((b) => {
     if (!b || b.type !== 'text') return false;
     return htmlToPlainText(b.content).length > 0;
   });
@@ -59,7 +56,7 @@ export const getNoteSnippet = (note, t = (k) => k) => {
     if (cleanTextStr) return cleanTextStr;
   }
 
-  const firstWidget = blocks.find(b => b && b.type && b.type !== 'text');
+  const firstWidget = blocks.find((b) => b && b.type && b.type !== 'text');
   if (firstWidget) {
     let label = '';
     switch (firstWidget.type) {
@@ -106,133 +103,371 @@ export const getNoteSnippet = (note, t = (k) => k) => {
     );
   }
 
-  return cleanText(t('emptyContent')) || 'İçerik yok';
+  return <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>{cleanText(t('emptyContent'))}</span>;
 };
 
-const NoteCard = ({
+const NoteCardComponent = ({
   note,
+  activeMenuNoteId,
+  setActiveMenuNoteId,
+  requestBiometricAuth,
+  setNotes,
+  persistNotes,
+  setToast,
+  handleMoveToTrash,
   openEditingNote,
-  handleTogglePin,
-  isLight,
-  t
+  setReminderNoteId,
+  setShowReminderModal,
+  handleCancelReminder,
+  setActiveShareNoteId,
+  setNudgeTargetNote,
+  checkAndRequestNotificationPermission,
+  reminders = [],
+  now = Date.now(),
+  t = (k) => k,
 }) => {
-  const snippet = getNoteSnippet(note, t);
+  const [menuDirection, setMenuDirection] = useState('down');
+
+  const netDebt = (note.debts || []).reduce((acc, curr) => acc + (curr?.amount || 0), 0);
+  const activeRem = (reminders || []).find(
+    (r) => r.noteId === note.id && r.active && new Date(r.time).getTime() > now
+  );
+
+  const handleCardClick = async () => {
+    if (note.isLocked) {
+      if (typeof requestBiometricAuth === 'function') {
+        const ok = await requestBiometricAuth(t('noteLocked'), t('authToOpenNote'));
+        if (!ok) {
+          if (typeof setToast === 'function') {
+            setToast({ title: '🔒', msg: t('authFailed') });
+          }
+          return;
+        }
+      }
+    }
+    window.history.pushState({ page: 'editor', noteId: note.id }, '');
+    if (typeof openEditingNote === 'function') {
+      openEditingNote(note);
+    }
+  };
+
+  const handleToggleMenu = (e) => {
+    e.stopPropagation();
+    if (activeMenuNoteId === note.id) {
+      if (typeof setActiveMenuNoteId === 'function') setActiveMenuNoteId(null);
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setMenuDirection(spaceBelow < 300 ? 'up' : 'down');
+      if (typeof setActiveMenuNoteId === 'function') setActiveMenuNoteId(note.id);
+    }
+  };
 
   return (
     <div
-      onClick={() => {
-        window.history.pushState({ page: 'editor', noteId: note.id }, '');
-        openEditingNote(note);
-      }}
-      style={{
-        padding: '16px',
-        borderRadius: '16px',
-        background: isLight ? 'rgba(255,255,255,0.90)' : 'rgba(18, 24, 36, 0.85)',
-        backdropFilter: 'blur(16px)',
-        border: note.isPinned 
-          ? '1.5px solid rgba(59, 130, 246, 0.5)' 
-          : isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.09)',
-        boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.04)' : '0 8px 24px rgba(0,0,0,0.35)',
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        position: 'relative',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-      }}
+      className="glass-panel-interactive note-card"
+      style={{ position: 'relative', zIndex: activeMenuNoteId === note.id ? 100 : 1 }}
+      onClick={handleCardClick}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-        <h3 style={{
-          fontSize: '0.98rem',
-          fontWeight: 800,
-          margin: 0,
-          color: isLight ? '#090E1A' : '#FFFFFF',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          flex: 1
-        }}>
-          {note.title || t('untitledNote')}
-        </h3>
+      <div className="note-card-header" style={{ position: 'relative' }}>
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <h3
+            style={{
+              fontSize: '1.05rem',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              color: 'var(--text-primary)',
+            }}
+          >
+            {note.title || t('untitledNote')}
+          </h3>
+          <div className="note-badges" style={{ marginTop: '4px' }}>
+            {note.isPinned && (
+              <span
+                className="badge badge-shared"
+                style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8B5CF6', display: 'inline-flex', alignItems: 'center' }}
+              >
+                <PinIcon /> {cleanText(t('pinnedBadge') || 'Sabitlendi')}
+              </span>
+            )}
+            {note.isLocked && (
+              <span
+                className="badge badge-reminder"
+                style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', display: 'inline-flex', alignItems: 'center' }}
+              >
+                <LockIcon /> {cleanText(t('locked'))}
+              </span>
+            )}
+            {note.hasPendingShare && !note.isShared && !note.sharedFrom && (
+              <span
+                className="badge badge-reminder"
+                style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', display: 'inline-flex', alignItems: 'center' }}
+              >
+                <PendingShareIcon /> {cleanText(t('pendingApproval') || 'Paylaşım Bekliyor')}
+              </span>
+            )}
+            {note.isShared &&
+              (note.sharedFrom ? (
+                <span
+                  className="badge badge-shared"
+                  style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8B5CF6', display: 'inline-flex', alignItems: 'center' }}
+                >
+                  <SharedWithMeIcon /> {note.sharedFromName || note.sharedFrom || cleanText(t('sharedWithMe') || 'Gelen')}
+                </span>
+              ) : (
+                <span
+                  className="badge badge-shared"
+                  style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', display: 'inline-flex', alignItems: 'center' }}
+                >
+                  <OwnerIcon /> {cleanText(t('ownerBadge') || 'Not Sahibi')}
+                </span>
+              ))}
+            {activeRem &&
+              (() => {
+                const targetMs = new Date(activeRem.time).getTime();
+                const countdownStr = getBadgeCountdown(targetMs, now);
+                const isNotif = activeRem.modes?.notification;
+                const isAlarm = activeRem.modes?.alarm;
+                let modeLabel = cleanText(t('reminderLabel'));
+                if (isNotif && isAlarm) {
+                  modeLabel += `: ${cleanText(t('notificationAndAlarm'))}`;
+                } else if (isAlarm) {
+                  modeLabel += `: ${cleanText(t('alarmType'))}`;
+                } else if (isNotif) {
+                  modeLabel += `: ${cleanText(t('notificationType'))}`;
+                }
+                const fullText = countdownStr ? `${modeLabel} (${countdownStr})` : modeLabel;
+                return (
+                  <span className="badge badge-reminder" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    <ClockIcon /> {fullText}
+                  </span>
+                );
+              })()}
+            {note.debts && note.debts.length > 0 && (
+              <span
+                className={`badge ${netDebt >= 0 ? 'badge-shared' : 'trash-btn-delete'}`}
+                style={{ border: 'none', display: 'inline-flex', alignItems: 'center' }}
+              >
+                <WalletIcon /> {netDebt > 0 ? `+${netDebt}` : netDebt} TL
+              </span>
+            )}
+          </div>
+        </div>
 
-        {/* Pin Toggle Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (typeof handleTogglePin === 'function') handleTogglePin(note.id);
-          }}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: note.isPinned ? '#3B82F6' : 'var(--text-muted)',
-            cursor: 'pointer',
-            padding: '2px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: note.isPinned ? 1 : 0.4
-          }}
-          title={note.isPinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill={note.isPinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="17" x2="12" y2="22" />
-            <path d="M5 17h14l-1.5-6H6.5L5 17z" />
-            <path d="M9 11V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v7" />
-          </svg>
-        </button>
+        {typeof setActiveMenuNoteId === 'function' && (
+          <button
+            className="three-dots-btn"
+            style={{ marginLeft: '12px', alignSelf: 'flex-start', padding: '6px' }}
+            onClick={handleToggleMenu}
+          >
+            <ThreeDotsIcon />
+          </button>
+        )}
+
+        {/* Floating Context Menu */}
+        {activeMenuNoteId === note.id && (
+          <div className={`context-menu-dropdown ${menuDirection === 'up' ? 'open-upward' : ''}`}>
+            {/* Lock / Unlock */}
+            <button
+              className="context-menu-btn"
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (typeof setActiveMenuNoteId === 'function') setActiveMenuNoteId(null);
+                const isLocking = !note.isLocked;
+                const title = isLocking ? t('lockNoteAuthTitle') : t('unlockNoteAuthTitle');
+                const subtitle = isLocking ? t('lockNoteAuthSub') : t('unlockNoteAuthSub');
+
+                if (typeof requestBiometricAuth === 'function') {
+                  const ok = await requestBiometricAuth(title, subtitle);
+                  if (ok) {
+                    if (typeof setNotes === 'function') {
+                      setNotes((prev) => {
+                        const upd = prev.map((n) =>
+                          n.id === note.id ? { ...n, isLocked: isLocking, updatedAt: Date.now() } : n
+                        );
+                        if (typeof persistNotes === 'function') persistNotes(upd);
+                        return upd;
+                      });
+                    }
+                    if (typeof setToast === 'function') {
+                      setToast({
+                        title: isLocking ? '🔒' : '🔓',
+                        msg: isLocking ? t('noteLockedToast') : t('noteUnlockedToast'),
+                      });
+                    }
+                  } else {
+                    if (typeof setToast === 'function') {
+                      setToast({ title: '⚠️', msg: t('authFailed') });
+                    }
+                  }
+                }
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
+                <LockIcon size={16} />
+              </span>
+              {note.isLocked ? cleanText(t('unlockNote')) : cleanText(t('lockNote'))}
+            </button>
+
+            {/* Pin / Unpin */}
+            <button
+              className="context-menu-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (typeof setActiveMenuNoteId === 'function') setActiveMenuNoteId(null);
+                const isPinning = !note.isPinned;
+                if (typeof setNotes === 'function') {
+                  setNotes((prev) => {
+                    const upd = prev.map((n) =>
+                      n.id === note.id ? { ...n, isPinned: isPinning, updatedAt: Date.now() } : n
+                    );
+                    if (typeof persistNotes === 'function') persistNotes(upd);
+                    return upd;
+                  });
+                }
+                if (typeof setToast === 'function') {
+                  setToast({
+                    title: isPinning ? t('notePinnedToast') : t('noteUnpinnedToast'),
+                    msg: '',
+                  });
+                }
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
+                <PinIcon size={16} />
+              </span>
+              {note.isPinned ? cleanText(t('unpinNote')) : cleanText(t('pinNote'))}
+            </button>
+
+            {/* Reminder */}
+            <button
+              className="context-menu-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (typeof setActiveMenuNoteId === 'function') setActiveMenuNoteId(null);
+                if (activeRem) {
+                  if (typeof handleCancelReminder === 'function') {
+                    handleCancelReminder(activeRem);
+                  }
+                } else {
+                  if (typeof setReminderNoteId === 'function') setReminderNoteId(note.id);
+                  if (typeof setShowReminderModal === 'function') setShowReminderModal(true);
+                }
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="13" r="8" />
+                  <polyline points="12 9 12 13 15 15" />
+                  <line x1="5" y1="3" x2="2" y2="6" />
+                  <line x1="19" y1="3" x2="22" y2="6" />
+                </svg>
+              </span>
+              {activeRem ? t('removeReminder') : cleanText(t('remind'))}
+            </button>
+
+            {/* Share with Friend */}
+            {!note.sharedFrom && typeof setActiveShareNoteId === 'function' && (
+              <button
+                className="context-menu-btn"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (typeof setActiveMenuNoteId === 'function') setActiveMenuNoteId(null);
+                  if (checkAndRequestNotificationPermission) {
+                    const granted = await checkAndRequestNotificationPermission();
+                    if (!granted) return;
+                  }
+                  if (note.isLocked && typeof requestBiometricAuth === 'function') {
+                    const title = t('lockedNoteAuthTitle');
+                    const subtitle = t('lockedNoteAuthSub');
+                    const ok = await requestBiometricAuth(title, subtitle);
+                    if (!ok) {
+                      setToast?.({ title: '⚠️', msg: t('authFailed') });
+                      return;
+                    }
+                  }
+                  setActiveShareNoteId(note.id);
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                </span>
+                {cleanText(t('shareWithFriend'))}
+              </button>
+            )}
+
+            {/* Nudge / Send Notification */}
+            {(note.isShared || (note.sharedWith && note.sharedWith.length > 0) || note.sharedFrom) &&
+              typeof setNudgeTargetNote === 'function' && (
+                <button
+                  className="context-menu-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (typeof setActiveMenuNoteId === 'function') setActiveMenuNoteId(null);
+                    setNudgeTargetNote(note);
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                  </span>
+                  {t('sendNotifBtn')}
+                </button>
+              )}
+
+            <div className="context-menu-divider" />
+
+            {/* Move to Trash / Leave Collab */}
+            {typeof handleMoveToTrash === 'function' && (
+              <button
+                className="context-menu-btn danger"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (typeof setActiveMenuNoteId === 'function') setActiveMenuNoteId(null);
+                  handleMoveToTrash(note.id);
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
+                  {note.sharedFrom ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                      <path d="M10 11v6" />
+                      <path d="M14 11v6" />
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                    </svg>
+                  )}
+                </span>
+                {note.sharedFrom ? cleanText(t('leaveCollabBtn') || 'Paylaşımdan Ayrıl') : cleanText(t('deleteBtn'))}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      <p style={{
-        fontSize: '0.82rem',
-        fontWeight: 500,
-        color: isLight ? '#334155' : 'rgba(255, 255, 255, 0.7)',
-        margin: 0,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        display: '-webkit-box',
-        WebkitLineClamp: 2,
-        WebkitBoxOrient: 'vertical',
-        lineHeight: 1.4
-      }}>
-        {snippet}
-      </p>
+      <p className="note-card-excerpt">{getNoteSnippet(note, t)}</p>
 
-      {/* Share / Collab Status Badge */}
-      {note.hasPendingShare && !note.isShared && !note.sharedFrom ? (
-        <div style={{ display: 'flex', alignItems: 'center', marginTop: '2px' }}>
-          <span style={{
-            fontSize: '0.68rem',
-            fontWeight: 800,
-            color: isLight ? '#B45309' : '#FCD34D',
-            background: isLight ? '#FEF3C7' : 'rgba(245, 158, 11, 0.15)',
-            padding: '2px 8px',
-            borderRadius: '6px',
-            border: isLight ? '1px solid #FDE68A' : '1px solid rgba(245, 158, 11, 0.3)',
-            display: 'inline-flex',
-            alignItems: 'center',
-          }}>
-            <PendingShareIcon /> {cleanText(t ? (t('pendingApproval') || 'Paylaşım Bekliyor') : 'Paylaşım Bekliyor')}
-          </span>
-        </div>
-      ) : (note.isShared || Boolean(note.sharedFrom)) ? (
-        <div style={{ display: 'flex', alignItems: 'center', marginTop: '2px' }}>
-          <span style={{
-            fontSize: '0.68rem',
-            fontWeight: 800,
-            color: isLight ? '#047857' : '#6EE7B7',
-            background: isLight ? '#ECFDF5' : 'rgba(16, 185, 129, 0.15)',
-            padding: '2px 8px',
-            borderRadius: '6px',
-            border: isLight ? '1px solid #A7F3D0' : '1px solid rgba(16, 185, 129, 0.3)',
-            display: 'inline-flex',
-            alignItems: 'center',
-          }}>
-            <CollabIcon /> {note.sharedFrom ? (cleanText(t('sharedWithMe') || 'Gelen Not')) : (cleanText(t('ownerBadge') || 'Not Sahibi'))}
-          </span>
-        </div>
-      ) : null}
+      <div className="note-card-footer">
+        <span>{new Date(note.updatedAt || Date.now()).toLocaleDateString()}</span>
+      </div>
     </div>
   );
 };
 
+export const NoteCard = React.memo(NoteCardComponent);
 export default NoteCard;

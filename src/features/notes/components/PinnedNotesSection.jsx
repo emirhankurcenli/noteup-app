@@ -1,6 +1,7 @@
 import React from 'react';
 import NoteCard from './NoteCard';
 import { PinIcon } from '@shared/components/Icons';
+import { cleanText } from '@shared/utils/textUtils';
 
 export const PinnedNotesSection = ({
   pinnedNotes,
@@ -12,6 +13,12 @@ export const PinnedNotesSection = ({
   setToast,
   handleMoveToTrash,
   openEditingNote,
+  setReminderNoteId,
+  setShowReminderModal,
+  handleCancelReminder,
+  setActiveShareNoteId,
+  setNudgeTargetNote,
+  checkAndRequestNotificationPermission,
   reminders,
   now,
   lang,
@@ -43,6 +50,12 @@ export const PinnedNotesSection = ({
             setToast={setToast}
             handleMoveToTrash={handleMoveToTrash}
             openEditingNote={openEditingNote}
+            setReminderNoteId={setReminderNoteId}
+            setShowReminderModal={setShowReminderModal}
+            handleCancelReminder={handleCancelReminder}
+            setActiveShareNoteId={setActiveShareNoteId}
+            setNudgeTargetNote={setNudgeTargetNote}
+            checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
             reminders={reminders}
             now={now}
             lang={lang}
