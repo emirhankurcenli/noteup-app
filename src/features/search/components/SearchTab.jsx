@@ -89,7 +89,6 @@ const SearchTab = ({
 }) => {
   const ctx = useLanguage();
   const t = propT || ctx?.t || ((k) => k);
-  const lang = propLang || ctx?.lang || 'tr';
   const isLight = theme === 'light';
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const debounceRef = useRef(null);
@@ -103,10 +102,10 @@ const SearchTab = ({
     }, 150);
   }, [setSearchQuery]);
 
-  // Sync debounced value when coming back to tab with existing query
+  // Sync debounced value when searchQuery changes externally
   React.useEffect(() => {
     setDebouncedQuery(searchQuery);
-  }, []);
+  }, [searchQuery]);
 
   const clearSearch = () => {
     setSearchQuery('');
@@ -132,8 +131,6 @@ const SearchTab = ({
 
     return matched;
   }, [debouncedQuery, notes]);
-
-  const hasQuery = debouncedQuery.trim().length > 0;
 
   return (
     <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

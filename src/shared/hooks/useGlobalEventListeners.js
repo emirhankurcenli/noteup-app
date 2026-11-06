@@ -1,4 +1,4 @@
-﻿/**
+/**
  * useGlobalEventListeners — thin orchestrator
  *
  * Each concern is now in its own single-responsibility hook.
@@ -15,7 +15,7 @@ export const useGlobalEventListeners = ({
   setNotes,
   setReminders,
   myCode,
-  user,
+  user: _user,
   toast,
   setToast,
   setEditingNote,
@@ -23,7 +23,7 @@ export const useGlobalEventListeners = ({
   setShowEditorMenu,
   setActiveMenuNoteId,
   openEditingNote,
-  persistNotes,
+  persistNotes: _persistNotes,
 }) => {
   useStorageSync({ myCode, setNotes, setReminders });
   useScrollLock();

@@ -211,7 +211,7 @@ function AppInner({ optionsRef }) {
 
   useEffect(() => {
     if (activeTab === 'profile') updatePermissionStates();
-  }, [activeTab]);
+  }, [activeTab, updatePermissionStates]);
 
   // --- Editor Lifecycle ---
   const { openEditingNote, cleanupEmptyNote, handleCloseEditor } = useEditorLifecycle({
