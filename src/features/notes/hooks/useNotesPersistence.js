@@ -12,8 +12,9 @@ import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 export default function useNotesPersistence({ user, getUserScopedKey, setNotes }) {
   const persistDebounceRef = useRef(null);
   const pendingNotesRef = useRef(null);
+  const lastSyncedTimestampsRef = useRef(new Map());
 
-  const persistNotes = useCallback(async (updatedNotes) => {
+  const persistNotes = useCallback(async (updatedNotes, forceSyncAll = false) => {
     try {
       const key = getUserScopedKey(STORAGE_KEYS.NOTES);
       const cleanNotes = updatedNotes.map(n => ({
@@ -32,11 +33,22 @@ export default function useNotesPersistence({ user, getUserScopedKey, setNotes }
       }
 
       if (user && user.uid) {
-        const ownedNotes = cleanNotes.filter(n => !n.sharedFrom);
-        const receivedNotes = cleanNotes.filter(n => Boolean(n.sharedFrom));
+        // Delta Eşitleme: Sadece son eşitlemeden sonra güncellenen notları seç
+        const dirtyNotes = forceSyncAll
+          ? cleanNotes
+          : cleanNotes.filter((n) => {
+              const noteTime = n.updatedAt ? new Date(n.updatedAt).getTime() : 0;
+              const lastSynced = lastSyncedTimestampsRef.current.get(n.id) || 0;
+              return noteTime > lastSynced;
+            });
 
-        if (ownedNotes.length > 0) {
-          const notesToUpsert = ownedNotes.map(n => ({
+        if (dirtyNotes.length === 0) return;
+
+        const ownedDirtyNotes = dirtyNotes.filter((n) => !n.sharedFrom);
+        const receivedDirtyNotes = dirtyNotes.filter((n) => Boolean(n.sharedFrom));
+
+        if (ownedDirtyNotes.length > 0) {
+          const notesToUpsert = ownedDirtyNotes.map((n) => ({
             id: n.id,
             user_id: user.uid,
             title: n.title || '',
@@ -45,7 +57,7 @@ export default function useNotesPersistence({ user, getUserScopedKey, setNotes }
             is_locked: n.isLocked || false,
             is_pinned: Boolean(n.isPinned),
             deleted_at: n.deletedAt ? Number(n.deletedAt) : null,
-            updated_at: n.updatedAt ? new Date(n.updatedAt).toISOString() : new Date().toISOString()
+            updated_at: n.updatedAt ? new Date(n.updatedAt).toISOString() : new Date().toISOString(),
           }));
 
           let { error } = await supabase.from('notes').upsert(notesToUpsert);
@@ -56,19 +68,35 @@ export default function useNotesPersistence({ user, getUserScopedKey, setNotes }
             error = res.error;
           }
 
-          if (error) console.error('Error upserting notes to Supabase:', error);
+          if (error) {
+            console.error('Error upserting notes to Supabase:', error);
+          } else {
+            ownedDirtyNotes.forEach((n) => {
+              const t = n.updatedAt ? new Date(n.updatedAt).getTime() : Date.now();
+              lastSyncedTimestampsRef.current.set(n.id, t);
+            });
+          }
         }
 
-        for (const rn of receivedNotes) {
+        // Received notes: Sadece kullanıcının bu oturumda bizzat değiştirdiği gelen notları gönder
+        for (const rn of receivedDirtyNotes) {
           try {
-            await supabase
+            const updateTime = rn.updatedAt ? new Date(rn.updatedAt).toISOString() : new Date().toISOString();
+            const { error: updateErr } = await supabase
               .from('notes')
               .update({
                 title: rn.title || '',
                 blocks: ensureBlockTimestamps(rn.blocks || []),
-                updated_at: new Date().toISOString()
+                updated_at: updateTime,
               })
               .eq('id', rn.id);
+
+            if (!updateErr) {
+              const t = rn.updatedAt ? new Date(rn.updatedAt).getTime() : Date.now();
+              lastSyncedTimestampsRef.current.set(rn.id, t);
+            } else {
+              console.warn('Shared note remote update error:', updateErr);
+            }
           } catch (updateErr) {
             console.warn('Shared note remote update error:', updateErr);
           }
