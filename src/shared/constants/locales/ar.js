@@ -1,4 +1,4 @@
-﻿const ar = {
+const ar = {
   confirmDeleteTitle: 'تأكيد الحذف',
   pinnedBadge: 'مثبت',
   alarmSetTitle: 'تم ضبط المنبه',
@@ -256,6 +256,8 @@
   changeLanguage: 'تغيير',
   locationGps: 'الموقع (GPS)',
   locationGpsSub: 'لأداة مواقف السيارات وموقع المركبة',
+  camera: 'الكاميرا',
+  cameraSub: 'لمسح رموز QR والتقاط الصور',
   shareAsImage: 'مشاركة كصورة',
   shareAsImageSub: 'إنشاء بطاقة صورة عالية الجودة للملاحظة',
   shareWithFriendSub: 'إرسال الملاحظة مباشرة لصديقك',
@@ -325,6 +327,7 @@
   noSharedWithMeSub: 'عندما يشارك أصدقاؤك الملاحظات معك، ستظهر هنا.',
   onlyOwnerCanShareNotice: 'نظراً لمشاركة هذه الملاحظة معك، يمكن للمالك الأصلي فقط مشاركتها مع الآخرين.',
   ownerBadge: 'المالك',
+  pendingShareRequests: 'الدعوات الواردة',
   newInvite: 'دعوة جديدة',
 };
 

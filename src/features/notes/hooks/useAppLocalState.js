@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 
 export const MAX_STORAGE_BYTES = 5 * 1024 * 1024 * 1024; // 5 GB
 
@@ -52,16 +53,17 @@ export default function useAppLocalState({ notes }) {
   const [showQuickReminderForm, setShowQuickReminderForm] = useState(false);
   const [pendingOpenNoteId, setPendingOpenNoteId] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [nudgeTargetNote, setNudgeTargetNote] = useState(null);
 
   // App Theme: 'light' | 'dark'
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('app_theme') || localStorage.getItem('s23_theme') || 'light';
+    return localStorage.getItem(STORAGE_KEYS.SAVED_THEME) || localStorage.getItem('app_theme') || localStorage.getItem('s23_theme') || 'light';
   });
 
   useEffect(() => {
     try {
+      localStorage.setItem(STORAGE_KEYS.SAVED_THEME, theme);
       localStorage.setItem('app_theme', theme);
-      localStorage.setItem('s23_theme', theme);
     } catch (_) {}
     document.documentElement.setAttribute('data-theme', theme);
     if (document.body) {
@@ -72,13 +74,6 @@ export default function useAppLocalState({ notes }) {
       metaThemeColor.setAttribute('content', theme === 'light' ? '#F0F4F8' : '#0A0E17');
     }
   }, [theme]);
-
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    if (activeTab !== 'reminders') return;
-    const tick = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(tick);
-  }, [activeTab]);
 
   return {
     activeTodoItemId,
@@ -116,8 +111,10 @@ export default function useAppLocalState({ notes }) {
     setPendingOpenNoteId,
     showFeedbackModal,
     setShowFeedbackModal,
+    nudgeTargetNote,
+    setNudgeTargetNote,
     theme,
     setTheme,
-    now
+    now: Date.now()
   };
 }

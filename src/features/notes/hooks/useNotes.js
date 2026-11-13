@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@src/supabaseClient';
 import { cancelLocalNotification } from '@shared/services/notificationService';
-import { registerPlugin } from '@capacitor/core';
+import { cancelNativeAlarm } from '@shared/services/alarmService';
 import useNoteUndoRedo from '@features/notes/hooks/useNoteUndoRedo';
 import { sanitizeNoteContent, sanitizeSingleLine, noteHasPasswordVault } from '@shared/utils/securityUtils';
 import { mergeNoteBlocks, ensureBlockTimestamps, enforceTrailingTextBlock } from '@shared/utils/blockMergeUtils';
@@ -9,6 +9,7 @@ import { cleanText } from '@shared/utils/textUtils';
 import { isR2MediaUrl } from '@shared/utils/mediaUtils';
 import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import useNotesPersistence from '@features/notes/hooks/useNotesPersistence';
+import { CryptoService } from '@shared/services/cryptoService';
 
 export default function useNotes({
   user,
@@ -350,6 +351,7 @@ export default function useNotes({
       id: 'n-' + Date.now(),
       title: '',
       blocks: [{ id: firstBlockId, type: 'text', content: '' }],
+      encKey: CryptoService.generateMediaKey(),
       isShared: false,
       createdAt: Date.now(),
       updatedAt: Date.now()
@@ -366,8 +368,12 @@ export default function useNotes({
   };
 
   const handleUpdateNote = (field, value, instantHistory = false) => {
+    let updatedNote = null;
+    let prevNoteSnapshot = null;
+
     setEditingNote(prevEditingNote => {
       if (!prevEditingNote) return null;
+      prevNoteSnapshot = prevEditingNote;
 
       let cleanValue = value;
       if (field === 'title' && typeof value === 'string') {
@@ -392,66 +398,68 @@ export default function useNotes({
         ? enforceTrailingTextBlock(cleanValue) 
         : (prevEditingNote.blocks || []);
 
-      const updatedNote = {
+      updatedNote = {
         ...prevEditingNote,
         [field]: cleanValue,
         blocks: finalBlocks,
         updatedAt: Date.now()
       };
 
-      if (field === 'title' || field === 'blocks') {
-        if (instantHistory) {
-          undoRedo.captureUndoSnapshot(prevEditingNote);
-          undoRedo.isTypingRef.current = false;
-        } else {
-          const getNoteTotalLength = (note) => {
-            if (!note) return 0;
-            const titleLen = (note.title || '').length;
-            const blocksLen = (note.blocks || []).reduce((acc, b) => acc + (b.content || '').length, 0);
-            return titleLen + blocksLen;
-          };
-
-          const prevLength = getNoteTotalLength(prevEditingNote);
-          const newLength = getNoteTotalLength(updatedNote);
-          const diff = Math.abs(newLength - undoRedo.lastLengthRef.current);
-
-          let lastChar = '';
-          if (field === 'title') {
-            lastChar = (value || '').slice(-1);
-          } else if (field === 'blocks' && Array.isArray(value)) {
-            const prevBlocks = prevEditingNote.blocks || [];
-            const modifiedBlock = value.find((b, i) => prevBlocks[i] && prevBlocks[i].content !== b.content);
-            if (modifiedBlock) {
-              lastChar = (modifiedBlock.content || '').slice(-1);
-            }
-          }
-
-          const isBoundary = lastChar === ' ' || lastChar === '.' || lastChar === ',' || lastChar === '?' || lastChar === '!' || lastChar === '\n';
-
-          if (!undoRedo.isTypingRef.current) {
-            undoRedo.captureUndoSnapshot(prevEditingNote);
-            undoRedo.isTypingRef.current = true;
-            undoRedo.lastLengthRef.current = prevLength;
-          } else if (diff >= 6 || isBoundary) {
-            undoRedo.captureUndoSnapshot(prevEditingNote);
-            undoRedo.lastLengthRef.current = newLength;
-          }
-
-          if (undoRedo.undoTimeoutRef.current) clearTimeout(undoRedo.undoTimeoutRef.current);
-          undoRedo.undoTimeoutRef.current = setTimeout(() => {
-            undoRedo.isTypingRef.current = false;
-          }, 1200);
-        }
-      }
-
-      setNotes(prevNotes => {
-        const updatedNotes = prevNotes.map(n => n.id === prevEditingNote.id ? updatedNote : n);
-        // Debounce: Her tus vurusunda degil, 1500ms duraklama sonrasi Supabase'e yazar
-        debouncedPersistNotes(updatedNotes);
-        return updatedNotes;
-      });
-
       return updatedNote;
+    });
+
+    if (!updatedNote || !prevNoteSnapshot) return;
+
+    if (field === 'title' || field === 'blocks') {
+      if (instantHistory) {
+        undoRedo.captureUndoSnapshot(prevNoteSnapshot);
+        undoRedo.isTypingRef.current = false;
+      } else {
+        const getNoteTotalLength = (note) => {
+          if (!note) return 0;
+          const titleLen = (note.title || '').length;
+          const blocksLen = (note.blocks || []).reduce((acc, b) => acc + (b.content || '').length, 0);
+          return titleLen + blocksLen;
+        };
+
+        const prevLength = getNoteTotalLength(prevNoteSnapshot);
+        const newLength = getNoteTotalLength(updatedNote);
+        const diff = Math.abs(newLength - undoRedo.lastLengthRef.current);
+
+        let lastChar = '';
+        if (field === 'title') {
+          lastChar = (value || '').slice(-1);
+        } else if (field === 'blocks' && Array.isArray(value)) {
+          const prevBlocks = prevNoteSnapshot.blocks || [];
+          const modifiedBlock = value.find((b, i) => prevBlocks[i] && prevBlocks[i].content !== b.content);
+          if (modifiedBlock) {
+            lastChar = (modifiedBlock.content || '').slice(-1);
+          }
+        }
+
+        const isBoundary = lastChar === ' ' || lastChar === '.' || lastChar === ',' || lastChar === '?' || lastChar === '!' || lastChar === '\n';
+
+        if (!undoRedo.isTypingRef.current) {
+          undoRedo.captureUndoSnapshot(prevNoteSnapshot);
+          undoRedo.isTypingRef.current = true;
+          undoRedo.lastLengthRef.current = prevLength;
+        } else if (diff >= 6 || isBoundary) {
+          undoRedo.captureUndoSnapshot(prevNoteSnapshot);
+          undoRedo.lastLengthRef.current = newLength;
+        }
+
+        if (undoRedo.undoTimeoutRef.current) clearTimeout(undoRedo.undoTimeoutRef.current);
+        undoRedo.undoTimeoutRef.current = setTimeout(() => {
+          undoRedo.isTypingRef.current = false;
+        }, 1200);
+      }
+    }
+
+    setNotes(prevNotes => {
+      const updatedNotes = prevNotes.map(n => n.id === prevNoteSnapshot.id ? updatedNote : n);
+      // Debounce: Her tus vurusunda degil, 1500ms duraklama sonrasi Supabase'e yazar
+      debouncedPersistNotes(updatedNotes);
+      return updatedNotes;
     });
   };
 
@@ -554,9 +562,7 @@ export default function useNotes({
           try {
             await cancelLocalNotification(rem.numericId);
           } catch (err) {}
-          try {
-            await registerPlugin('Alarm').cancelAlarm({ id: rem.id });
-          } catch (err) {}
+          await cancelNativeAlarm(rem.id);
         }
         if (noteReminders.length > 0) {
           const updatedReminders = reminders.filter(r => r.noteId !== noteId);
@@ -717,9 +723,7 @@ export default function useNotes({
             try {
               await cancelLocalNotification(rem.numericId);
             } catch (err) {}
-            try {
-              await registerPlugin('Alarm').cancelAlarm({ id: rem.id });
-            } catch (err) {}
+            await cancelNativeAlarm(rem.id);
           }
         }
 

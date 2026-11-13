@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import {
@@ -35,7 +35,8 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
     notification: 'unknown',
     storage: 'unknown',
     audio: 'unknown',
-    location: 'unknown'
+    location: 'unknown',
+    camera: 'unknown'
   });
 
   const checkAndRequestNotificationPermissionRef = useRef(null);
@@ -47,6 +48,7 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
       audio: lang === 'tr' ? '🎵 Müzik & Ses İzni Gerekli' : '🎵 Audio Permission Required',
       location: lang === 'tr' ? '📍 Konum İzni Gerekli' : '📍 Location Permission Required',
       notification: lang === 'tr' ? '🔔 Bildirim İzni Gerekli' : '🔔 Notification Permission Required',
+      camera: lang === 'tr' ? '📷 Kamera İzni Gerekli' : '📷 Camera Permission Required',
     };
     const messages = {
       storage: lang === 'tr'
@@ -64,6 +66,9 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
       notification: lang === 'tr'
         ? 'Hatırlatıcı alabilmek ve alarmları kullanabilmek için bildirim izinlerini etkinleştirmeniz gerekmektedir.'
         : 'Please enable notification permissions to receive reminders.',
+      camera: lang === 'tr'
+        ? 'QR kodları anında tarayabilmek için cihaz ayarlarından kamera iznini etkinleştirmeniz gerekmektedir.'
+        : 'Please enable camera permissions in device settings to scan QR codes.',
     };
 
     if (setConfirmDialog) {
@@ -87,7 +92,7 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
   };
 
   const updatePermissionStates = async () => {
-    const states = { microphone: 'unknown', notification: 'unknown', storage: 'unknown', audio: 'unknown', location: 'unknown' };
+    const states = { microphone: 'unknown', notification: 'unknown', storage: 'unknown', audio: 'unknown', location: 'unknown', camera: 'unknown' };
     const hasNotify = await checkNotificationPermission();
     states.notification = hasNotify ? 'granted' : 'denied';
 
@@ -97,6 +102,7 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
       // 1. iOS: Storage & Audio are managed through sandbox PHPicker / UIDocumentPicker with zero-permission
       states.storage = 'granted';
       states.audio = 'granted';
+      states.camera = 'granted';
 
       // 2. iOS: Microphone
       if (localStorage.getItem('noteup_ios_mic_granted') === 'true') {
@@ -126,6 +132,7 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
         states.storage = nativeStatus.storage || 'unknown';
         states.audio = nativeStatus.audio || 'unknown';
         states.location = nativeStatus.location || 'unknown';
+        states.camera = nativeStatus.camera || 'unknown';
       } catch (err) {}
     } else if (navigator.permissions && navigator.permissions.query) {
       try {
@@ -138,6 +145,7 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
       } catch (e) {}
       states.storage = 'granted';
       states.audio = 'granted';
+      states.camera = 'granted';
     }
 
     if (setConfirmDialog) {
@@ -341,6 +349,26 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
     updatePermissionStates();
   };
 
+  const handleRequestCameraPermission = async () => {
+    try {
+      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+        const res = await AppSettings.requestCameraPermission();
+        if (res.camera === 'granted') {
+          if (setToast) setToast({ title: "📷 Kamera İzni", msg: lang === 'tr' ? "Kamera erişim izni onaylandı." : "Camera permission granted." });
+        } else {
+          showPermissionDialog('camera');
+        }
+      } else {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(t => t.stop());
+        if (setToast) setToast({ title: "📷 Kamera İzni", msg: lang === 'tr' ? "Kamera erişimi hazır." : "Camera access ready." });
+      }
+    } catch (e) {
+      showPermissionDialog('camera');
+    }
+    updatePermissionStates();
+  };
+
   const checkAndRequestPermission = async (type) => {
     try {
       if (Capacitor.isNativePlatform()) {
@@ -377,6 +405,18 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
             return true;
           }
         }
+        if (type === 'camera') {
+          if (Capacitor.getPlatform() === 'android') {
+            const res = await AppSettings.requestCameraPermission();
+            const ok = res.camera === 'granted';
+            if (!ok) showPermissionDialog('camera');
+            return ok;
+          } else {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream.getTracks().forEach(t => t.stop());
+            return true;
+          }
+        }
         if (type === 'location') {
           if (Capacitor.getPlatform() === 'android') {
             const res = await AppSettings.requestLocationPermission();
@@ -409,6 +449,18 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           stream.getTracks().forEach(t => t.stop());
           return true;
+        }
+        if (type === 'camera') {
+          if (Capacitor.getPlatform() === 'android') {
+            const res = await AppSettings.requestCameraPermission();
+            const ok = res.camera === 'granted';
+            if (!ok) showPermissionDialog('camera');
+            return ok;
+          } else {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream.getTracks().forEach(t => t.stop());
+            return true;
+          }
         }
         if (type === 'location') {
           return new Promise((resolve) => {
@@ -444,6 +496,7 @@ export default function useAppPermissions({ setToast, lang, setConfirmDialog }) 
     handleRequestStoragePermission,
     handleRequestAudioPermission,
     handleRequestLocationPermission,
+    handleRequestCameraPermission,
     checkAndRequestPermission,
     showPermissionDialog,
     checkAndRequestNotificationPermissionRef,

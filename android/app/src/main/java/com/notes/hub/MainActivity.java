@@ -51,32 +51,25 @@ public class MainActivity extends BridgeActivity {
             bridge.getWebView().setWebChromeClient(new BridgeWebChromeClient(bridge) {
                 @Override
                 public void onPermissionRequest(final PermissionRequest request) {
-                    // Grant WebView media permissions directly since we handle native perms on startup
-                    request.grant(request.getResources());
+                    runOnUiThread(() -> {
+                        try {
+                            request.grant(request.getResources());
+                        } catch (Exception ignored) {}
+                    });
                 }
             });
 
             // Prevent white flash during screen transitions
             bridge.getWebView().setBackgroundColor(android.graphics.Color.parseColor("#0F1117"));
+            bridge.getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
         }
+
+        // One-time startup permission request on first launch (cold start)
+        checkStartupPermissions();
     }
 
-    @Override
-    protected void onNewIntent(android.content.Intent intent) {
+    private void checkStartupPermissions() {
         try {
-            super.onNewIntent(intent);
-            setIntent(intent);
-            if (intent != null && intent.hasExtra("openNoteId")) {
-                launchNoteId = intent.getStringExtra("openNoteId");
-                // Stop alarm ringing sound immediately when app is brought to front from notification
-                try {
-                    android.content.Intent stopIntent = new android.content.Intent(this, AlarmService.class);
-                    stopIntent.setAction("STOP_ALARM");
-                    startService(stopIntent);
-                } catch (Exception ignored) {}
-            }
-
-            // One-time startup permission request (only on first launch)
             android.content.SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
             boolean hasPrompted = prefs.getBoolean("has_prompted_permissions", false);
 
@@ -105,6 +98,28 @@ public class MainActivity extends BridgeActivity {
 
                 prefs.edit().putBoolean("has_prompted_permissions", true).apply();
             }
+        } catch (Exception e) {
+            android.util.Log.e("NoteUp", "Permission prompt error: " + e.getMessage());
+        }
+    }
+
+    @Override
+    protected void onNewIntent(android.content.Intent intent) {
+        try {
+            super.onNewIntent(intent);
+            setIntent(intent);
+            if (intent != null && intent.hasExtra("openNoteId")) {
+                launchNoteId = intent.getStringExtra("openNoteId");
+                // Stop alarm ringing sound immediately when app is brought to front from notification
+                try {
+                    android.content.Intent stopIntent = new android.content.Intent(this, AlarmService.class);
+                    stopIntent.setAction("STOP_ALARM");
+                    startService(stopIntent);
+                } catch (Exception ignored) {}
+            }
+
+            // Also check permissions in onNewIntent if not prompted yet
+            checkStartupPermissions();
         } catch (Exception e) {
             // Never let onNewIntent crash the app
             android.util.Log.e("NoteUp", "onNewIntent error: " + e.getMessage());

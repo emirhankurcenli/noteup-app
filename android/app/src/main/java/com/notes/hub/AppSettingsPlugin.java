@@ -29,6 +29,10 @@ import android.os.Build;
             strings = { Manifest.permission.RECORD_AUDIO }
         ),
         @Permission(
+            alias = "camera",
+            strings = { Manifest.permission.CAMERA }
+        ),
+        @Permission(
             alias = "location",
             strings = { Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION }
         ),
@@ -126,6 +130,10 @@ public class AppSettingsPlugin extends Plugin {
         JSObject ret = new JSObject();
         ret.put("microphone", getPermissionState("microphone").toString().toLowerCase());
         
+        // Programmatic check for camera
+        boolean hasCamera = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        ret.put("camera", hasCamera ? "granted" : "prompt");
+        
         // Programmatic check for storage/media
         boolean hasStorage = false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // Android 13+
@@ -162,6 +170,17 @@ public class AppSettingsPlugin extends Plugin {
             call.resolve(ret);
         } else {
             requestPermissionForAlias("microphone", call, "permissionCallback");
+        }
+    }
+
+    @PluginMethod
+    public void requestCameraPermission(PluginCall call) {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            JSObject ret = new JSObject();
+            ret.put("camera", "granted");
+            call.resolve(ret);
+        } else {
+            requestPermissionForAlias("camera", call, "permissionCallback");
         }
     }
 

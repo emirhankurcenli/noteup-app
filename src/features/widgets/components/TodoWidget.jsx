@@ -13,11 +13,21 @@ const TodoWidget = ({
   handleAddTodoItem,
   handleUpdateBlock,
   triggerHaptic,
+  t,
+  lang = 'tr',
 }) => {
   const [isInsertingHeader, setIsInsertingHeader] = useState(false);
   const textareaRef = useRef(null);
   const fs = blockFormStates[block.id] || {};
   const items = block.items || [];
+
+  const getTr = (key, fallback) => {
+    if (typeof t === 'function') {
+      const val = t(key);
+      if (val && val !== key) return val;
+    }
+    return fallback;
+  };
   const { taskItems, doneCount, total, progress, isAllDone } = useMemo(() => {
     const tasks = items.filter(i => !i.isHeader);
     const done = tasks.filter(i => i.done).length;
@@ -72,12 +82,12 @@ const TodoWidget = ({
     if (triggerHaptic) triggerHaptic('success');
     const newItem = {
       id: 'h-' + Date.now(),
-      text: 'Yeni Alt Başlık',
+      text: getTr('newSubheading', lang === 'tr' ? 'Alt Başlık' : 'Section'),
       isHeader: true
     };
     const updatedItems = [...items];
     updatedItems.splice(index, 0, newItem);
-    handleUpdateBlock(block.id, { items: updatedItems });
+    handleUpdateBlock(block.id, { items: updatedItems, setupDone: true });
     setIsInsertingHeader(false);
   };
 
@@ -108,118 +118,11 @@ const TodoWidget = ({
 
   let currentSectionCollapsed = false;
 
-  const isSetupForm = block.setupDone !== undefined ? !block.setupDone : (items.length === 0 && !block.title);
-
-  if (isSetupForm) {
-    return (
-      <div 
-        className="todo-widget animate-fade-in" 
-        style={{ 
-          borderRadius: '18px', 
-          border: '1.5px solid rgba(6, 182, 212, 0.35)', 
-          background: 'var(--bg-card)', 
-          padding: '16px' 
-        }} 
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Setup Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-          <div 
-            style={{ 
-              width: '34px', 
-              height: '34px', 
-              borderRadius: '11px', 
-              background: 'linear-gradient(135deg, #06B6D4, #0891B2)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              color: '#FFF', 
-              flexShrink: 0, 
-              boxShadow: '0 3px 10px rgba(6, 182, 212, 0.35)' 
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 11 12 14 22 4" />
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-            </svg>
-          </div>
-
-          <span style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--text-primary)' }}>
-            Görev Listesi
-          </span>
-
-          <button 
-            type="button"
-            style={{ 
-              background: 'rgba(239, 68, 68, 0.1)', 
-              border: 'none', 
-              color: '#EF4444', 
-              cursor: 'pointer', 
-              width: '28px', 
-              height: '28px', 
-              borderRadius: '50%', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              flexShrink: 0, 
-              marginLeft: 'auto' 
-            }}
-            onClick={onDeleteBlock}
-            title="Bloğu Sil"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Info Hint Box */}
-        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', background: 'rgba(6, 182, 212, 0.08)', border: '1px solid rgba(6, 182, 212, 0.15)', borderRadius: '12px', padding: '10px 12px', lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '14px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}>
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="16" x2="12" y2="12" />
-            <line x1="12" y1="8" x2="12.01" y2="8" />
-          </svg>
-          <span>Günlük yapacaklarınızı, işlerinizi ve hedeflerinizi düzenli olarak takip edin.</span>
-        </div>
-
-        {/* Setup Action Button */}
-        <button
-          type="button"
-          className="btn-primary"
-          style={{
-            width: '100%',
-            padding: '12px',
-            fontSize: '0.92rem',
-            fontWeight: 800,
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #06B6D4, #0891B2)',
-            border: 'none',
-            color: '#FFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            boxShadow: '0 4px 14px rgba(6, 182, 212, 0.35)',
-            cursor: 'pointer'
-          }}
-          onClick={() => {
-            if (triggerHaptic) triggerHaptic('success');
-            handleUpdateBlock(block.id, { setupDone: true });
-          }}
-        >
-          <span>✓ Listeye Başla</span>
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className={`todo-widget ${isAllDone ? 'todo-widget-completed animate-pop' : ''}`} style={{ borderRadius: '18px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', padding: '16px' }} onClick={(e) => e.stopPropagation()}>
+    <div className={`todo-widget ${isAllDone ? 'todo-widget-completed animate-pop' : ''}`} style={{ borderRadius: '16px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', padding: '16px' }} onClick={(e) => e.stopPropagation()}>
       <div className="todo-widget-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #06B6D4, #0891B2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', flexShrink: 0, boxShadow: '0 2px 8px rgba(6, 182, 212, 0.3)' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'rgba(6, 182, 212, 0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0891B2', flexShrink: 0 }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 11 12 14 22 4" />
             <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
           </svg>
@@ -229,7 +132,7 @@ const TodoWidget = ({
           <input
             type="text"
             value={block.title || ''}
-            placeholder="Görev Listesi"
+            placeholder={getTr('todoList', lang === 'tr' ? 'Yapılacaklar Listesi' : 'To-Do List')}
             onChange={(e) => handleTodoTitleChange(block.id, e.target.value)}
             onClick={(e) => e.stopPropagation()}
             style={{
@@ -237,8 +140,8 @@ const TodoWidget = ({
               border: 'none',
               outline: 'none',
               color: 'var(--text-primary)',
-              fontSize: '0.95rem',
-              fontWeight: 800,
+              fontSize: '0.94rem',
+              fontWeight: 700,
               fontFamily: 'var(--font-family)',
               flex: 1,
               minWidth: 0,
@@ -249,45 +152,28 @@ const TodoWidget = ({
             <div 
               style={{
                 position: 'relative',
-                minWidth: '64px',
-                height: '24px',
+                minWidth: '52px',
+                height: '22px',
                 padding: '0 8px',
-                borderRadius: '12px',
-                background: 'rgba(6, 182, 212, 0.08)',
-                border: '1px solid rgba(6, 182, 212, 0.25)',
+                borderRadius: '10px',
+                background: isAllDone ? 'rgba(16, 185, 129, 0.14)' : 'rgba(6, 182, 212, 0.12)',
+                border: `1px solid ${isAllDone ? 'rgba(16, 185, 129, 0.3)' : 'rgba(6, 182, 212, 0.25)'}`,
                 overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
                 marginLeft: 'auto',
-                boxShadow: isAllDone ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none'
               }}
             >
-              <div 
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: `${progress}%`,
-                  background: isAllDone 
-                    ? 'linear-gradient(90deg, #10B981, #059669)' 
-                    : 'linear-gradient(90deg, #06B6D4, #0891B2)',
-                  transition: 'width 0.3s ease',
-                  zIndex: 1
-                }}
-              />
               <span 
                 style={{
                   position: 'relative',
                   zIndex: 2,
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  color: '#FFF',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: isAllDone ? '#10B981' : '#0891B2',
                   lineHeight: 1,
-                  letterSpacing: '0.03em'
                 }}
               >
                 {doneCount}/{total}
@@ -295,47 +181,42 @@ const TodoWidget = ({
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
           {/* Subheading Insert Toggle Button */}
           <button
             style={{
               padding: '5px 10px',
-              borderRadius: '10px',
-              fontSize: '0.76rem',
-              fontWeight: 800,
-              background: isInsertingHeader 
-                ? 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)' 
-                : 'rgba(6, 182, 212, 0.12)',
-              border: '1px solid rgba(6, 182, 212, 0.3)',
-              color: isInsertingHeader ? '#FFFFFF' : '#06B6D4',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              background: isInsertingHeader ? '#0891B2' : 'rgba(6, 182, 212, 0.1)',
+              border: '1px solid rgba(6, 182, 212, 0.25)',
+              color: isInsertingHeader ? '#FFFFFF' : '#0891B2',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
               whiteSpace: 'nowrap',
               flexShrink: 0,
-              transition: 'all 0.2s ease',
-              boxShadow: isInsertingHeader ? '0 2px 8px rgba(6, 182, 212, 0.35)' : 'none'
+              transition: 'all 0.15s ease',
             }}
             onClick={() => {
               if (triggerHaptic) triggerHaptic('light');
               setIsInsertingHeader(!isInsertingHeader);
             }}
-            title="Alt Başlık Ekleme Modu"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span>Başlık</span>
+            <span>{getTr('subheadingBtn', lang === 'tr' ? 'Alt Başlık' : 'Section')}</span>
           </button>
 
           <button
-            style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#EF4444', cursor: 'pointer', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+            style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#EF4444', cursor: 'pointer', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
             onClick={onDeleteBlock}
-            title="Bloğu Sil"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -343,47 +224,27 @@ const TodoWidget = ({
         </div>
       </div>
 
-
-
-      {/* Styles for glowing dividers and headers */}
-      <style>{`
-        @keyframes glowCyanGlobal {
-          0% {
-            box-shadow: 0 0 4px rgba(6, 182, 212, 0.2);
-            border-color: rgba(6, 182, 212, 0.3);
-            background-color: rgba(6, 182, 212, 0.04);
-          }
-          100% {
-            box-shadow: 0 0 12px rgba(6, 182, 212, 0.7), 0 0 20px rgba(6, 182, 212, 0.3);
-            border-color: rgba(6, 182, 212, 0.9);
-            background-color: rgba(6, 182, 212, 0.12);
-          }
-        }
-        .glow-divider {
-          height: 10px;
-          margin: 4px 0;
-          border: 1.5px dashed rgba(6, 182, 212, 0.5);
-          border-radius: 6px;
-          cursor: pointer;
-          animation: glowCyanGlobal 0.8s infinite alternate;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          justifyContent: center;
-        }
-        .glow-divider:hover {
-          transform: scaleY(1.3);
-          background-color: rgba(6, 182, 212, 0.25) !important;
-        }
-      `}</style>
-
-      <div className="todo-list" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div className="todo-list" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {isInsertingHeader && (
-          <div 
-            className="glow-divider" 
+          <button
+            type="button"
             onClick={() => onInsertHeaderAt(0)}
-            title="Alt Başlığı Buraya Ekle"
-          />
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              margin: '2px 0',
+              borderRadius: '8px',
+              border: '1px dashed rgba(6, 182, 212, 0.45)',
+              background: 'rgba(6, 182, 212, 0.06)',
+              color: '#0891B2',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              textAlign: 'center',
+            }}
+          >
+            + {getTr('subheadingBtn', lang === 'tr' ? 'Buraya Alt Başlık Ekle' : 'Insert Section Here')}
+          </button>
         )}
         
         {items.map((item, index) => {
@@ -402,56 +263,15 @@ const TodoWidget = ({
                   alignItems: 'center',
                   width: '100%',
                   gap: '8px',
-                  padding: '10px 14px',
-                  background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(8, 145, 178, 0.05) 100%)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(6, 182, 212, 0.18)',
-                  marginTop: '12px',
-                  marginBottom: '4px',
-                  position: 'relative',
-                  overflow: 'hidden'
+                  padding: '8px 10px',
+                  background: 'var(--bg-tertiary, rgba(148, 163, 184, 0.08))',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color)',
+                  marginTop: index === 0 ? '4px' : '10px',
+                  marginBottom: '2px',
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Section checkbox */}
-                {(() => {
-                  const stats = getSectionStats(index);
-                  const secAllDone = stats.total > 0 && stats.done === stats.total;
-                  return (
-                    <div style={{
-                      width: '18px',
-                      height: '18px',
-                      borderRadius: '5px',
-                      border: `2px solid ${secAllDone ? 'transparent' : 'rgba(6, 182, 212, 0.5)'}`,
-                      background: secAllDone
-                        ? 'linear-gradient(135deg, #10B981, #059669)'
-                        : 'var(--bg-card)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      boxShadow: secAllDone ? '0 2px 6px rgba(16, 185, 129, 0.4)' : 'none'
-                    }}>
-                      {secAllDone && (
-                        <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* Subtle left glow accent */}
-                <div style={{
-                  width: '3px',
-                  height: '20px',
-                  borderRadius: '4px',
-                  background: 'linear-gradient(180deg, #06B6D4, #0891B2)',
-                  flexShrink: 0,
-                  boxShadow: '0 0 6px rgba(6, 182, 212, 0.5)'
-                }} />
-
                 {(() => {
                   const stats = getSectionStats(index);
                   const secAllDone = stats.total > 0 && stats.done === stats.total;
@@ -459,7 +279,7 @@ const TodoWidget = ({
                     <input
                       type="text"
                       value={item.text}
-                      placeholder="Alt Başlık..."
+                      placeholder={getTr('subheadingPlaceholder', lang === 'tr' ? 'Alt Başlık...' : 'Section title...')}
                       onChange={(e) => handleHeaderChange(item.id, e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Backspace' && (!item.text || item.text.trim() === '')) {
@@ -473,16 +293,13 @@ const TodoWidget = ({
                         border: 'none',
                         outline: 'none',
                         color: secAllDone ? 'var(--text-muted)' : 'var(--text-primary)',
-                        fontSize: '0.95rem',
-                        fontWeight: 900,
+                        fontSize: '0.88rem',
+                        fontWeight: 600,
                         fontFamily: 'var(--font-family)',
                         width: '100%',
                         minWidth: 0,
                         padding: '0',
-                        letterSpacing: '0.02em',
-                        textTransform: 'uppercase',
                         textDecoration: secAllDone ? 'line-through' : 'none',
-                        transition: 'color 0.2s, text-decoration 0.2s'
                       }}
                     />
                   );
@@ -494,14 +311,11 @@ const TodoWidget = ({
                   return stats.total > 0 ? (
                     <span style={{
                       fontSize: '0.7rem',
-                      fontWeight: 700,
-                      color: allDone ? '#10B981' : '#06B6D4',
-                      background: allDone
-                        ? 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1))'
-                        : 'linear-gradient(135deg, rgba(6,182,212,0.18), rgba(8,145,178,0.1))',
-                      border: `1px solid ${allDone ? 'rgba(16,185,129,0.25)' : 'rgba(6,182,212,0.25)'}`,
-                      padding: '2px 8px',
-                      borderRadius: '20px',
+                      fontWeight: 600,
+                      color: allDone ? '#10B981' : 'var(--text-secondary)',
+                      background: allDone ? 'rgba(16,185,129,0.12)' : 'rgba(148,163,184,0.12)',
+                      padding: '2px 7px',
+                      borderRadius: '8px',
                       flexShrink: 0,
                       whiteSpace: 'nowrap'
                     }}>
@@ -515,7 +329,7 @@ const TodoWidget = ({
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: 'rgba(6, 182, 212, 0.7)',
+                    color: 'var(--text-secondary)',
                     width: '24px',
                     height: '24px',
                     borderRadius: '6px',
@@ -524,14 +338,11 @@ const TodoWidget = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    transition: 'all 0.15s ease',
-                    marginLeft: '4px'
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleHeaderCollapse(item.id);
                   }}
-                  title={item.collapsed ? "Görevleri Göster" : "Görevleri Gizle"}
                 >
                   <svg 
                     width="14" 
@@ -539,7 +350,7 @@ const TodoWidget = ({
                     viewBox="0 0 24 24" 
                     fill="none" 
                     stroke="currentColor" 
-                    strokeWidth="2.5" 
+                    strokeWidth="2.2" 
                     strokeLinecap="round" 
                     strokeLinejoin="round"
                     style={{
@@ -567,7 +378,7 @@ const TodoWidget = ({
                   }}
                   onClick={(e) => onDeleteItem(e, item.id)}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
@@ -580,24 +391,24 @@ const TodoWidget = ({
                   if (triggerHaptic) triggerHaptic('light');
                   setActiveTodoItemId(activeTodoItemId === item.id ? null : item.id);
                 }}
-                style={{ padding: '8px 12px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                style={{ padding: '8px 10px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}
               >
                 <button
                   className={`todo-checkbox ${item.done ? 'checked' : ''}`}
                   onClick={(e) => onToggleItem(e, item)}
                 >
                   {item.done && (
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   )}
                 </button>
-                <span className="todo-item-text" style={{ flex: 1, fontSize: '0.85rem' }}>{item.text}</span>
+                <span className="todo-item-text" style={{ flex: 1, fontSize: '0.88rem' }}>{item.text}</span>
                 <button
-                  style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#EF4444', width: '22px', height: '22px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                  style={{ background: 'rgba(239, 68, 68, 0.08)', border: 'none', color: '#EF4444', width: '22px', height: '22px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                   onClick={(e) => onDeleteItem(e, item.id)}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
@@ -606,23 +417,37 @@ const TodoWidget = ({
             )}
             
             {isInsertingHeader && (
-              <div 
-                className="glow-divider" 
+              <button
+                type="button"
                 onClick={() => onInsertHeaderAt(index + 1)}
-                title="Alt Başlığı Buraya Ekle"
-              />
+                style={{
+                  width: '100%',
+                  padding: '6px 10px',
+                  margin: '2px 0',
+                  borderRadius: '8px',
+                  border: '1px dashed rgba(6, 182, 212, 0.45)',
+                  background: 'rgba(6, 182, 212, 0.06)',
+                  color: '#0891B2',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                }}
+              >
+                + {getTr('subheadingBtn', lang === 'tr' ? 'Buraya Alt Başlık Ekle' : 'Insert Section Here')}
+              </button>
             )}
           </React.Fragment>
         );
       })}
       </div>
 
-      <div className="todo-input-row" style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+      <div className="todo-input-row" style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
         <textarea
           ref={textareaRef}
           className="input-field"
-          style={{ padding: '8px 12px', fontSize: '0.85rem', flex: 1, resize: 'none', minHeight: '38px', maxHeight: '120px', lineHeight: '1.5', overflowY: 'auto', borderRadius: '10px' }}
-          placeholder="Yeni görev ekle..."
+          style={{ padding: '8px 12px', fontSize: '0.86rem', fontWeight: 500, flex: 1, resize: 'none', minHeight: '38px', maxHeight: '120px', lineHeight: '1.5', overflowY: 'auto', borderRadius: '10px' }}
+          placeholder={getTr('newTaskPlaceholder', lang === 'tr' ? 'Yeni görev ekle...' : 'Add a task...')}
           rows={1}
           value={fs.todoInput || ''}
           onChange={(e) => {
@@ -639,11 +464,16 @@ const TodoWidget = ({
         />
         <button
           className="btn-primary"
-          style={{ padding: '8px 16px', fontSize: '1rem', fontWeight: 700, flexShrink: 0, borderRadius: '10px', background: 'linear-gradient(135deg, #06B6D4, #0891B2)', border: 'none', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: '38px', height: '38px', padding: 0, flexShrink: 0, borderRadius: '10px', background: '#0891B2', border: 'none', color: '#FFF', boxShadow: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={onAddItem}
           onMouseDown={(e) => e.preventDefault()}
           onTouchStart={(e) => e.preventDefault()}
-        >+</button>
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
       </div>
     </div>
   );

@@ -7,6 +7,8 @@ const cloneBlock = (b) => {
   const cloned = { ...b };
   if (Array.isArray(b.items)) cloned.items = b.items.map(it => ({ ...it }));
   if (Array.isArray(b.payments)) cloned.payments = b.payments.map(p => ({ ...p }));
+  if (Array.isArray(b.expenses)) cloned.expenses = b.expenses.map(e => ({ ...e, among: Array.isArray(e.among) ? [...e.among] : e.among }));
+  if (Array.isArray(b.participants)) cloned.participants = [...b.participants];
   return cloned;
 };
 

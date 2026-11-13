@@ -41,6 +41,7 @@ export const useSharedNotesSync = ({
           noteId: item.note_id,
           noteTitle: item.note_title,
           noteBlocks: item.note_blocks,
+          permission: item.permission || 'edit',
           timestamp: new Date(item.created_at).getTime(),
           processed: false,
         }));
@@ -496,10 +497,10 @@ export const useSharedNotesSync = ({
     // İlk yüklemede hemen çalıştır
     pollSharedNotes();
 
-    // Her 10 saniyede bir periyodik polling
+    // Periyodik yedek kontrol (Realtime WebSocket ana kanaldır, polling hafif kalp atışıdır)
     pollingIntervalRef.current = setInterval(() => {
       pollSharedNotes();
-    }, 10_000);
+    }, 60_000);
 
     // Sekme geçişi veya manuel yenileme eventi dinleyicisi
     const handleManualRefresh = () => {
@@ -540,4 +541,34 @@ export const useSharedNotesSync = ({
       }
     };
   }, [myCode, pollSharedNotes, syncIncomingPendingShares]);
+
+  // Nudge inbox: listen for nudge broadcasts from friends
+  useEffect(() => {
+    if (!myCode) return;
+    const channelName = `nudge_inbox_${String(myCode).trim().toUpperCase()}`;
+    let nudgeChannel = null;
+    try {
+      nudgeChannel = supabase.channel(channelName);
+      nudgeChannel
+        .on('broadcast', { event: 'nudge' }, (payload) => {
+          const data = payload.payload || {};
+          const fromName = data.fromName || 'Arkadaşınız';
+          const noteTitle = data.noteTitle || 'Not';
+          const customMsg = data.customMessage ? ` "${data.customMessage}"` : '';
+          setToast?.({
+            title: `📣 ${fromName} sizi dürtüyor!`,
+            msg: `"${noteTitle}" notu için bir bildirim gönderdi.${customMsg}`,
+          });
+          playChime();
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('Nudge inbox channel error:', err);
+    }
+    return () => {
+      if (nudgeChannel) {
+        try { supabase.removeChannel(nudgeChannel); } catch (_) {}
+      }
+    };
+  }, [myCode, setToast]);
 };

@@ -1,13 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import audioPlayerService from '@shared/services/audioPlayerService';
 
 const AudioBlockComponent = ({
   block,
-  activeAudioPlayingId,
-  activeAudioProgress,
-  handlePlayPauseAudio,
   handleDeleteBlock,
 }) => {
-  const isPlaying = activeAudioPlayingId === block.id;
+  const [isPlaying, setIsPlaying] = useState(() => audioPlayerService.getPlayingId() === block?.id);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (!block?.id) return;
+    return audioPlayerService.subscribe(block.id, ({ isPlaying: playing, progress: pct }) => {
+      setIsPlaying(playing);
+      setProgress(pct);
+    });
+  }, [block?.id]);
+
+  const handleToggle = () => {
+    audioPlayerService.toggle(block);
+  };
+
+  const currentPlaying = isPlaying;
+  const currentProgress = progress;
 
   return (
     <div
@@ -24,7 +38,7 @@ const AudioBlockComponent = ({
       }}
     >
       <button
-        onClick={() => handlePlayPauseAudio(block)}
+        onClick={handleToggle}
         style={{
           width: '36px',
           height: '36px',
@@ -39,7 +53,7 @@ const AudioBlockComponent = ({
           flexShrink: 0,
         }}
       >
-        {isPlaying ? (
+        {currentPlaying ? (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
             <rect x="6" y="4" width="4" height="16" />
             <rect x="14" y="4" width="4" height="16" />
@@ -53,12 +67,12 @@ const AudioBlockComponent = ({
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
         <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-          {block.fileName || 'Ses Kaydı'}
+          {block.fileName || block.name || 'Ses Kaydı'}
         </span>
         <div style={{ width: '100%', height: '4px', background: 'var(--bg-tertiary)', borderRadius: '2px', overflow: 'hidden' }}>
           <div
             style={{
-              width: `${isPlaying ? activeAudioProgress || 0 : 0}%`,
+              width: `${currentPlaying ? currentProgress || 0 : 0}%`,
               height: '100%',
               background: '#06B6D4',
               transition: 'width 0.1s linear',
@@ -68,7 +82,12 @@ const AudioBlockComponent = ({
       </div>
 
       <button
-        onClick={() => handleDeleteBlock(block.id)}
+        onClick={() => {
+          if (currentPlaying) {
+            audioPlayerService.stopCurrent();
+          }
+          handleDeleteBlock(block.id);
+        }}
         style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px' }}
       >
         ✕

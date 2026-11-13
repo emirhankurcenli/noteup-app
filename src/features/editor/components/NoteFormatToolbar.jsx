@@ -313,29 +313,25 @@ const NoteFormatToolbar = ({
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{
-                  width: '34px',
-                  height: '34px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '9px',
+                  background: 'rgba(139, 92, 246, 0.14)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#FFF',
-                  boxShadow: '0 4px 12px rgba(139, 92, 246, 0.35)'
+                  color: '#8B5CF6',
                 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="4 7 4 4 20 4 20 7" />
                     <line x1="9" y1="20" x2="15" y2="20" />
                     <line x1="12" y1="4" x2="12" y2="20" />
                   </svg>
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: isLight ? '#0F172A' : '#F8FAFC', margin: 0 }}>
-                    Yazı Tipi Seçin
+                  <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: isLight ? '#0F172A' : '#F8FAFC', margin: 0 }}>
+                    Yazı Tipi
                   </h3>
-                  <p style={{ fontSize: '0.72rem', color: isLight ? '#64748B' : '#94A3B8', margin: 0, fontWeight: 600 }}>
-                    Canlı önizleyerek stilinizi belirleyin
-                  </p>
                 </div>
               </div>
 

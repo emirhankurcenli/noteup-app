@@ -1,4 +1,4 @@
-﻿const de = {
+const de = {
   confirmDeleteTitle: 'Löschen bestätigen',
   pinnedBadge: 'Angeheftet',
   alarmSetTitle: 'Erinnerung gestellt',
@@ -256,6 +256,8 @@
   changeLanguage: 'Ändern',
   locationGps: 'Standort (GPS)',
   locationGpsSub: 'Für Parkplatz-Widget & Fahrzeugstandort',
+  camera: 'Kamera',
+  cameraSub: 'Zum Scannen von QR-Codes und Aufnehmen von Fotos',
   shareAsImage: 'Als Bild teilen',
   shareAsImageSub: 'Erstellt eine hochwertige Bildkarte der Notiz',
   shareWithFriendSub: 'Notiz direkt an einen Freund senden',
@@ -325,6 +327,7 @@
   noSharedWithMeSub: 'Wenn Freunde Notizen mit Ihnen teilen, erscheinen diese hier.',
   onlyOwnerCanShareNotice: 'Da diese Notiz mit Ihnen geteilt wurde, kann nur der Eigentümer sie weiter teilen.',
   ownerBadge: 'Eigentümer',
+  pendingShareRequests: 'Eingehende Einladungen',
   newInvite: 'Neue Einladung',
 };
 

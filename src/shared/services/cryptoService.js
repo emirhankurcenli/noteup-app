@@ -4,6 +4,15 @@
 
 import { deriveKey, bufferToBase64, base64ToBuffer, getFallbackUserKey } from './crypto/keyDerivation';
 import { encryptText, decryptText } from './crypto/aesEncryption';
+import {
+  generateMediaKey,
+  importMediaKey,
+  encryptMediaBlob,
+  decryptMediaBuffer,
+  getOrDecryptMedia,
+  cacheDecryptedMedia,
+  getCachedMediaUrl,
+} from './crypto/mediaEncryption';
 
 export const CryptoService = {
   deriveKey,
@@ -12,6 +21,15 @@ export const CryptoService = {
   getFallbackUserKey,
   encrypt: encryptText,
   decrypt: decryptText,
+
+  // Media End-to-End Encryption
+  generateMediaKey,
+  importMediaKey,
+  encryptMediaBlob,
+  decryptMediaBuffer,
+  getOrDecryptMedia,
+  cacheDecryptedMedia,
+  getCachedMediaUrl,
 
   /**
    * Objedeki belirtilen alanları şifreler

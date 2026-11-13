@@ -12,69 +12,63 @@ import {
   SnippetIcon,
 } from '@shared/components/Icons';
 
-export const getBadgeCountdown = (targetTimeMs, nowMs) => {
-  const diffMs = targetTimeMs - nowMs;
-  if (diffMs <= 0) return null;
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
+export const formatReminderTarget = (targetTime, t = (k) => k) => {
+  if (!targetTime) return '';
+  const date = new Date(targetTime);
+  if (isNaN(date.getTime())) return '';
 
-  const hours = diffHour % 24;
-  const mins = diffMin % 60;
-  const secs = diffSec % 60;
+  const now = new Date();
+  const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  if (diffDay > 0) {
-    return `${diffDay}g ${hours}sa`;
-  } else if (diffHour > 0) {
-    return `${diffHour}sa ${mins}dk`;
-  } else if (diffMin > 0) {
-    return `${diffMin}dk ${secs}s`;
-  } else {
-    return `${diffSec}s`;
+  const isToday = date.toDateString() === now.toDateString();
+
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+  if (isToday) {
+    return `${cleanText(t('today') || 'Bugün')}, ${timeStr}`;
   }
+  if (isTomorrow) {
+    return `${cleanText(t('tomorrow') || 'Yarın')}, ${timeStr}`;
+  }
+
+  // Same year -> "9 Kas, 22:01"
+  if (date.getFullYear() === now.getFullYear()) {
+    const monthDay = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+    return `${monthDay}, ${timeStr}`;
+  }
+
+  // Different year -> "9 Kas 2027, 22:01"
+  const fullDate = date.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+  return `${fullDate}, ${timeStr}`;
 };
 
 export const ReminderBadge = React.memo(({ activeRem, t }) => {
-  const targetMs = useMemo(() => (activeRem ? new Date(activeRem.time).getTime() : 0), [activeRem?.time]);
-  const [nowMs, setNowMs] = useState(Date.now());
+  if (!activeRem || !activeRem.time) return null;
 
-  useEffect(() => {
-    if (!activeRem || !targetMs) return;
-    const checkDiff = targetMs - Date.now();
-    if (checkDiff <= 0) return;
+  const targetFormatted = formatReminderTarget(activeRem.time, t);
+  if (!targetFormatted) return null;
 
-    // Fast 1s tick only when <= 60s; 10s tick when <= 1 hour; 30s otherwise
-    const intervalMs = checkDiff <= 60_000 ? 1000 : (checkDiff <= 3600_000 ? 10_000 : 30_000);
-    const timer = setInterval(() => {
-      const cur = Date.now();
-      setNowMs(cur);
-      if (targetMs - cur <= 0) {
-        clearInterval(timer);
-      }
-    }, intervalMs);
-
-    return () => clearInterval(timer);
-  }, [activeRem, targetMs]);
-
-  if (!activeRem) return null;
-
-  const countdownStr = getBadgeCountdown(targetMs, nowMs);
   const isNotif = activeRem.modes?.notification;
   const isAlarm = activeRem.modes?.alarm;
-  let modeLabel = cleanText(t('reminderLabel'));
+
+  let modeTag = '';
   if (isNotif && isAlarm) {
-    modeLabel += `: ${cleanText(t('notificationAndAlarm'))}`;
+    modeTag = ` (${cleanText(t('notificationAndAlarm') || 'Bildirim & Alarm')})`;
   } else if (isAlarm) {
-    modeLabel += `: ${cleanText(t('alarmType'))}`;
+    modeTag = ` (${cleanText(t('alarmType') || 'Alarm')})`;
   } else if (isNotif) {
-    modeLabel += `: ${cleanText(t('notificationType'))}`;
+    modeTag = ` (${cleanText(t('notificationType') || 'Bildirim')})`;
   }
-  const fullText = countdownStr ? `${modeLabel} (${countdownStr})` : modeLabel;
 
   return (
-    <span className="badge badge-reminder" style={{ display: 'inline-flex', alignItems: 'center' }}>
-      <ClockIcon /> {fullText}
+    <span
+      className="badge badge-reminder"
+      style={{ display: 'inline-flex', alignItems: 'center' }}
+      title={activeRem.time}
+    >
+      <ClockIcon /> {targetFormatted}{modeTag}
     </span>
   );
 });
@@ -168,6 +162,7 @@ const NoteCardComponent = ({
   checkAndRequestNotificationPermission,
   reminders = [],
   now = Date.now(),
+  lang = 'tr',
   t = (k) => k,
 }) => {
   const [menuDirection, setMenuDirection] = useState('down');
@@ -268,6 +263,18 @@ const NoteCardComponent = ({
                   <OwnerIcon /> {cleanText(t('ownerBadge') || 'Not Sahibi')}
                 </span>
               ))}
+            {note.sharedFrom && note.permission === 'view' && (
+              <span
+                className="badge"
+                style={{ background: 'rgba(59, 130, 246, 0.14)', color: '#3B82F6', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                {t('viewOnlyBadge') !== 'viewOnlyBadge' ? cleanText(t('viewOnlyBadge')) : (lang === 'tr' ? 'Salt Okunur' : 'View Only')}
+              </span>
+            )}
             {activeRem && <ReminderBadge activeRem={activeRem} t={t} />}
             {note.debts && note.debts.length > 0 && (
               <span
@@ -444,7 +451,7 @@ const NoteCardComponent = ({
                       <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                     </svg>
                   </span>
-                  {t('sendNotifBtn')}
+                  {cleanText(t('sendNotifBtn'))}
                 </button>
               )}
 
@@ -502,7 +509,9 @@ export const NoteCard = React.memo(NoteCardComponent, (prevProps, nextProps) => 
   }
   if (prevProps.theme !== nextProps.theme) return false;
   if (prevProps.lang !== nextProps.lang) return false;
-  if (prevProps.reminders !== nextProps.reminders) return false;
+  const prevRem = prevProps.reminders?.find((r) => r?.noteId === prevProps.note.id);
+  const nextRem = nextProps.reminders?.find((r) => r?.noteId === nextProps.note.id);
+  if (prevRem !== nextRem) return false;
   return true;
 });
 export default NoteCard;

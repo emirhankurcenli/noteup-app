@@ -50,9 +50,6 @@ export const AppStateProvider = ({ children, optionsRef }) => {
     setProfileName: logic.setProfileName,
     showAvatarPicker: logic.showAvatarPicker,
     setShowAvatarPicker: logic.setShowAvatarPicker,
-    userPlan: logic.userPlan,
-    setUserPlan: logic.setUserPlan,
-    planNotification: logic.planNotification,
     toast: logic.toast,
     setToast: logic.setToast,
     getUserScopedKey: logic.getUserScopedKey,
@@ -64,7 +61,7 @@ export const AppStateProvider = ({ children, optionsRef }) => {
     syncDataFromSupabase: logic.syncDataFromSupabase,
     syncDeltaSharedNotes: logic.syncDeltaSharedNotes,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [logic.user, logic.isLoggingIn, logic.myCode, logic.profileName, logic.showAvatarPicker, logic.userPlan, logic.toast]);
+  }), [logic.user, logic.isLoggingIn, logic.myCode, logic.profileName, logic.showAvatarPicker, logic.toast]);
 
   const notesValue = React.useMemo(() => ({
     notes: logic.notes,

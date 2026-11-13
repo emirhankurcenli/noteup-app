@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import { registerPlugin } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
@@ -182,52 +182,78 @@ export default function useAppLifecycleEvents({
     };
   }, []);
 
-  // 4. Android Hardware Back Button listener
+  // 4. Android Hardware Back Button listener (Stabilized with Ref to avoid re-binding on every keystroke)
+  const backHandlerStateRef = useRef({});
+  backHandlerStateRef.current = {
+    lightboxUrl,
+    setLightboxUrl,
+    previewFileModal,
+    setPreviewFileModal,
+    confirmDialog,
+    setConfirmDialog,
+    showFeedbackModal,
+    setShowFeedbackModal,
+    showShareModal,
+    setShowShareModal,
+    activeShareNoteId,
+    setActiveShareNoteId,
+    showEditorMenu,
+    setShowEditorMenu,
+    showReminderModal,
+    setShowReminderModal,
+    editingNote,
+    handleCloseEditor,
+    tabHistoryRef,
+    activeTab,
+    setActiveTab,
+  };
+
   useEffect(() => {
     const handleBackButton = async () => {
+      const s = backHandlerStateRef.current;
       // Topmost overlays dismissed first
-      if (lightboxUrl) {
-        if (setLightboxUrl) setLightboxUrl(null);
+      if (s.lightboxUrl) {
+        if (s.setLightboxUrl) s.setLightboxUrl(null);
         return;
       }
-      if (previewFileModal) {
-        if (setPreviewFileModal) setPreviewFileModal(null);
+      if (s.previewFileModal) {
+        if (s.setPreviewFileModal) s.setPreviewFileModal(null);
         return;
       }
-      if (confirmDialog) {
-        if (confirmDialog.onCancel) confirmDialog.onCancel();
-        if (setConfirmDialog) setConfirmDialog(null);
+      if (s.confirmDialog) {
+        if (s.confirmDialog.onCancel) s.confirmDialog.onCancel();
+        if (s.setConfirmDialog) s.setConfirmDialog(null);
         return;
       }
-      if (showFeedbackModal) {
-        if (setShowFeedbackModal) setShowFeedbackModal(false);
+      if (s.showFeedbackModal) {
+        if (s.setShowFeedbackModal) s.setShowFeedbackModal(false);
         return;
       }
-      if (showShareModal) {
-        if (setShowShareModal) setShowShareModal(false);
+      if (s.showShareModal) {
+        if (s.setShowShareModal) s.setShowShareModal(false);
         return;
       }
-      if (activeShareNoteId) {
-        if (setActiveShareNoteId) setActiveShareNoteId(null);
+      if (s.activeShareNoteId) {
+        if (s.setActiveShareNoteId) s.setActiveShareNoteId(null);
         return;
       }
-      if (showEditorMenu) {
-        if (setShowEditorMenu) setShowEditorMenu(false);
+      if (s.showEditorMenu) {
+        if (s.setShowEditorMenu) s.setShowEditorMenu(false);
         return;
       }
-      if (showReminderModal) {
-        if (setShowReminderModal) setShowReminderModal(false);
+      if (s.showReminderModal) {
+        if (s.setShowReminderModal) s.setShowReminderModal(false);
         return;
       }
 
-      if (editingNote) {
-        handleCloseEditor();
-      } else if (tabHistoryRef && tabHistoryRef.current && tabHistoryRef.current.length > 1) {
-        tabHistoryRef.current.pop();
-        const prevTab = tabHistoryRef.current[tabHistoryRef.current.length - 1] || 'notes';
-        setActiveTab(prevTab);
-      } else if (activeTab !== 'notes') {
-        setActiveTab('notes');
+      if (s.editingNote) {
+        if (s.handleCloseEditor) s.handleCloseEditor();
+      } else if (s.tabHistoryRef && s.tabHistoryRef.current && s.tabHistoryRef.current.length > 1) {
+        s.tabHistoryRef.current.pop();
+        const prevTab = s.tabHistoryRef.current[s.tabHistoryRef.current.length - 1] || 'notes';
+        if (s.setActiveTab) s.setActiveTab(prevTab);
+      } else if (s.activeTab !== 'notes') {
+        if (s.setActiveTab) s.setActiveTab('notes');
       } else {
         try {
           await CapApp.exitApp();
@@ -241,16 +267,5 @@ export default function useAppLifecycleEvents({
     return () => {
       listener.then(l => l.remove());
     };
-  }, [
-    confirmDialog,
-    editingNote,
-    showEditorMenu,
-    showReminderModal,
-    activeTab,
-    lightboxUrl,
-    previewFileModal,
-    showShareModal,
-    activeShareNoteId,
-    showFeedbackModal
-  ]);
+  }, []);
 }

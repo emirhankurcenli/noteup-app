@@ -65,21 +65,21 @@ const ParkingWidget = ({
   };
 
   return (
-    <div className="parking-widget" style={{ borderRadius: '18px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', padding: '16px' }} onClick={(e) => e.stopPropagation()}>
-      <div className="parking-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #EF4444, #DC2626)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', flexShrink: 0, boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <div className="parking-widget" style={{ borderRadius: '16px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', padding: '16px' }} onClick={(e) => e.stopPropagation()}>
+      <div className="parking-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+        <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'rgba(239, 68, 68, 0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', flexShrink: 0 }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.0 10.9 2 11.2 2 11.5V16c0 .6.4 1 1 1h2" />
             <circle cx="7" cy="17" r="2" />
             <circle cx="17" cy="17" r="2" />
           </svg>
         </div>
-        <span className="parking-title" style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{t('parkTitle')}</span>
+        <span className="parking-title" style={{ fontWeight: 700, fontSize: '0.94rem', color: 'var(--text-primary)' }}>{t('parkTitle')}</span>
         <button
-          style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#EF4444', cursor: 'pointer', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginLeft: 'auto' }}
+          style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#EF4444', cursor: 'pointer', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginLeft: 'auto' }}
           onClick={() => handleDeleteBlock(block.id)}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -106,6 +106,7 @@ const ParkingWidget = ({
             <div className="parking-map-preview" style={{ overflow: 'hidden', borderRadius: '14px', border: '1px solid var(--border-color)', height: '180px', marginTop: '4px', marginBottom: '10px' }}>
               <iframe
                 title="Parking Location Map"
+                sandbox="allow-scripts allow-same-origin"
                 width="100%"
                 height="100%"
                 style={{ border: 0, display: 'block' }}

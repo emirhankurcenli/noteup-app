@@ -70,10 +70,12 @@ const AccountSubTab = ({
                 <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
               </svg>
             </div>
-            <span style={{ fontSize: '0.88rem', fontWeight: 700, color: isLight ? '#0F172A' : '#FFFFFF' }}>Bulut Depolama</span>
+            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: isLight ? '#0F172A' : '#FFFFFF' }}>
+              {t && t('cloudStorage') !== 'cloudStorage' ? t('cloudStorage') : (lang === 'tr' ? 'Bulut Depolama' : 'Cloud Storage')}
+            </span>
           </div>
 
-          <span style={{ fontSize: '0.8rem', color: isLight ? '#1E293B' : '#CBD5E1', fontWeight: 800 }}>
+          <span style={{ fontSize: '0.8rem', color: isLight ? '#1E293B' : '#CBD5E1', fontWeight: 700 }}>
             {formatBytes(usedBytes)} / {limitText} ({percent}%)
           </span>
         </div>

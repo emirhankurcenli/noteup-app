@@ -19,6 +19,7 @@ const SocialSubTab = ({
   friends = [],
   handleDisconnect,
   isSendingRequest,
+  triggerHaptic,
   lang,
   isLight,
   t,
@@ -27,7 +28,7 @@ const SocialSubTab = ({
   const outgoingRequests = friendRequests.filter(r => r.fromCode === myCode && !r.processed && r.status === 'pending');
 
   return (
-    <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box' }}>
 
       <MyProfileCodeCard 
         myCode={myCode}
@@ -43,6 +44,7 @@ const SocialSubTab = ({
         formatFriendCode={formatFriendCode}
         handleSendFriendRequest={handleSendFriendRequest}
         isSendingRequest={isSendingRequest}
+        triggerHaptic={triggerHaptic}
         lang={lang}
         isLight={isLight}
         t={t}

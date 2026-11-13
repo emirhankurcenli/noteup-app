@@ -9,7 +9,6 @@ const useMediaStorageHandlers = ({
   setEditingNote,
   focusedBlockRef,
   user,
-  userPlan,
   lang,
   getStorageUsageBytes,
   handleInsertWidget,
@@ -24,7 +23,6 @@ const useMediaStorageHandlers = ({
   const r2Storage = useR2Storage({
     editingNote,
     user,
-    userPlan,
     getStorageUsageBytes,
     handleInsertWidget,
     handleUpdateNote,

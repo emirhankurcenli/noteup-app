@@ -5,7 +5,6 @@ import SettingsSubTab from './SettingsSubTab';
 import ProfileTabBar from './ProfileTabBar';
 
 const ProfileTab = ({
-  userPlan,
   theme,
   setTheme,
   lang,
@@ -37,6 +36,7 @@ const ProfileTab = ({
   handleRequestStoragePermission,
   handleRequestAudioPermission,
   handleRequestLocationPermission,
+  handleRequestCameraPermission,
   checkAndRequestNotificationPermission,
   handleLogout,
   DEFAULT_AVATARS,
@@ -56,7 +56,7 @@ const ProfileTab = ({
         t={t}
       />
 
-      <div className="match-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="match-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box' }}>
         {/* --- SUBTAB 1: ACCOUNT & MEMBERSHIP --- */}
         {profileSubTab === 'account' && (
           <AccountSubTab
@@ -93,6 +93,7 @@ const ProfileTab = ({
             handleCancelFriendRequest={handleCancelFriendRequest}
             friends={friends}
             handleDisconnect={handleDisconnect}
+            triggerHaptic={triggerHaptic}
             lang={lang}
             isLight={isLight}
             t={t}
@@ -112,6 +113,7 @@ const ProfileTab = ({
             handleRequestStoragePermission={handleRequestStoragePermission}
             handleRequestAudioPermission={handleRequestAudioPermission}
             handleRequestLocationPermission={handleRequestLocationPermission}
+            handleRequestCameraPermission={handleRequestCameraPermission}
             checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
             handleLogout={handleLogout}
             isLight={isLight}

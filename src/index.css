@@ -259,7 +259,7 @@ p {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-surface);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   padding: 12px 24px;
@@ -275,7 +275,7 @@ p {
 }
 
 .btn-secondary:active {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg-interactive);
   transform: scale(0.97);
 }
 
@@ -296,7 +296,7 @@ p {
   border-radius: 12px;
   font-family: var(--font-family);
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 500;
   width: 100%;
   transition: var(--transition-smooth);
 }

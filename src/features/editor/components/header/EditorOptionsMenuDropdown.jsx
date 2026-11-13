@@ -13,7 +13,6 @@ export const EditorOptionsMenuDropdown = (props) => {
     setShowEditorMenu = props.setShowEditorMenu,
     editingNote = props.editingNote,
     setEditingNote = props.setEditingNote,
-    userPlan = props.userPlan,
     notes = props.notes,
     setToast = props.setToast,
     lang = props.lang,
@@ -63,7 +62,6 @@ export const EditorOptionsMenuDropdown = (props) => {
         editingNote={editingNote}
         setEditingNote={setEditingNote}
         setShowEditorMenu={setShowEditorMenu}
-        userPlan={userPlan}
         notes={notes}
         setToast={setToast}
         lang={lang}

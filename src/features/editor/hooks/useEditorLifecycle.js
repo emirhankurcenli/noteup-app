@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@src/supabaseClient';
 
 export default function useEditorLifecycle({
@@ -123,18 +123,22 @@ export default function useEditorLifecycle({
     }
   };
 
+  const cleanupEmptyNoteRef = useRef(cleanupEmptyNote);
+  cleanupEmptyNoteRef.current = cleanupEmptyNote;
+
   useEffect(() => {
     if (editingNote) {
       if (setLastEditingNoteId) setLastEditingNoteId(editingNote.id);
     } else if (lastEditingNoteId) {
       // Safely schedule cleanup with a small timeout to let all state updates settle
+      const targetId = lastEditingNoteId;
       const timer = setTimeout(() => {
-        cleanupEmptyNote(lastEditingNoteId);
+        cleanupEmptyNoteRef.current(targetId);
         if (setLastEditingNoteId) setLastEditingNoteId(null);
       }, 150);
       return () => clearTimeout(timer);
     }
-  }, [editingNote]);
+  }, [editingNote, lastEditingNoteId, setLastEditingNoteId]);
 
   return {
     openEditingNote,

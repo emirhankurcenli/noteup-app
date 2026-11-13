@@ -39,7 +39,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT,
     name TEXT,
     photo_url TEXT,
-    plan TEXT DEFAULT 'lite',
     status TEXT DEFAULT 'active',
     my_code TEXT,
     friend_code TEXT,
@@ -141,10 +140,30 @@ DROP POLICY IF EXISTS "Public note_shares access" ON public.note_shares;
 CREATE POLICY "Users can manage own folders" ON public.folders
   FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
--- 2) NOTES: Kullanıcı kendi notlarını yönetebilir; paylaşılan notları katılımcılar da okuyup güncelleyebilir
+-- 2) NOTES: Kullanıcı kendi notlarını yönetebilir; paylaşılan notları yalnızca kabul edilmiş davetliler okuyup güncelleyebilir
 CREATE POLICY "Users can manage own notes" ON public.notes
-  FOR ALL USING (auth.uid() = user_id OR is_shared = true)
-  WITH CHECK (auth.uid() = user_id OR is_shared = true);
+  FOR ALL USING (
+    auth.uid() = user_id 
+    OR (
+      is_shared = true 
+      AND id IN (
+        SELECT ns.note_id FROM public.note_shares ns
+        JOIN public.profiles p ON (p.friend_code = ns.to_code OR p.my_code = ns.to_code)
+        WHERE p.id = auth.uid() AND ns.status = 'accepted'
+      )
+    )
+  )
+  WITH CHECK (
+    auth.uid() = user_id 
+    OR (
+      is_shared = true 
+      AND id IN (
+        SELECT ns.note_id FROM public.note_shares ns
+        JOIN public.profiles p ON (p.friend_code = ns.to_code OR p.my_code = ns.to_code)
+        WHERE p.id = auth.uid() AND ns.status = 'accepted'
+      )
+    )
+  );
 
 -- 3) REMINDERS
 CREATE POLICY "Users can manage own reminders" ON public.reminders
@@ -157,14 +176,79 @@ CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles
 CREATE POLICY "Users can update own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
--- 5) FRIEND_REQUESTS
-CREATE POLICY "Everyone can view friend requests" ON public.friend_requests FOR SELECT USING (true);
-CREATE POLICY "Everyone can insert friend requests" ON public.friend_requests FOR INSERT WITH CHECK (true);
-CREATE POLICY "Everyone can update friend requests" ON public.friend_requests FOR UPDATE USING (true);
-CREATE POLICY "Everyone can delete friend requests" ON public.friend_requests FOR DELETE USING (true);
+-- 5) FRIEND_REQUESTS: Yalnızca isteği gönderen veya alan kullanıcı görebilir ve yönetebilir
+CREATE POLICY "Users can view relevant friend requests" ON public.friend_requests
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p 
+      WHERE p.id = auth.uid() 
+      AND (p.friend_code = from_code OR p.my_code = from_code OR p.friend_code = to_code OR p.my_code = to_code)
+    )
+  );
 
--- 6) NOTE_SHARES
-CREATE POLICY "Public note_shares access" ON public.note_shares FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Users can insert friend requests" ON public.friend_requests
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles p 
+      WHERE p.id = auth.uid() 
+      AND (p.friend_code = from_code OR p.my_code = from_code)
+    )
+  );
+
+CREATE POLICY "Users can update relevant friend requests" ON public.friend_requests
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p 
+      WHERE p.id = auth.uid() 
+      AND (p.friend_code = from_code OR p.my_code = from_code OR p.friend_code = to_code OR p.my_code = to_code)
+    )
+  );
+
+CREATE POLICY "Users can delete relevant friend requests" ON public.friend_requests
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p 
+      WHERE p.id = auth.uid() 
+      AND (p.friend_code = from_code OR p.my_code = from_code OR p.friend_code = to_code OR p.my_code = to_code)
+    )
+  );
+
+-- 6) NOTE_SHARES: Yalnızca notu paylaşan veya davet edilen kullanıcı erişebilir
+CREATE POLICY "Users can view relevant note shares" ON public.note_shares
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p 
+      WHERE p.id = auth.uid() 
+      AND (p.friend_code = from_code OR p.my_code = from_code OR p.friend_code = to_code OR p.my_code = to_code)
+    )
+  );
+
+CREATE POLICY "Users can insert note shares" ON public.note_shares
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles p 
+      WHERE p.id = auth.uid() 
+      AND (p.friend_code = from_code OR p.my_code = from_code)
+    )
+  );
+
+CREATE POLICY "Users can update relevant note shares" ON public.note_shares
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p 
+      WHERE p.id = auth.uid() 
+      AND (p.friend_code = from_code OR p.my_code = from_code OR p.friend_code = to_code OR p.my_code = to_code)
+    )
+  );
+
+CREATE POLICY "Users can delete relevant note shares" ON public.note_shares
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p 
+      WHERE p.id = auth.uid() 
+      AND (p.friend_code = from_code OR p.my_code = from_code OR p.friend_code = to_code OR p.my_code = to_code)
+    )
+  );
 
 -- 10. REALTIME YAYINI (Realtime Publication)
 DO $$

@@ -2,26 +2,39 @@ import React from 'react';
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { Capacitor } from "@capacitor/core";
+import { htmlToPlainText } from '@shared/utils/textUtils';
 
-export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", setConfirmDialog) => {
+const toPdfSafe = (str) => {
+  if (!str) return '';
+  const plain = htmlToPlainText(String(str));
+  return plain
+    .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
+    .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+    .replace(/ş/g, 's').replace(/Ş/g, 'S')
+    .replace(/ı/g, 'i').replace(/İ/g, 'I')
+    .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+    .replace(/ç/g, 'c').replace(/Ç/g, 'C');
+};
+
+export const exportNoteAsPDF = async (note, setToast, lang = "tr", setConfirmDialog) => {
   const generatePDFDoc = async () => {
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF();
     
-    // Add premium header / brand styling
-    doc.setFillColor(79, 70, 229); // Premium Indigo brand color
+    // Header styling
+    doc.setFillColor(79, 70, 229); // Brand color
     doc.rect(0, 0, 210, 15, "F");
     
     doc.setTextColor(255, 255, 255);
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(11);
-    doc.text("NOTEUP - PREMIUM NOTE EXPORT", 15, 10);
+    doc.text(lang === 'tr' ? "NOTEUP - NOT BELGESI" : "NOTEUP - NOTE DOCUMENT", 15, 10);
     
     // Title
     doc.setTextColor(15, 23, 42); // slate-900
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(22);
-    const titleText = note.title || (lang === 'tr' ? 'Başlıksız Not' : 'Untitled Note');
+    const titleText = toPdfSafe(note.title || (lang === 'tr' ? 'Basliksiz Not' : 'Untitled Note'));
     doc.text(titleText, 15, 30);
     
     // Divider
@@ -46,7 +59,8 @@ export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", set
         doc.setFont("Helvetica", "normal");
         doc.setFontSize(12);
         doc.setTextColor(51, 65, 85); // slate-700
-        const contentText = block.content || '';
+        const contentText = toPdfSafe(block.content || '');
+        if (!contentText) return;
         const splitText = doc.splitTextToSize(contentText, 180);
         
         splitText.forEach(line => {
@@ -76,8 +90,8 @@ export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", set
             doc.addPage();
             y = 20;
           }
-          const checkSymbol = item.completed ? "[X]  " : "[ ]  ";
-          const itemText = checkSymbol + (item.title || '');
+          const checkSymbol = (item.completed || item.done) ? "[X]  " : "[ ]  ";
+          const itemText = checkSymbol + toPdfSafe(item.text || item.title || '');
           const splitItemText = doc.splitTextToSize(itemText, 180);
           
           splitItemText.forEach(line => {
@@ -105,7 +119,7 @@ export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", set
             y = 20;
           }
           const debtType = item.type === 'give' ? (lang === 'tr' ? 'Verilecek: ' : 'To Give: ') : (lang === 'tr' ? 'Alinacak: ' : 'To Receive: ');
-          const debtText = `* ${item.name || ''} - ${debtType}${item.amount || '0'} TL`;
+          const debtText = toPdfSafe(`* ${item.name || ''} - ${debtType}${item.amount || '0'} TL`);
           doc.text(debtText, 15, y);
           y += 6;
         });
@@ -129,7 +143,7 @@ export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", set
             y = 20;
           }
           const typeLabel = item.type === 'income' ? (lang === 'tr' ? 'Gelir: +' : 'Income: +') : (lang === 'tr' ? 'Gider: -' : 'Expense: -');
-          const expText = `* ${item.title || ''} - ${typeLabel}${item.amount || '0'} TL`;
+          const expText = toPdfSafe(`* ${item.title || ''} - ${typeLabel}${item.amount || '0'} TL`);
           doc.text(expText, 15, y);
           y += 6;
         });
@@ -152,7 +166,7 @@ export const exportNoteAsPDF = async (note, userPlan, setToast, lang = "tr", set
             doc.addPage();
             y = 20;
           }
-          const expText = `* ${exp.description || ''} - Paid by ${exp.paidBy || ''}: ${exp.amount || '0'} TL`;
+          const expText = toPdfSafe(`* ${exp.desc || exp.description || ''} - Paid by ${exp.paidBy || ''}: ${exp.amount || '0'} TL`);
           doc.text(expText, 15, y);
           y += 6;
         });

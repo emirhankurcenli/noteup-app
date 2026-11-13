@@ -62,8 +62,6 @@ export default function useAppLogic(options = {}) {
     user: auth.user,
     myCode: auth.myCode,
     profileName: auth.profileName,
-    userPlan: auth.userPlan,
-    setUserPlan: auth.setUserPlan,
     notes: auth.notes,
     saveNotes: (newNotes) => notesHook.saveNotes(newNotes),
     setToast: auth.setToast,
@@ -130,12 +128,6 @@ export default function useAppLogic(options = {}) {
     setProfileName: auth.setProfileName,
     showAvatarPicker: auth.showAvatarPicker,
     setShowAvatarPicker: auth.setShowAvatarPicker,
-
-    // Billing
-    userPlan: auth.userPlan,
-    setUserPlan: auth.setUserPlan,
-    planNotification: auth.planNotification,
-    setPlanNotification: auth.setPlanNotification,
 
     // Toast
     toast: auth.toast,

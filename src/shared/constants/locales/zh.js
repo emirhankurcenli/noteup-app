@@ -1,4 +1,4 @@
-﻿const zh = {
+const zh = {
   confirmDeleteTitle: '确认删除',
   pinnedBadge: '已置顶',
   alarmSetTitle: '闹钟已设置',
@@ -256,6 +256,8 @@
   changeLanguage: '更改',
   locationGps: '位置 (GPS)',
   locationGpsSub: '用于停车小组件及车辆定位',
+  camera: '相机',
+  cameraSub: '用于扫描二维码和拍照',
   shareAsImage: '作为图片分享',
   shareAsImageSub: '将笔记生成高质量的卡片图片',
   shareWithFriendSub: '直接将笔记发送给您的好友',
@@ -325,6 +327,7 @@
   noSharedWithMeSub: '当朋友与您共享笔记时，它们会显示在此处。',
   onlyOwnerCanShareNotice: '由于此笔记是与您共享的，因此只有原始所有者才能与其他人共享。',
   ownerBadge: '所有者',
+  pendingShareRequests: '收到的邀请',
   newInvite: '新邀请',
 };
 

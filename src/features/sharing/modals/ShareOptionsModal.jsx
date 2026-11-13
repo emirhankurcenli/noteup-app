@@ -12,7 +12,6 @@ const ShareOptionsModal = ({
   handleShareNoteImage,
   theme,
   t,
-  userPlan,
   setToast,
   setConfirmDialog,
   setActiveShareNoteId,
@@ -277,7 +276,7 @@ const ShareOptionsModal = ({
                   }
                 }
                 setShowShareModal(false);
-                exportNoteAsPDF(editingNote, userPlan, setToast, lang, setConfirmDialog);
+                exportNoteAsPDF(editingNote, setToast, lang, setConfirmDialog);
               }}
               style={{
                 padding: '14px 16px',

@@ -1,14 +1,11 @@
 import React from 'react';
 
 export const FONTS = [
-  { label: 'System UI', value: 'inherit', description: 'Standart Mobil Font', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-  { label: 'Inter', value: 'Inter', description: 'Modern & Temiz Sans-serif', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-  { label: 'Roboto', value: 'Roboto', description: 'Klasik Android Tipografisi', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-  { label: 'Playfair Display', value: 'Playfair Display', description: 'Şık & Zarif Serif', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-  { label: 'Fira Code', value: 'Fira Code', description: 'Yazılımcı & Daktilo Stili', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-  { label: 'Pacifico', value: 'Pacifico', description: 'Estetik El Yazısı', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-  { label: 'Montserrat', value: 'Montserrat', description: 'Güçlü & Geometrik', preview: 'Aa Bb Cc 123 — Harika Notlar' },
-  { label: 'Outfit', value: 'Outfit', description: 'Futurist & Premium', preview: 'Aa Bb Cc 123 — Harika Notlar' },
+  { label: 'Varsayılan', value: 'inherit', description: 'Standart uygulama yazı tipi' },
+  { label: 'Inter', value: 'Inter', description: 'Sade ve okunaklı' },
+  { label: 'Playfair Display', value: 'Playfair Display', description: 'Klasik kitap ve dergi stili' },
+  { label: 'Fira Code', value: 'Fira Code', description: 'Daktilo ve kod görünümü' },
+  { label: 'Montserrat', value: 'Montserrat', description: 'Belirgin ve dengeli' },
 ];
 
 export const ToolbarFontSelector = ({
@@ -30,20 +27,22 @@ export const ToolbarFontSelector = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '9px 14px',
-        borderRadius: '12px',
-        background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.07)',
+        padding: '9px 12px',
+        borderRadius: '10px',
+        background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.06)',
         border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.12)',
         color: isLight ? '#0F172A' : '#F8FAFC',
-        fontSize: '0.88rem',
-        fontWeight: 700,
+        fontSize: '0.86rem',
+        fontWeight: 600,
         cursor: 'pointer',
       }}
     >
       <span style={{ fontFamily: currentFontObj.value, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {currentFontObj.label}
       </span>
-      <span style={{ fontSize: '0.75rem', opacity: 0.6, marginLeft: '6px' }}>▼</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.65, marginLeft: '6px', flexShrink: 0 }}>
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
     </button>
   );
 };

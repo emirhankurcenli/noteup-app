@@ -44,7 +44,6 @@ export default function AppWorkspaceContainer({
   setQuickReminderTime,
   setPendingWidgetAlarmCtx,
   setShowShareModal,
-  userPlan,
   notes,
   triggerHaptic,
   checkAndRequestNotificationPermission,
@@ -106,6 +105,7 @@ export default function AppWorkspaceContainer({
   handleRequestStoragePermission,
   handleRequestAudioPermission,
   handleRequestLocationPermission,
+  handleRequestCameraPermission,
   handleCancelReminder,
   handleBulkRestoreNotes,
   handleBulkPermanentDelete,
@@ -177,7 +177,6 @@ export default function AppWorkspaceContainer({
         setQuickReminderTime={setQuickReminderTime}
         setPendingWidgetAlarmCtx={setPendingWidgetAlarmCtx}
         setShowShareModal={setShowShareModal}
-        userPlan={userPlan}
         notes={notes}
         triggerHaptic={triggerHaptic}
         checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
@@ -261,6 +260,7 @@ export default function AppWorkspaceContainer({
         handleRequestStoragePermission={handleRequestStoragePermission}
         handleRequestAudioPermission={handleRequestAudioPermission}
         handleRequestLocationPermission={handleRequestLocationPermission}
+        handleRequestCameraPermission={handleRequestCameraPermission}
         setReminderNoteId={setReminderNoteId}
         setShowReminderModal={setShowReminderModal}
         setActiveShareNoteId={setActiveShareNoteId}
@@ -274,7 +274,6 @@ export default function AppWorkspaceContainer({
         handlePermanentDelete={handlePermanentDelete}
         handleBulkRestoreNotes={handleBulkRestoreNotes}
         handleBulkPermanentDelete={handleBulkPermanentDelete}
-        userPlan={userPlan}
         theme={theme}
         setTheme={setTheme}
         lang={lang}

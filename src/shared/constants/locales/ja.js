@@ -256,6 +256,8 @@ const ja = {
   changeLanguage: '変更',
   locationGps: '位置情報 (GPS)',
   locationGpsSub: '駐車ウィジェットおよび車両位置用',
+  camera: 'カメラ',
+  cameraSub: 'QRコードのスキャンと写真撮影用',
   shareAsImage: '画像として共有',
   shareAsImageSub: 'メモを高画質なカード画像として書き出します',
   shareWithFriendSub: 'メモを直接友達に送信します',
@@ -325,6 +327,7 @@ const ja = {
   noSharedWithMeSub: '友達がノートを共有すると、ここに表示されます。',
   onlyOwnerCanShareNotice: 'このノートは共有されたもののため、作成者のみが他の人と共有できます。',
   ownerBadge: '作成者',
+  pendingShareRequests: '受信した招待',
   newInvite: '新しい招待',
 };
 

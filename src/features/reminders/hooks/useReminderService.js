@@ -1,7 +1,8 @@
 import { useRef, useEffect } from 'react';
 import { supabase } from '@src/supabaseClient';
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 import { scheduleLocalNotification, cancelLocalNotification } from '@shared/services/notificationService';
+import { setNativeAlarm, cancelNativeAlarm, checkNativeAlarmDismissed } from '@shared/services/alarmService';
 import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 
 const useReminderService = ({
@@ -69,17 +70,13 @@ const useReminderService = ({
     }
 
     if (modes.alarm) {
-      try {
-        const targetTime = new Date(reminder.time).getTime();
-        await registerPlugin('Alarm').setAlarm({
-          id: reminder.id,
-          noteId: reminderNoteIdStr,
-          title: reminder.title,
-          timestamp: targetTime.toString()
-        });
-      } catch (e) {
-        console.log("Native AlarmPlugin scheduling skipped:", e);
-      }
+      const targetTime = new Date(reminder.time).getTime();
+      await setNativeAlarm({
+        id: reminder.id,
+        noteId: reminderNoteIdStr,
+        title: reminder.title,
+        timestamp: targetTime.toString()
+      });
     }
   };
 
@@ -93,18 +90,14 @@ const useReminderService = ({
       for (let i = 0; i < updated.length; i++) {
         const rem = updated[i];
         if (rem.active) {
-          try {
-            const res = await registerPlugin('Alarm').isAlarmDismissed({ id: rem.id.toString() });
-            if (res && res.snoozed) {
-              rem.time = res.snoozedTime;
-              rem.active = true;
-              changed = true;
-            } else if (res && res.dismissed) {
-              rem.active = false;
-              changed = true;
-            }
-          } catch (e) {
-            console.error("isAlarmDismissed plugin call error:", e);
+          const res = await checkNativeAlarmDismissed(rem.id);
+          if (res && res.snoozed) {
+            rem.time = res.snoozedTime;
+            rem.active = true;
+            changed = true;
+          } else if (res && res.dismissed) {
+            rem.active = false;
+            changed = true;
           }
         }
       }
@@ -128,11 +121,7 @@ const useReminderService = ({
       console.log("Capacitor local notification cancel skipped:", e);
     }
 
-    try {
-      await registerPlugin('Alarm').cancelAlarm({ id: reminder.id });
-    } catch (e) {
-      console.log("Native AlarmPlugin cancel skipped:", e);
-    }
+    await cancelNativeAlarm(reminder.id);
 
     const preId = reminder.id + '-pre';
     const preRem = reminders.find(r => r.id === preId);

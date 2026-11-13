@@ -48,7 +48,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>NoteUp notlarınıza fotoğraf eklemek ve profil resminizi güncellemek için fotoğraf kitaplığınıza erişim gereklidir.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>NoteUp notlarınıza anında fotoğraf çekip eklemek için kamera erişimi gereklidir.</string>
+	<string>NoteUp notlarınıza fotoğraf çekip eklemek ve arkadaş eklerken QR kod okutmak için kamera erişimi gereklidir.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Notlarınıza eklediğiniz görselleri galerinize kaydetmek için erişim gereklidir.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

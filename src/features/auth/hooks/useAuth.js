@@ -18,16 +18,18 @@ export default function useAuth() {
 
   // --- AUTH & PROFILE STATES ---
   const [user, setUser] = useState(() => {
-    const localUser = localStorage.getItem(STORAGE_KEYS.USER);
-    return localUser ? JSON.parse(localUser) : null;
+    try {
+      const localUser = localStorage.getItem(STORAGE_KEYS.USER);
+      return localUser ? JSON.parse(localUser) : null;
+    } catch (e) {
+      console.warn('Failed to parse cached user:', e);
+      return null;
+    }
   });
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [myCode, setMyCode] = useState(() => localStorage.getItem('s23_my_code') || '');
   const [profileName, setProfileName] = useState(() => localStorage.getItem('s23_profile_name') || '');
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-
-  // --- PLAN STATE (All users have full unmetered access) ---
-  const [userPlan, setUserPlan] = useState('ultra');
 
   // --- SUB-HOOK: DATA SYNC ---
   const sync = useSupabaseSync({
@@ -413,8 +415,6 @@ export default function useAuth() {
     myCode, setMyCode,
     profileName, setProfileName,
     showAvatarPicker, setShowAvatarPicker,
-
-    userPlan, setUserPlan,
 
     toast, setToast,
 

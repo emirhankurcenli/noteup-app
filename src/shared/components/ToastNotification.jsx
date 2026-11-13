@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Icons from '@shared/components/Icons';
 
 const stripEmojis = (str = '') => {
@@ -9,9 +9,36 @@ const stripEmojis = (str = '') => {
 };
 
 const ToastNotification = ({ toast, setToast }) => {
+  const rawTitle = toast?.title || '';
+  const rawMsg = toast?.msg || '';
+
+  const isLoading = toast?.status === 'loading' || rawTitle.toLowerCase().includes('yükleniyor');
+  const isErrorToast = toast?.status === 'error' || rawTitle.includes('❌') || rawTitle.toLowerCase().includes('hata') || rawTitle.toLowerCase().includes('error');
+  const isSuccess = toast?.status === 'success' || (!isLoading && !isErrorToast && (
+    rawTitle.includes('✅') ||
+    rawTitle.includes('🎨') ||
+    rawTitle.toLowerCase().includes('başarılı') ||
+    rawTitle.toLowerCase().includes('tamamlandı') ||
+    rawTitle.toLowerCase().includes('yüklendi') ||
+    rawTitle.toLowerCase().includes('eklendi') ||
+    rawTitle.toLowerCase().includes('kaydedildi')
+  ));
+
+  const isPinToast = rawTitle.toLowerCase().includes('sabit') || rawTitle.includes('📌');
+  const isProfileToast = rawTitle.toLowerCase().includes('profil') || rawMsg.toLowerCase().includes('profil');
+
   useEffect(() => {
     if (!toast) return;
-    const duration = toast.duration || 3500;
+
+    // While loading, do not auto-close unless 45 seconds have passed (safety timeout)
+    if (isLoading) {
+      const safetyTimer = setTimeout(() => {
+        if (typeof setToast === 'function') setToast(null);
+      }, 45000);
+      return () => clearTimeout(safetyTimer);
+    }
+
+    const duration = toast.duration || (isSuccess ? 2600 : 3500);
     const timer = setTimeout(() => {
       if (typeof setToast === 'function') {
         setToast(null);
@@ -19,20 +46,72 @@ const ToastNotification = ({ toast, setToast }) => {
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [toast, setToast]);
+  }, [toast, isLoading, isSuccess, setToast]);
 
   if (!toast) return null;
 
-  const rawTitle = toast.title || '';
-  const rawMsg = toast.msg || '';
-
-  const isPinToast = rawTitle.toLowerCase().includes('sabit') || rawTitle.includes('📌');
-  const isProfileToast = rawTitle.toLowerCase().includes('profil') || rawMsg.toLowerCase().includes('profil');
-  const isErrorToast = rawTitle.includes('❌') || rawTitle.toLowerCase().includes('hata') || rawTitle.toLowerCase().includes('error');
-  const isSuccessToast = rawTitle.includes('✅') || rawTitle.includes('🎨') || rawTitle.toLowerCase().includes('başarılı') || rawTitle.toLowerCase().includes('kaydedildi');
-
   const renderIcon = () => {
     if (toast.icon) return toast.icon;
+
+    // 🔄 Yükleniyor İkonu
+    if (isLoading) {
+      return (
+        <div style={{
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          background: 'rgba(59, 130, 246, 0.18)',
+          border: '1.5px solid rgba(59, 130, 246, 0.35)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#3B82F6',
+          boxShadow: '0 2px 10px rgba(59, 130, 246, 0.3)',
+          flexShrink: 0
+        }}>
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ animation: 'toastSpin 2s linear infinite' }}
+          >
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+            <path d="M16 21h5v-5" />
+          </svg>
+        </div>
+      );
+    }
+
+    // ✅ Başarı / Tamamlandı İkonu
+    if (isSuccess) {
+      return (
+        <div style={{
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          background: 'rgba(16, 185, 129, 0.2)',
+          border: '1.5px solid rgba(16, 185, 129, 0.45)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#10B981',
+          boxShadow: '0 2px 10px rgba(16, 185, 129, 0.35)',
+          animation: 'toastCheckmarkPop 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards',
+          flexShrink: 0
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+      );
+    }
 
     // 📌 Pin / Sabitleme Bildirimi İkonu
     if (isPinToast) {
@@ -107,28 +186,6 @@ const ToastNotification = ({ toast, setToast }) => {
       );
     }
 
-    // ✅ Başarı İkonu
-    if (isSuccessToast) {
-      return (
-        <div style={{
-          width: '32px',
-          height: '32px',
-          borderRadius: '50%',
-          background: 'rgba(16, 185, 129, 0.18)',
-          border: '1.5px solid rgba(16, 185, 129, 0.35)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#10B981',
-          flexShrink: 0
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </div>
-      );
-    }
-
     return (
       <div style={{
         width: '32px',
@@ -151,16 +208,35 @@ const ToastNotification = ({ toast, setToast }) => {
   const cleanMsg = stripEmojis(rawMsg);
 
   return (
-    <div key={rawTitle + rawMsg} className="toast-notification">
+    <div key={toast.id || 'toast-root'} className="toast-notification">
       <div className="toast-icon">
         {renderIcon()}
       </div>
+
       <div className="toast-content animate-fade-in">
-        <div className="toast-title">{cleanTitle || rawTitle}</div>
-        {cleanMsg && <div className="toast-msg">{cleanMsg}</div>}
+        <div className="toast-title" style={{ transition: 'all 0.3s ease' }}>
+          {cleanTitle || rawTitle}
+        </div>
+        {cleanMsg && (
+          <div className="toast-msg" style={{ transition: 'all 0.3s ease' }}>
+            {cleanMsg}
+          </div>
+        )}
       </div>
-      <button className="toast-close" onClick={() => setToast(null)}>×</button>
-      <div className="toast-progress-bar"></div>
+
+      {/* Sağ Taraf: Standart sade ve şık kapatma butonu */}
+      <button className="toast-close" onClick={() => setToast(null)} title="Kapat">
+        ×
+      </button>
+
+      {/* Alt Çizgi: Yüklenirken akan dalga, Tamamlandığında yeşil dolu çizgi, Normalde geri sayım */}
+      {isLoading ? (
+        <div className="toast-loading-bar" />
+      ) : isSuccess ? (
+        <div className="toast-success-bar" />
+      ) : (
+        <div className="toast-progress-bar" />
+      )}
     </div>
   );
 };

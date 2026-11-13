@@ -8,6 +8,7 @@ import WidgetAlarmModal from '@shared/components/WidgetAlarmModal';
 import ReminderModal from '@features/reminders/modals/ReminderModal';
 import SelectFriendsShareModal from '@features/sharing/modals/SelectFriendsShareModal';
 import FeedbackModal from '@features/settings/modals/FeedbackModal';
+import NudgeModal from '@features/social/modals/NudgeModal';
 import { DEFAULT_AVATARS } from '@shared/constants/avatars';
 
 import {
@@ -27,6 +28,8 @@ const AppModals = ({
   confirmDialog, setConfirmDialog,
   showFeedbackModal, setShowFeedbackModal,
   checkAndRequestNotificationPermission,
+  nudgeTargetNote, setNudgeTargetNote,
+  handleSendNudge,
   theme = 'dark',
   triggerHaptic
 }) => {
@@ -176,6 +179,14 @@ const AppModals = ({
         lang={lang}
         triggerHaptic={triggerHaptic}
         t={t}
+      />
+
+      {/* 📣 Dürtme / Bildirim Gönder Modalı */}
+      <NudgeModal
+        nudgeTargetNote={nudgeTargetNote}
+        setNudgeTargetNote={setNudgeTargetNote}
+        handleSendNudge={handleSendNudge}
+        theme={theme}
       />
     </>
   );

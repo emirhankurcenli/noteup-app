@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SharingContext — arkadas listesi, paylasim davetleri ve paylasim islemleri.
  * useSharing hook'unu sararak tum paylasim state'ini context olarak sunar.
  */
@@ -9,15 +9,13 @@ import { useAuthContext } from './AuthContext';
 const SharingContext = createContext(null);
 
 export const SharingProvider = ({ children }) => {
-  const { user, myCode, profileName, userPlan, setUserPlan, notes, setToast } = useAuthContext();
+  const { user, myCode, profileName, notes, setToast } = useAuthContext();
 
   // saveNotes NotesContext'ten gelecek — circular dep'i onlemek icin prop olarak alinir
   const sharing = useSharing({
     user,
     myCode,
     profileName,
-    userPlan,
-    setUserPlan,
     notes,
     setToast,
     // saveNotes: NotesProvider tarafindan SharingProviderBridge uzerinden inject edilir

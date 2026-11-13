@@ -1,4 +1,4 @@
-﻿const ru = {
+const ru = {
   confirmDeleteTitle: 'Подтвердите удаление',
   pinnedBadge: 'Закреплено',
   alarmSetTitle: 'Напоминание установлено',
@@ -256,6 +256,8 @@
   changeLanguage: 'Изменить',
   locationGps: 'Местоположение (GPS)',
   locationGpsSub: 'Для виджета парковки и поиска авто',
+  camera: 'Камера',
+  cameraSub: 'Для сканирования QR-кодов и фотосъемки',
   shareAsImage: 'Поделиться как картинкой',
   shareAsImageSub: 'Создает красивую карточку заметки в виде изображения',
   shareWithFriendSub: 'Отправить заметку напрямую другу',
@@ -325,6 +327,7 @@
   noSharedWithMeSub: 'Когда друзья поделятся с вами заметками, они появятся здесь.',
   onlyOwnerCanShareNotice: 'Так как эта заметка была вам отправлена, только владелец может делиться ею.',
   ownerBadge: 'Владелец',
+  pendingShareRequests: 'Входящие приглашения',
   newInvite: 'Новое приглашение',
 };
 

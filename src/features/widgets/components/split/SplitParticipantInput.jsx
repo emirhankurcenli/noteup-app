@@ -58,14 +58,27 @@ export const SplitParticipantInput = ({
                   }));
                 }}
               >
-                ✕
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
               </button>
             )}
           </div>
         ))}
         <button
           className="split-add-person-btn"
-          style={{ padding: '8px 12px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700 }}
+          style={{
+            padding: '9px 12px',
+            borderRadius: '10px',
+            fontSize: '0.82rem',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            textAlign: 'center',
+          }}
           onClick={() => {
             if (triggerHaptic) triggerHaptic('light');
             const nextInputs = [...inputs, ''];
@@ -75,7 +88,11 @@ export const SplitParticipantInput = ({
             }));
           }}
         >
-          + {getTr('splitAddPerson', 'Kişi Ekle')}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span>{getTr('splitAddPerson', 'Kişi Ekle')}</span>
         </button>
       </div>
 
@@ -83,13 +100,14 @@ export const SplitParticipantInput = ({
         className="btn-primary"
         style={{
           width: '100%',
-          padding: '12px',
-          fontSize: '0.9rem',
-          fontWeight: 700,
-          borderRadius: '12px',
-          background: 'linear-gradient(135deg, #F97316, #EA580C)',
+          padding: '11px',
+          fontSize: '0.88rem',
+          fontWeight: 600,
+          borderRadius: '10px',
+          background: '#F97316',
           border: 'none',
           color: '#FFF',
+          boxShadow: 'none',
           cursor: 'pointer',
         }}
         onClick={() => {

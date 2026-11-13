@@ -16,6 +16,7 @@ const SelectFriendsShareModal = ({
 }) => {
   const targetNote = Array.isArray(notes) ? notes.find(n => String(n?.id) === String(activeShareNoteId)) : null;
   const [selectedCodes, setSelectedCodes] = useState([]);
+  const [permissions, setPermissions] = useState({});
 
   useEffect(() => {
     if (activeShareNoteId) {
@@ -35,6 +36,20 @@ const SelectFriendsShareModal = ({
       setSelectedCodes([]);
     }
   }, [activeShareNoteId, targetNote?.id]);
+
+  useEffect(() => {
+    if (activeShareNoteId && targetNote) {
+      const perms = {};
+      (targetNote.sharedWith || []).forEach(code => {
+        perms[String(code).trim().toUpperCase()] = targetNote.sharePermissions?.[String(code).trim().toUpperCase()] || 'edit';
+      });
+      setPermissions(perms);
+    }
+  }, [activeShareNoteId, targetNote?.id]);
+
+  const handlePermissionToggle = (friendCode, perm) => {
+    setPermissions(prev => ({ ...prev, [String(friendCode).trim().toUpperCase()]: perm }));
+  };
 
   if (!activeShareNoteId) return null;
 
@@ -182,6 +197,8 @@ const SelectFriendsShareModal = ({
           lang={lang}
           t={t}
           targetNote={targetNote}
+          permissions={permissions}
+          handlePermissionToggle={handlePermissionToggle}
         />
 
         {/* Footer Actions */}
@@ -210,7 +227,7 @@ const SelectFriendsShareModal = ({
           {friends && friends.length > 0 && (
             <button
               onClick={() => {
-                handleSendShareInvitation(activeShareNoteId, selectedCodes);
+                handleSendShareInvitation(activeShareNoteId, selectedCodes, permissions);
                 setActiveShareNoteId(null);
                 setSelectedCodes([]);
                 if (typeof setSelectedFriendCodes === 'function') setSelectedFriendCodes([]);

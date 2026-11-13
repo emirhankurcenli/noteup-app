@@ -1,4 +1,4 @@
-﻿const it = {
+const it = {
   confirmDeleteTitle: 'Conferma eliminazione',
   pinnedBadge: 'Fissata',
   alarmSetTitle: 'Sveglia impostata',
@@ -256,6 +256,8 @@
   changeLanguage: 'Cambia',
   locationGps: 'Posizione (GPS)',
   locationGpsSub: 'Per widget parcheggio e posizione veicolo',
+  camera: 'Fotocamera',
+  cameraSub: 'Per scansionare codici QR e scattare foto',
   shareAsImage: 'Condividi come immagine',
   shareAsImageSub: 'Crea una scheda immagine ad alta qualità per la nota',
   shareWithFriendSub: 'Invia la nota direttamente al tuo amico',
@@ -325,6 +327,7 @@
   noSharedWithMeSub: 'Quando gli amici condivideranno note con te, appariranno qui.',
   onlyOwnerCanShareNotice: 'Poiché questa nota è stata condivisa con te, solo il proprietario può condividerla.',
   ownerBadge: 'Proprietario',
+  pendingShareRequests: 'Inviti in arrivo',
   newInvite: 'Nuovo invito',
 };
 

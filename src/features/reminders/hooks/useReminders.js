@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cancelLocalNotification } from '@shared/services/notificationService';
-import { registerPlugin } from '@capacitor/core';
+import { cancelNativeAlarm } from '@shared/services/alarmService';
 import { triggerHaptic } from '@shared/services/haptics';
 import useReminderService from '@features/reminders/hooks/useReminderService';
 import { getNowLocalDateTimeString } from '@shared/utils/dateUtils';
@@ -57,7 +57,7 @@ export default function useReminders({
     for (const oldRem of oldReminders) {
       try {
         await cancelLocalNotification(oldRem.numericId);
-        await registerPlugin('Alarm').cancelAlarm({ id: oldRem.id });
+        await cancelNativeAlarm(oldRem.id);
       } catch (e) {}
     }
 
@@ -127,7 +127,7 @@ export default function useReminders({
         for (const oldRem of oldReminders) {
           try {
             await cancelLocalNotification(oldRem.numericId);
-            await registerPlugin('Alarm').cancelAlarm({ id: oldRem.id });
+            await cancelNativeAlarm(oldRem.id);
           } catch (e) {}
         }
       }
@@ -226,7 +226,7 @@ export default function useReminders({
       for (const oldRem of oldReminders) {
         try {
           await cancelLocalNotification(oldRem.numericId);
-          await registerPlugin('Alarm').cancelAlarm({ id: oldRem.id });
+          await cancelNativeAlarm(oldRem.id);
         } catch (e) {}
       }
     }

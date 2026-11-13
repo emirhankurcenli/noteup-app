@@ -36,7 +36,7 @@ const DebtWidget = ({
   const [showDetailModal, setShowDetailModal] = useState(false);
   const fs = blockFormStates[block.id] || { direction: 'plus' };
   const items = block.items || [];
-  const netTotal = useMemo(() => items.reduce((acc, i) => acc + (Number(i.amount) || 0), 0), [items]);
+  const netTotal = useMemo(() => (block.items || []).reduce((acc, i) => acc + (Number(i.amount) || 0), 0), [block.items]);
   const isEditing = fs.isEditing || !block.setupDone;
 
   const getTr = (key, fallback) => {
@@ -59,38 +59,37 @@ const DebtWidget = ({
       <div 
         className="debt-widget" 
         style={{ 
-          borderRadius: '18px', 
-          border: '1.5px solid rgba(16, 185, 129, 0.4)', 
+          borderRadius: '16px', 
+          border: '1px solid var(--border-color)', 
           background: 'var(--bg-card)', 
           padding: '16px' 
         }} 
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
           <div 
             style={{ 
-              width: '34px', 
-              height: '34px', 
-              borderRadius: '11px', 
-              background: 'linear-gradient(135deg, #10B981, #059669)', 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '9px', 
+              background: 'rgba(16, 185, 129, 0.14)', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              color: '#FFF', 
+              color: '#10B981', 
               flexShrink: 0, 
-              boxShadow: '0 3px 10px rgba(16, 185, 129, 0.35)' 
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="6" width="20" height="12" rx="2" />
               <circle cx="12" cy="12" r="2" />
               <path d="M6 12h.01M18 12h.01" />
             </svg>
           </div>
 
-          <span style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--text-primary)' }}>
-            {getTr('debtWidgetTitle', 'Borç / Alacak Takibi')}
+          <span style={{ fontWeight: 700, fontSize: '0.94rem', color: 'var(--text-primary)' }}>
+            {getTr('debtTrackerWidget', 'Borç / Alacak Takibi')}
           </span>
 
           <button 
@@ -102,7 +101,7 @@ const DebtWidget = ({
               cursor: 'pointer', 
               width: '28px', 
               height: '28px', 
-              borderRadius: '50%', 
+              borderRadius: '8px', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
@@ -110,61 +109,44 @@ const DebtWidget = ({
               marginLeft: 'auto'
             }}
             onClick={onDeleteBlock}
-            title="Bloğu Sil"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
-        {/* Info Hint Box */}
-        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.15)', borderRadius: '12px', padding: '10px 12px', lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '14px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}>
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="16" x2="12" y2="12" />
-            <line x1="12" y1="8" x2="12.01" y2="8" />
-          </svg>
-          <span>{getTr('debtWidgetDesc', 'Belirlediğiniz kişiyle olan borç ve alacak hesaplarınızı tek bir yerden düzenli olarak takip edin.')}</span>
-        </div>
-
         {/* Setup Form */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              KİŞİ ADI
-            </label>
-            <input
-              id={`debt-person-${block.id}`}
-              type="text"
-              className="input-field"
-              style={{ padding: '10px 14px', fontSize: '0.9rem', borderRadius: '12px' }}
-              placeholder={getTr('debtPersonNamePlaceholder', 'Kişi Adı Girin (örn: Ahmet Yılmaz)')}
-              value={currentLabel}
-              onChange={(e) => updateBlockForm(block.id, { tempLabel: e.target.value })}
-            />
-          </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            id={`debt-person-${block.id}`}
+            type="text"
+            className="input-field"
+            style={{ flex: 1, padding: '10px 14px', fontSize: '0.88rem', fontWeight: 500, borderRadius: '10px' }}
+            placeholder={getTr('debtPersonNamePlaceholder', 'Kişi Adı Girin')}
+            value={currentLabel}
+            onChange={(e) => updateBlockForm(block.id, { tempLabel: e.target.value })}
+          />
 
           <button 
             type="button"
             className="btn-primary" 
             style={{ 
               padding: '10px 16px', 
-              fontSize: '0.9rem', 
-              fontWeight: 800, 
-              borderRadius: '12px', 
-              background: 'linear-gradient(135deg, #10B981, #059669)',
+              fontSize: '0.86rem', 
+              fontWeight: 600, 
+              borderRadius: '10px', 
+              background: '#10B981',
               border: 'none',
               color: '#FFF',
               cursor: 'pointer',
-              opacity: 1,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
-              transition: 'all 0.25s ease'
+              gap: '6px',
+              boxShadow: 'none',
+              flexShrink: 0
             }}
             onClick={() => {
               if (!currentLabel.trim()) {
@@ -173,12 +155,10 @@ const DebtWidget = ({
                 if (el) {
                   el.focus();
                   el.style.borderColor = '#F59E0B';
-                  el.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.4)';
-                  el.style.backgroundColor = 'rgba(245, 158, 11, 0.08)';
+                  el.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.3)';
                   setTimeout(() => {
                     el.style.borderColor = '';
                     el.style.boxShadow = '';
-                    el.style.backgroundColor = '';
                   }, 1200);
                 }
                 return;
@@ -188,10 +168,7 @@ const DebtWidget = ({
               if (triggerHaptic) triggerHaptic('success');
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            {getTr('confirmDebtSetup', 'Kişi Adını Onayla')}
+            {getTr('confirmDebtSetup', 'Onayla')}
           </button>
         </div>
       </div>
@@ -203,7 +180,7 @@ const DebtWidget = ({
     <div 
       className="debt-widget" 
       style={{ 
-        borderRadius: '18px', 
+        borderRadius: '16px', 
         border: '1px solid var(--border-color)', 
         background: 'var(--bg-card)', 
         padding: '16px' 
@@ -214,19 +191,18 @@ const DebtWidget = ({
       <div className="debt-widget-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
         <div 
           style={{ 
-            width: '34px', 
-            height: '34px', 
-            borderRadius: '11px', 
-            background: 'linear-gradient(135deg, #10B981, #059669)', 
+            width: '32px', 
+            height: '32px', 
+            borderRadius: '9px', 
+            background: 'rgba(16, 185, 129, 0.14)', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
-            color: '#FFF', 
+            color: '#10B981', 
             flexShrink: 0, 
-            boxShadow: '0 3px 10px rgba(16, 185, 129, 0.35)' 
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="6" width="20" height="12" rx="2" />
             <circle cx="12" cy="12" r="2" />
             <path d="M6 12h.01M18 12h.01" />
@@ -234,8 +210,8 @@ const DebtWidget = ({
         </div>
 
         <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {block.label || getTr('debtWidgetTitle', 'Borç / Alacak')}
+          <span style={{ fontWeight: 700, fontSize: '0.94rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {block.label || getTr('debtTracking', 'Borç / Alacak')}
           </span>
         </div>
 
@@ -243,13 +219,13 @@ const DebtWidget = ({
           {/* Net Status Badge */}
           <div 
             style={{
-              fontSize: '0.78rem',
-              fontWeight: 800,
+              fontSize: '0.76rem',
+              fontWeight: 600,
               color: netTotal >= 0 ? '#10B981' : '#EF4444',
               background: netTotal >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
               border: netTotal >= 0 ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)',
-              padding: '3px 10px',
-              borderRadius: '12px',
+              padding: '3px 9px',
+              borderRadius: '10px',
               whiteSpace: 'nowrap'
             }}
           >
@@ -266,16 +242,15 @@ const DebtWidget = ({
               cursor: 'pointer', 
               width: '28px', 
               height: '28px', 
-              borderRadius: '50%', 
+              borderRadius: '8px', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
               flexShrink: 0 
             }}
             onClick={onDeleteBlock}
-            title="Bloğu Sil"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -289,7 +264,7 @@ const DebtWidget = ({
           <input 
             type="text" 
             className="input-field" 
-            style={{ padding: '8px 12px', fontSize: '0.85rem', flex: 1, borderRadius: '10px' }} 
+            style={{ padding: '8px 12px', fontSize: '0.85rem', fontWeight: 500, flex: 1, borderRadius: '10px' }} 
             placeholder={getTr('debtDescPlaceholder', 'Açıklama')} 
             value={fs.noteText || ''}
             onChange={(e) => updateBlockForm(block.id, { noteText: e.target.value })}
@@ -298,7 +273,7 @@ const DebtWidget = ({
             type="text" 
             inputMode="decimal"
             className="input-field" 
-            style={{ padding: '8px 12px', fontSize: '0.85rem', width: '100px', borderRadius: '10px' }} 
+            style={{ padding: '8px 12px', fontSize: '0.85rem', fontWeight: 600, width: '100px', borderRadius: '10px' }} 
             placeholder={getTr('debtAmountPlaceholder', 'Miktar')} 
             value={fs.amount || ''}
             onChange={(e) => updateBlockForm(block.id, { amount: formatTurkishMoneyInput(e.target.value) })}
@@ -310,7 +285,7 @@ const DebtWidget = ({
               type="button"
               className={`debt-type-btn ${(fs.direction || 'plus') === 'plus' ? 'active plus' : ''}`}
               onClick={() => updateBlockForm(block.id, { direction: 'plus' })}
-              style={{ flex: 1, padding: '6px 0', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+              style={{ flex: 1, padding: '6px 0', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
             >
               {getTr('debtGiven', 'Verilen')} (+)
             </button>
@@ -318,7 +293,7 @@ const DebtWidget = ({
               type="button"
               className={`debt-type-btn ${fs.direction === 'minus' ? 'active minus' : ''}`}
               onClick={() => updateBlockForm(block.id, { direction: 'minus' })}
-              style={{ flex: 1, padding: '6px 0', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+              style={{ flex: 1, padding: '6px 0', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
             >
               {getTr('debtReceived', 'Alınan')} (-)
             </button>
@@ -328,12 +303,13 @@ const DebtWidget = ({
             className="btn-primary" 
             style={{ 
               padding: '6px 16px', 
-              fontSize: '0.85rem', 
-              fontWeight: 700, 
+              fontSize: '0.84rem', 
+              fontWeight: 600, 
               borderRadius: '10px', 
-              background: 'linear-gradient(135deg, #10B981, #059669)', 
+              background: '#10B981', 
               border: 'none', 
               color: '#FFF',
+              boxShadow: 'none',
               cursor: 'pointer'
             }}
             onClick={() => handleAddDebtItem(block.id)}
@@ -356,19 +332,19 @@ const DebtWidget = ({
               background: 'rgba(16, 185, 129, 0.08)',
               border: '1px solid rgba(16, 185, 129, 0.2)',
               color: '#10B981',
-              padding: '6px 14px',
+              padding: '6px 12px',
               borderRadius: '10px',
-              fontSize: '0.8rem',
-              fontWeight: 800,
+              fontSize: '0.78rem',
+              fontWeight: 600,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
               transition: 'all 0.15s ease'
             }}
           >
-            <span>Tüm Detayları Gör ({items.length})</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <span>{getTr('debtSeeAllDetails', 'Tüm Detayları Gör')} ({items.length})</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>

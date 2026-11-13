@@ -1,8 +1,6 @@
-﻿import { useEffect } from 'react';
+import { useEffect } from 'react';
 import { STORAGE_KEYS } from '@shared/utils/storageKeys';
-import { createNotificationChannels, addNotificationListener } from '@shared/services/notificationService';
-import { playChime } from '@shared/services/soundService';
-import { triggerHaptic } from '@shared/services/haptics';
+import { CryptoService } from '@shared/services/cryptoService';
 
 export default function useInitialDataLoad({
   setMyCode,
@@ -13,7 +11,7 @@ export default function useInitialDataLoad({
   setReminders,
   syncDismissedAlarms,
   updatePermissionStates,
-  requestAllPermissionsAtStartup,
+  _requestAllPermissionsAtStartup,
   getScopedStorageItem
 }) {
   useEffect(() => {
@@ -43,13 +41,16 @@ export default function useInitialDataLoad({
       if (storedFriends) {
         try {
           setFriends(JSON.parse(storedFriends));
-        } catch (e) {}
+        } catch (_) {}
       }
       try {
         setFriendRequests(JSON.parse(localStorage.getItem('s23_friend_requests') || '[]'));
-      } catch (e) {}
+      } catch (_) {}
 
-      const activeUid = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || '{}')?.uid || 'guest';
+      let activeUid = 'guest';
+      try {
+        activeUid = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || '{}')?.uid || 'guest';
+      } catch (_) {}
       let storedNotes = getScopedStorageItem(STORAGE_KEYS.NOTES, activeUid);
       let storedReminders = getScopedStorageItem(STORAGE_KEYS.REMINDERS, activeUid);
 
@@ -71,7 +72,7 @@ export default function useInitialDataLoad({
         const sanitizedBlocks = blocks.map(b => {
           if (b && (b.type === 'image' || b.type === 'file' || b.type === 'audio')) {
             if (b.url && (b.localUrl || '').startsWith('blob:')) {
-              const { localUrl, ...rest } = b;
+              const { localUrl: _l, ...rest } = b;
               return rest;
             }
           }
@@ -79,16 +80,18 @@ export default function useInitialDataLoad({
         });
 
         const { content: _c, debts: _d, hasDebtWidget: _h, ...rest } = note;
-        return { ...rest, blocks: sanitizedBlocks };
+        return {
+          ...rest,
+          encKey: note.encKey || CryptoService.generateMediaKey(),
+          blocks: sanitizedBlocks,
+        };
       };
 
       try {
         const rawNotes = JSON.parse(storedNotes || '[]').map(migrateNote);
         setNotes(rawNotes);
-        localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(rawNotes));
       } catch (e) {
         console.error('Corrupted notes data, resetting:', e);
-        localStorage.removeItem(STORAGE_KEYS.NOTES);
         setNotes([]);
       }
 
@@ -99,7 +102,6 @@ export default function useInitialDataLoad({
           if (syncDismissedAlarms) syncDismissedAlarms(parsed);
         } catch (e) {
           console.error('Corrupted reminders data, resetting:', e);
-          localStorage.removeItem(STORAGE_KEYS.REMINDERS);
           setReminders([]);
         }
       }
@@ -107,17 +109,6 @@ export default function useInitialDataLoad({
 
     loadInitialData();
 
-    createNotificationChannels();
-
-    const foregroundListener = addNotificationListener(
-      'localNotificationReceived',
-      () => { playChime(); triggerHaptic('success'); }
-    );
-
     if (updatePermissionStates) updatePermissionStates();
-
-    return () => {
-      foregroundListener.then(l => l.remove()).catch(() => {});
-    };
   }, []);
 }

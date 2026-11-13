@@ -9,8 +9,6 @@ import { useFriendRealtimeChannel } from '@features/social/hooks/useFriendRealti
 const useFriendManager = ({
   myCode,
   profileName,
-  userPlan,
-  setUserPlan,
   setToast,
 }) => {
   const [partnerCodeInput, setPartnerCodeInput] = useState('HUB-');
@@ -191,7 +189,7 @@ const useFriendManager = ({
       stopPolling();
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [myCode, userPlan, setUserPlan, pollFriendRequests]);
+  }, [myCode, pollFriendRequests]);
 
   // Delegate Supabase Realtime WebSocket subscription to single-responsibility hook
   useFriendRealtimeChannel({ myCode, pollFriendRequests });
@@ -490,7 +488,7 @@ const useFriendManager = ({
     pollFriendRequests();
   };
 
-  const handleSendNudge = (note, customMessage = '') => {
+  const handleSendNudge = async (note, customMessage = '') => {
     if (!note) return false;
     
     // Check 10-minute cooldown per note
@@ -512,13 +510,11 @@ const useFriendManager = ({
       return false;
     }
 
-    const recipients = new Set();
-    if (note.sharedWith && Array.isArray(note.sharedWith)) {
-      note.sharedWith.forEach(code => recipients.add(code));
-    }
-    if (note.sharedFrom) {
-      recipients.add(note.sharedFrom);
-    }
+    // Build recipient list
+    const recipients = new Set([
+      ...(Array.isArray(note.sharedWith) ? note.sharedWith : []),
+      ...(note.sharedFrom ? [note.sharedFrom] : []),
+    ]);
     
     if (recipients.size === 0) {
       if (triggerHaptic) triggerHaptic('warning');
@@ -529,18 +525,29 @@ const useFriendManager = ({
       return false;
     }
 
-    recipients.forEach(friendCode => {
-      const nudgePayload = {
-        from: myCode,
-        fromName: profileName || ('Arkadaş (' + myCode.substring(9) + ')'),
-        to: friendCode,
-        noteId: note.id,
-        noteTitle: note.title || 'Başlıksız Not',
-        customMessage: (customMessage || '').trim(),
-        timestamp: Date.now()
-      };
-      localStorage.setItem(`s23_nudge_${friendCode}`, JSON.stringify(nudgePayload));
-    });
+    // Send via Supabase Realtime broadcast to each recipient
+    for (const friendCode of recipients) {
+      const channelName = `nudge_inbox_${String(friendCode).trim().toUpperCase()}`;
+      try {
+        const ch = supabase.channel(channelName);
+        await ch.subscribe();
+        await ch.send({
+          type: 'broadcast',
+          event: 'nudge',
+          payload: {
+            from: myCode,
+            fromName: profileName || ('Arkadaş (' + myCode.substring(9) + ')'),
+            noteId: note.id,
+            noteTitle: note.title || 'Başlıksız Not',
+            customMessage: (customMessage || '').trim(),
+            timestamp: Date.now()
+          }
+        });
+        supabase.removeChannel(ch);
+      } catch (err) {
+        console.warn('Nudge broadcast error:', err);
+      }
+    }
 
     localStorage.setItem(`s23_nudge_cooldown_${note.id}`, Date.now().toString());
 

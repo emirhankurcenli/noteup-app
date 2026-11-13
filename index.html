@@ -10,7 +10,7 @@
     <script>
       (function() {
         try {
-          var t = localStorage.getItem('app_theme') || localStorage.getItem('s23_theme') || 'light';
+          var t = localStorage.getItem('noteup_theme') || localStorage.getItem('app_theme') || localStorage.getItem('s23_theme') || 'light';
           document.documentElement.setAttribute('data-theme', t);
         } catch(e) {}
       })();

@@ -11,8 +11,6 @@ export default function useSharing({
   user,
   myCode,
   profileName,
-  userPlan,
-  setUserPlan,
   notes,
   saveNotes,
   setToast,
@@ -23,8 +21,6 @@ export default function useSharing({
   const friendMgr = useFriendManager({
     myCode,
     profileName,
-    userPlan,
-    setUserPlan,
     setToast,
   });
 
@@ -40,7 +36,7 @@ export default function useSharing({
 
   // --- ACTIONS ---
 
-  const handleSendShareInvitation = (activeShareNoteId, customSelectedCodes) => {
+  const handleSendShareInvitation = async (activeShareNoteId, customSelectedCodes, permissions = {}) => {
     if (!activeShareNoteId) return;
     const noteToShare = notes.find(n => n.id === activeShareNoteId);
     if (!noteToShare) return;
@@ -91,6 +87,7 @@ export default function useSharing({
             sharedWith: activeSharedWith,
             pendingShares: activePendingShares,
             hasPendingShare: hasPendingShare,
+            sharePermissions: { ...(n.sharePermissions || {}), ...Object.fromEntries(selectedCodes.map(c => [String(c).trim().toUpperCase(), (permissions || {})[String(c).trim().toUpperCase()] || 'edit'])) },
             updatedAt: Date.now()
           } 
         : n
@@ -98,8 +95,9 @@ export default function useSharing({
     saveNotes(updatedNotes);
 
     // 1. Mark share as revoked first so Supabase Realtime broadcasts full removal payload to collaborator, then delete
-    removedCodes.forEach(async (code) => {
+    for (const code of removedCodes) {
       try {
+        // First update to 'revoked' so Realtime notifies recipient instantly
         await supabase
           .from('note_shares')
           .update({ status: 'revoked', updated_at: new Date().toISOString() })
@@ -107,25 +105,23 @@ export default function useSharing({
           .eq('note_id', noteToShare.id)
           .eq('to_code', code);
 
-        // Delete from database after a short delay so Realtime event finishes dispatching
-        setTimeout(async () => {
-          try {
-            await supabase.from('note_shares').delete()
-              .eq('from_code', myCode)
-              .eq('note_id', noteToShare.id)
-              .eq('to_code', code);
-          } catch (_) {}
-        }, 3000);
+        // Then immediately delete (no setTimeout — synchronous cleanup)
+        await supabase.from('note_shares').delete()
+          .eq('from_code', myCode)
+          .eq('note_id', noteToShare.id)
+          .eq('to_code', code);
       } catch (err) {
         console.warn("Supabase note share revoke error:", err);
       }
-    });
+    }
 
     // 2. Send invitations to newly checked friends via Supabase
     const codesToInvite = selectedCodes.filter(code => !activeSharedWith.includes(code));
-    codesToInvite.forEach(async (code) => {
+    for (const code of codesToInvite) {
       const normalizedToCode = String(code).trim().toUpperCase();
       const normalizedFromCode = String(myCode).trim().toUpperCase();
+      const permKey = normalizedToCode;
+      const permission = (permissions || {})[permKey] || 'edit';
       try {
         // Delete any existing row first to guarantee a clean state and trigger Realtime INSERT
         await supabase
@@ -142,12 +138,13 @@ export default function useSharing({
           note_id: noteToShare.id,
           note_title: noteToShare.title || 'Paylaşılan Not',
           note_blocks: noteToShare.blocks || [],
-          status: 'pending'
+          status: 'pending',
+          permission: permission
         }]);
       } catch (err) {
         console.warn("Supabase note share insert error:", err);
       }
-    });
+    }
 
     friendMgr.setSelectedFriendCodes([]);
     setToast({
@@ -190,6 +187,7 @@ export default function useSharing({
       sharedWith: [req.fromCode],
       sharedFrom: req.fromCode,
       sharedFromName: req.fromName || 'Arkadaş',
+      permission: req.permission || 'edit',
       createdAt: req.timestamp || Date.now(),
       updatedAt: Date.now()
     };

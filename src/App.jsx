@@ -34,7 +34,7 @@ function AppInner({ optionsRef }) {
   const { lang, setLang, t, formatReminderDate, getRemainingTimeText } = useLanguageCtx();
   const {
     user, isLoggingIn, myCode, setMyCode, profileName, setProfileName,
-    showAvatarPicker, setShowAvatarPicker, userPlan, toast, setToast,
+    showAvatarPicker, setShowAvatarPicker, toast, setToast,
     getUserScopedKey, getScopedStorageItem,
     handleLogin, handleLogout, handleSelectAvatar, handleUpdateProfileName,
     syncDataFromSupabase, syncDeltaSharedNotes,
@@ -87,6 +87,7 @@ function AppInner({ optionsRef }) {
     checkAndRequestNotificationPermission,
     handleRequestMicPermission, handleRequestStoragePermission,
     handleRequestAudioPermission, handleRequestLocationPermission,
+    handleRequestCameraPermission,
     checkAndRequestPermission, showPermissionDialog, openSystemSettings
   } = useAppPermissions({ setToast, lang, setConfirmDialog: (d) => optionsRef?.current?.setConfirmDialog?.(d) });
 
@@ -261,7 +262,7 @@ function AppInner({ optionsRef }) {
     handleSetReminder, handleCreateQuickReminder,
     updateBlockForm,
   } = useAppEditorHandlers({
-    editingNote, setEditingNote, focusedBlockRef, user, userPlan, lang,
+    editingNote, setEditingNote, focusedBlockRef, user, lang,
     getStorageUsageBytes, handleUpdateNote, checkAndRequestPermission,
     setToast, setConfirmDialog, setLightboxUrl, setPreviewFileModal,
     notes, setNotes, persistNotes, deleteFromR2Ref, blockFormStates, setBlockFormStates,
@@ -326,7 +327,6 @@ function AppInner({ optionsRef }) {
         setQuickReminderTime={setQuickReminderTime}
         setPendingWidgetAlarmCtx={setPendingWidgetAlarmCtx}
         setShowShareModal={setShowShareModal}
-        userPlan={userPlan}
         notes={notes}
         triggerHaptic={triggerHaptic}
         checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
@@ -388,6 +388,7 @@ function AppInner({ optionsRef }) {
         handleRequestStoragePermission={handleRequestStoragePermission}
         handleRequestAudioPermission={handleRequestAudioPermission}
         handleRequestLocationPermission={handleRequestLocationPermission}
+        handleRequestCameraPermission={handleRequestCameraPermission}
         handleCancelReminder={handleCancelReminder}
         handleBulkRestoreNotes={handleBulkRestoreNotes}
         handleBulkPermanentDelete={handleBulkPermanentDelete}
@@ -438,6 +439,9 @@ function AppInner({ optionsRef }) {
         checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
         theme={theme}
         triggerHaptic={triggerHaptic}
+        nudgeTargetNote={nudgeTargetNote}
+        setNudgeTargetNote={setNudgeTargetNote}
+        handleSendNudge={handleSendNudge}
       />
 
     </div>

@@ -1,6 +1,9 @@
 name: Build and Upload iOS App to App Store Connect / TestFlight
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -23,8 +26,6 @@ jobs:
       - name: Create .env file for build
         run: |
           cat << 'EOF' > .env
-          VITE_REVENUECAT_KEY=goog_klpvzugPjsJwnTuzpqHEafDShcM
-          VITE_REVENUECAT_IOS_KEY=appl_yufUAZavCzJzYAxDYOivipQgpMR
           VITE_SUPABASE_URL=https://qgrzvhejdwsmuzuwmpyj.supabase.co
           VITE_SUPABASE_ANON_KEY=sb_publishable_AJEZjo6jPlfypapcBOTDSw_5RvzTL2u
           EOF
@@ -67,7 +68,7 @@ jobs:
         run: |
           cd ios/App
           # Otomatik artan Build Numarası (Apple duplicate version hatasını engeller)
-          BUILD_NUM=$((25 + ${{ github.run_number }}))
+          BUILD_NUM=$((40 + ${{ github.run_number }}))
           echo "Building iOS App with Build Number: $BUILD_NUM"
           
           xcodebuild archive \

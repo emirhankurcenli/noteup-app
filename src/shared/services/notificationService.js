@@ -80,7 +80,7 @@ export const scheduleLocalNotification = async ({ id, title, body, at, channelId
         schedule: { at },
         channelId, // 'alarm_channel' or 'system_default_channel_v4'
         extra,     // { noteId }
-        smallIcon: 'ic_stat_name',
+        smallIcon: 'ic_stat_icon',
         iconColor: '#8B5CF6'
       }]
     });

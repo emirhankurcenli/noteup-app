@@ -24,9 +24,9 @@ function getSearchableStrings(note) {
       const clean = htmlToPlainText(block.content);
       if (clean) strings.push({ text: clean, type: 'text' });
     }
-    if (block.type === 'audio' && block.name) strings.push({ text: block.name, type: 'audio' });
-    if (block.type === 'file' && block.name) strings.push({ text: block.name, type: 'file' });
-    if (block.type === 'image' && block.name) strings.push({ text: block.name, type: 'image' });
+    if (block.type === 'audio' && (block.fileName || block.name)) strings.push({ text: block.fileName || block.name, type: 'audio' });
+    if (block.type === 'file' && (block.fileName || block.name)) strings.push({ text: block.fileName || block.name, type: 'file' });
+    if (block.type === 'image' && (block.fileName || block.name)) strings.push({ text: block.fileName || block.name, type: 'image' });
 
     // Todo widget
     if (block.type === 'todo') {
@@ -39,19 +39,24 @@ function getSearchableStrings(note) {
     }
     // Bill widget
     if (block.type === 'bill') {
+      if (block.name) strings.push({ text: htmlToPlainText(block.name), type: 'bill' });
+      if (block.subscriberNo) strings.push({ text: htmlToPlainText(block.subscriberNo), type: 'bill' });
       if (block.amount) strings.push({ text: String(block.amount), type: 'bill' });
       if (block.category) strings.push({ text: htmlToPlainText(block.category), type: 'bill' });
     }
     // Password widget
     if (block.type === 'password') {
+      if (block.title) strings.push({ text: htmlToPlainText(block.title), type: 'password' });
       if (block.username) strings.push({ text: htmlToPlainText(block.username), type: 'password' });
       if (block.platform) strings.push({ text: htmlToPlainText(block.platform), type: 'password' });
     }
     // Debt widget
     if (block.type === 'debt') {
+      if (block.label) strings.push({ text: htmlToPlainText(block.label), type: 'debt' });
       if (block.personName) strings.push({ text: htmlToPlainText(block.personName), type: 'debt' });
       (block.items || []).forEach(item => {
         if (item.description) strings.push({ text: htmlToPlainText(item.description), type: 'debt' });
+        if (item.amount) strings.push({ text: String(item.amount), type: 'debt' });
       });
     }
     // Split widget
@@ -61,6 +66,7 @@ function getSearchableStrings(note) {
       });
       (block.expenses || []).forEach(e => {
         if (e.description) strings.push({ text: htmlToPlainText(e.description), type: 'split' });
+        if (e.title) strings.push({ text: htmlToPlainText(e.title), type: 'split' });
       });
     }
     // Parking widget
@@ -69,6 +75,7 @@ function getSearchableStrings(note) {
     }
     // Exam widget
     if (block.type === 'exam') {
+      if (block.course) strings.push({ text: htmlToPlainText(block.course), type: 'exam' });
       if (block.courseName) strings.push({ text: htmlToPlainText(block.courseName), type: 'exam' });
       if (block.subject) strings.push({ text: htmlToPlainText(block.subject), type: 'exam' });
     }
@@ -101,12 +108,14 @@ const SearchTab = ({
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setDebouncedQuery(val);
-    }, 150);
+    }, 180);
   }, [setSearchQuery]);
 
-  // Sync debounced value when searchQuery changes externally
+  // If searchQuery was cleared externally (e.g. empty string), reset debouncedQuery immediately
   React.useEffect(() => {
-    setDebouncedQuery(searchQuery);
+    if (!searchQuery) {
+      setDebouncedQuery('');
+    }
   }, [searchQuery]);
 
   const clearSearch = () => {

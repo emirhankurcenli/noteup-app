@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect } from 'react';
 import { formatBytes } from '@shared/utils/mediaUtils';
 import { MAX_STORAGE_BYTES } from '@features/notes/hooks/useAppLocalState';
+import audioPlayerService from '@shared/services/audioPlayerService';
+import { CryptoService } from '@shared/services/cryptoService';
 
 const useAudioRecorderHandler = ({
   editingNote,
@@ -113,6 +115,7 @@ const useAudioRecorderHandler = ({
     const micGranted = await checkAndRequestPermission('microphone');
     if (!micGranted) return;
 
+    audioPlayerService.stopCurrent();
     cleanupRecordingTimer();
     preSplitForRecording();
 
@@ -121,12 +124,16 @@ const useAudioRecorderHandler = ({
       audioChunksRef.current = [];
 
       let options = { audioBitsPerSecond: 64000 };
-      if (MediaRecorder.isTypeSupported('audio/webm')) {
-        options.mimeType = 'audio/webm';
-      } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
-        options.mimeType = 'audio/ogg';
-      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-        options.mimeType = 'audio/mp4';
+      if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+        if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          options.mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          options.mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          options.mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+          options.mimeType = 'audio/ogg';
+        }
       }
 
       const recorder = new MediaRecorder(stream, options);
@@ -142,9 +149,16 @@ const useAudioRecorderHandler = ({
         cleanupRecordingTimer();
         setIsRecording(false);
 
-        const mimeType = options.mimeType || 'audio/webm';
-        const extension = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
-        const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        const rawMime = recorder.mimeType || options.mimeType || 'audio/mp4';
+        const cleanMime = rawMime.split(';')[0].trim();
+        const extension = cleanMime.includes('mp4') || cleanMime.includes('m4a')
+          ? 'm4a'
+          : cleanMime.includes('aac')
+            ? 'aac'
+            : cleanMime.includes('ogg')
+              ? 'ogg'
+              : 'webm';
+        const blob = new Blob(audioChunksRef.current, { type: cleanMime });
 
         if (blob.size === 0) {
           stream.getTracks().forEach(track => track.stop());
@@ -157,27 +171,52 @@ const useAudioRecorderHandler = ({
 
         const doAudioUpload = async () => {
           setToast({
-            title: "🔄 Ses Kaydı Yükleniyor...",
-            msg: "Ses kaydı buluta yükleniyor, lütfen bekleyin."
+            id: 'media-upload',
+            status: 'loading',
+            title: "Ses Kaydı Yükleniyor...",
+            msg: "Ses kaydı güvenle şifreleniyor ve yükleniyor..."
           });
 
           try {
-            const publicUrl = await uploadToR2(blob, fileName);
+            // E2EE: Şifreleme anahtarını üret ve ses dosyasını AES-256-GCM ile şifrele
+            const encKey = CryptoService.generateMediaKey();
+            const encryptedBlob = await CryptoService.encryptMediaBlob(blob, encKey);
+            const encFileName = `${fileName}.enc`;
+
+            const publicUrl = await uploadToR2(encryptedBlob, encFileName);
+
+            // Yerel blob URL'sini önbelleğe al (anında çalınabilmesi için)
+            try {
+              const localAudioUrl = URL.createObjectURL(blob);
+              CryptoService.cacheDecryptedMedia(publicUrl, localAudioUrl);
+            } catch (_) {}
 
             handleInsertWidget('audio', {
               url: publicUrl,
               name: `Ses Kaydı (${new Date().toLocaleDateString()}).${extension}`,
               size: readableSize,
+              mimeType: cleanMime,
+              isEncrypted: true,
+              encKey: encKey,
               transcription: null
             }, []);
 
             setToast({
-              title: "🎙️ Ses Kaydı Eklendi",
-              msg: "Ses kaydı buluta yüklendi."
+              id: 'media-upload',
+              status: 'success',
+              title: "Ses Kaydı Eklendi!",
+              msg: "Ses kaydı şifrelenerek buluta yüklendi.",
+              duration: 2500
             });
           } catch (uploadErr) {
             console.error("Audio upload to R2 failed:", uploadErr);
-            setToast({ title: "❌ Hata", msg: "Ses kaydı buluta yüklenirken hata oluştu." });
+            setToast({
+              id: 'media-upload',
+              status: 'error',
+              title: "❌ Hata",
+              msg: "Ses kaydı buluta yüklenirken hata oluştu.",
+              duration: 4000
+            });
           } finally {
             stream.getTracks().forEach(track => track.stop());
           }
@@ -288,42 +327,14 @@ const useAudioRecorderHandler = ({
     setToast({ title: "🗑️ İptal Edildi", msg: "Ses kaydı iptal edildi." });
   };
 
+  useEffect(() => {
+    return () => {
+      audioPlayerService.stopCurrent();
+    };
+  }, []);
+
   const handlePlayPauseAudio = (block) => {
-    if (activeAudioPlayingId === block.id) {
-      if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
-      }
-      setActiveAudioPlayingId(null);
-    } else {
-      if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
-        currentAudioRef.current.src = '';
-        currentAudioRef.current.load();
-        currentAudioRef.current = null;
-      }
-      const audioUrl = block.url || block.localUrl;
-      const audio = new Audio(audioUrl);
-      currentAudioRef.current = audio;
-      setActiveAudioPlayingId(block.id);
-
-      audio.ontimeupdate = () => {
-        const pct = (audio.currentTime / audio.duration) * 100 || 0;
-        setActiveAudioProgress(prev => ({ ...prev, [block.id]: pct }));
-      };
-
-      audio.onended = () => {
-        setActiveAudioPlayingId(null);
-        setActiveAudioProgress(prev => ({ ...prev, [block.id]: 0 }));
-        audio.src = '';
-        audio.load();
-        currentAudioRef.current = null;
-      };
-
-      audio.play().catch(err => {
-        console.error("Audio playback failed:", err);
-        setActiveAudioPlayingId(null);
-      });
-    }
+    audioPlayerService.toggle(block);
   };
 
   return {

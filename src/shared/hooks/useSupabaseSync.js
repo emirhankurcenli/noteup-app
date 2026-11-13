@@ -1,4 +1,4 @@
-﻿import { supabase } from '@src/supabaseClient';
+import { supabase } from '@src/supabaseClient';
 import { STORAGE_KEYS } from '@shared/utils/storageKeys';
 import { getUserScopedKey as coreGetUserScopedKey, getScopedStorageItem as coreGetScopedStorageItem } from '@shared/utils/scopedStorage';
 
@@ -75,6 +75,7 @@ const useSupabaseSync = ({
                 id: share.note_id,
                 title: originNote?.title ?? share.note_title ?? '',
                 blocks: parsedBlocks,
+                encKey: parsedBlocks.find(b => b?.encKey)?.encKey || null,
                 isShared: true,
                 sharedFrom: share.from_code,
                 sharedFromName: share.from_name || 'Arkadaş',
@@ -122,6 +123,10 @@ const useSupabaseSync = ({
             return b;
           });
           const localN = localMap.get(n.id);
+          const localTime = localN?.updatedAt ? Number(localN.updatedAt) : 0;
+          const remoteTime = n.updated_at ? new Date(n.updated_at).getTime() : 0;
+          const useLocalData = localN && localTime > remoteTime;
+
           const noteOutgoingShares = (outgoingShares || []).filter(s => s.note_id === n.id);
           const acceptedOutgoingCodes = noteOutgoingShares.filter(s => s.status === 'accepted').map(s => s.to_code);
           const pendingOutgoingCodes = noteOutgoingShares.filter(s => s.status === 'pending').map(s => s.to_code);
@@ -133,16 +138,17 @@ const useSupabaseSync = ({
 
           return {
             id: n.id,
-            title: n.title || '',
-            blocks: parsedBlocks,
+            title: useLocalData ? (localN.title || '') : (n.title || ''),
+            blocks: useLocalData ? (localN.blocks || []) : parsedBlocks,
+            encKey: localN?.encKey || (useLocalData ? localN?.blocks : parsedBlocks)?.find(b => b?.encKey)?.encKey || null,
             isShared,
             sharedWith,
             pendingShares,
             hasPendingShare,
             isLocked: n.is_locked || false,
             isPinned: n.is_pinned !== undefined && n.is_pinned !== null ? Boolean(n.is_pinned) : Boolean(localN?.isPinned),
-            deletedAt: n.deleted_at ? Number(n.deleted_at) : null,
-            updatedAt: n.updated_at ? new Date(n.updated_at).getTime() : Date.now()
+            deletedAt: n.deleted_at ? Number(n.deleted_at) : (localN?.deletedAt || null),
+            updatedAt: useLocalData ? localTime : (remoteTime || Date.now())
           };
         });
 
@@ -152,6 +158,12 @@ const useSupabaseSync = ({
         acceptedSharedNotes.forEach(n => {
           if (!combinedNotesMap.has(n.id)) {
             combinedNotesMap.set(n.id, n);
+          }
+        });
+        // Preserve offline locally-created notes not yet in dbNotes
+        localNotes.forEach(ln => {
+          if (ln && ln.id && !ln.sharedFrom && !combinedNotesMap.has(ln.id)) {
+            combinedNotesMap.set(ln.id, ln);
           }
         });
 

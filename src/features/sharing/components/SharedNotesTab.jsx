@@ -30,6 +30,7 @@ const SharedNotesTab = ({
   handleRejectShare,
 }) => {
   const isLight = theme === 'light';
+  const [filter, setFilter] = React.useState('all'); // 'all' | 'mine' | 'received'
 
   // Immediately refresh incoming pending shares and accepted shares when user views this tab
   useEffect(() => {
@@ -45,6 +46,12 @@ const SharedNotesTab = ({
       (Array.isArray(n.pendingShares) && n.pendingShares.length > 0)
     ));
   }, [notes]);
+
+  const filteredNotes = useMemo(() => {
+    if (filter === 'mine') return allSharedNotes.filter(n => !n.sharedFrom);
+    if (filter === 'received') return allSharedNotes.filter(n => !!n.sharedFrom);
+    return allSharedNotes;
+  }, [allSharedNotes, filter]);
 
   const getFirstLinePreview = (req) => {
     if (!req) return '';
@@ -97,6 +104,51 @@ const SharedNotesTab = ({
         <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
           {t('sharedNotesTab') || 'Paylaşılan Notlar'}
         </h2>
+      </div>
+
+      {/* Filter tabs */}
+      <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
+        {[
+          { key: 'all', label: lang === 'tr' ? 'Tümü' : 'All' },
+          { key: 'mine', label: lang === 'tr' ? 'Paylaştıklarım' : 'Shared by Me' },
+          { key: 'received', label: lang === 'tr' ? 'Benimle Paylaşılanlar' : 'Shared with Me' },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setFilter(tab.key)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: filter === tab.key
+                ? 'none'
+                : isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,0.1)',
+              background: filter === tab.key
+                ? 'linear-gradient(135deg, #3B82F6, #2563EB)'
+                : isLight ? '#F1F5F9' : 'rgba(255,255,255,0.05)',
+              color: filter === tab.key ? '#FFFFFF' : isLight ? '#475569' : '#94A3B8',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              boxShadow: filter === tab.key ? '0 2px 8px rgba(59,130,246,0.3)' : 'none',
+              transition: 'all 0.2s ease',
+              flexShrink: 0,
+            }}
+          >
+            {tab.label}
+            {tab.key !== 'all' && (
+              <span style={{
+                marginLeft: '5px',
+                background: filter === tab.key ? 'rgba(255,255,255,0.2)' : isLight ? '#E2E8F0' : 'rgba(255,255,255,0.1)',
+                borderRadius: '10px',
+                padding: '0 5px',
+                fontSize: '0.68rem',
+              }}>
+                {tab.key === 'mine' ? allSharedNotes.filter(n => !n.sharedFrom).length : allSharedNotes.filter(n => !!n.sharedFrom).length}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* ── Pending Share Invitations Section ─────────────────────────────────── */}
@@ -264,12 +316,33 @@ const SharedNotesTab = ({
             </svg>
           </div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-            {t('noSharedNotesTitle') || 'Paylaşılan not bulunamadı'}
+            {lang === 'tr' ? 'Henüz Paylaşım Yok' : 'No Shared Notes Yet'}
           </h3>
+          <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+            {lang === 'tr' ? 'Arkadaşlarınızla not paylaşabilmek için önce arkadaş ekleyin.' : 'Add friends first, then share notes with them.'}
+          </p>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('noteup_open_tab', { detail: { tab: 'profile' } }))}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '12px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #10B981, #059669)',
+                color: '#FFF',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+              }}
+            >
+              👥 {lang === 'tr' ? 'Arkadaş Ekle' : 'Add Friend'}
+            </button>
+          </div>
         </div>
       ) : (
         <NotesGrid
-          visibleNotes={allSharedNotes}
+          visibleNotes={filteredNotes}
           reminders={reminders}
           activeMenuNoteId={activeMenuNoteId}
           setActiveMenuNoteId={setActiveMenuNoteId}

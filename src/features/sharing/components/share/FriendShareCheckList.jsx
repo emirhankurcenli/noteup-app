@@ -32,6 +32,8 @@ export const FriendShareCheckList = ({
   lang,
   t,
   targetNote,
+  permissions,
+  handlePermissionToggle,
 }) => {
   if (!friends || friends.length === 0) {
     return (
@@ -73,8 +75,8 @@ export const FriendShareCheckList = ({
         const isPendingCollab = (targetNote?.pendingShares || []).some(c => isCodeEqual(c, friendCode));
 
         return (
+          <React.Fragment key={friendCode || f.name}>
           <div
-            key={friendCode || f.name}
             onClick={() => handleFriendToggle(friendCode)}
             style={{
               cursor: 'pointer',
@@ -213,6 +215,43 @@ export const FriendShareCheckList = ({
                 : (t ? cleanText(t('addShareBtn')) : (lang === 'tr' ? 'Ekle' : 'Add'))}
             </button>
           </div>
+          {isSelected && (
+            <div style={{ display: 'flex', gap: '6px', paddingLeft: '48px', marginTop: '-6px', marginBottom: '4px' }}>
+              {[
+                { value: 'edit', label: lang === 'tr' ? '✏️ Düzenleyebilir' : '✏️ Can Edit' },
+                { value: 'view', label: lang === 'tr' ? '👁️ Sadece Görüntüle' : '👁️ View Only' },
+              ].map(opt => {
+                const currentPerm = (permissions || {})[String(friendCode).trim().toUpperCase()] || 'edit';
+                const isActive = currentPerm === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePermissionToggle?.(friendCode, opt.value);
+                    }}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '20px',
+                      border: isActive ? 'none' : isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,0.12)',
+                      background: isActive
+                        ? (opt.value === 'edit' ? 'linear-gradient(135deg, #3B82F6, #2563EB)' : 'linear-gradient(135deg, #8B5CF6, #7C3AED)')
+                        : isLight ? '#F1F5F9' : 'rgba(255,255,255,0.05)',
+                      color: isActive ? '#FFF' : isLight ? '#64748B' : '#94A3B8',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          </React.Fragment>
         );
       })}
     </div>

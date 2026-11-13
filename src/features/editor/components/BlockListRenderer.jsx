@@ -1,28 +1,10 @@
-﻿import React from 'react';
+import React from 'react';
 import { ensureElementVisible as ensureElementVisibleUtil } from '@shared/utils/editorKeyboardUtils';
 import { TextBlock } from '@features/editor/components/blocks/TextBlock';
 import { AudioBlock } from '@features/editor/components/blocks/AudioBlock';
 import { ImageBlock } from '@features/editor/components/blocks/ImageBlock';
 import { FileBlock } from '@features/editor/components/blocks/FileBlock';
 import { WidgetBlock } from '@features/editor/components/blocks/WidgetBlock';
-
-const EncryptedImage = ({ src, alt, className, onClick }) => {
-  const [displaySrc, setDisplaySrc] = React.useState(src);
-
-  React.useEffect(() => {
-    setDisplaySrc(src);
-  }, [src]);
-
-  return (
-    <img 
-      src={displaySrc} 
-      alt={alt} 
-      className={className} 
-      onError={() => console.warn("Image load error:", displaySrc)}
-      onClick={() => onClick && onClick(displaySrc)} 
-    />
-  );
-};
 
 const BlockListRenderer = ({
   editingNote,

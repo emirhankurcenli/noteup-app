@@ -11,6 +11,7 @@ import {
 } from '@shared/utils/mediaUtils';
 import { sanitizeFilename } from '@shared/utils/securityUtils';
 import { MAX_STORAGE_BYTES } from '@features/notes/hooks/useAppLocalState';
+import { CryptoService } from '@shared/services/cryptoService';
 
 const AppSettings = registerPlugin('AppSettings');
 
@@ -20,7 +21,6 @@ const AppSettings = registerPlugin('AppSettings');
 const useR2Storage = ({
   editingNote,
   user,
-  userPlan,
   getStorageUsageBytes,
   handleInsertWidget,
   handleUpdateNote,
@@ -68,9 +68,14 @@ const useR2Storage = ({
     }
 
     const doUploadFiles = async () => {
+      const hasImages = files.some(f => f.type.startsWith('image/'));
       setToast({
-        title: "🔄 Buluta Yükleniyor...",
-        msg: `${files.length} adet dosya bulut sunucusuna yükleniyor, lütfen bekleyin.`
+        id: 'media-upload',
+        status: 'loading',
+        title: hasImages ? "Görsel Yükleniyor..." : "Buluta Yükleniyor...",
+        msg: hasImages
+          ? (files.length === 1 ? "Görsel güvenle yükleniyor..." : `${files.length} adet görsel yükleniyor...`)
+          : (files.length === 1 ? "Dosya güvenle yükleniyor..." : `${files.length} adet dosya yükleniyor...`)
       });
 
       try {
@@ -111,9 +116,26 @@ const useR2Storage = ({
             blockType = 'audio';
           }
 
+          const fileMime = file.type || (blockType === 'image' ? 'image/jpeg' : 'application/octet-stream');
+          const encKey = CryptoService.generateMediaKey();
+          let blobToUpload = finalBlob;
+          let uploadFilename = finalName;
+
+          try {
+            blobToUpload = await CryptoService.encryptMediaBlob(finalBlob, encKey);
+            uploadFilename = `${finalName}.enc`;
+          } catch (encErr) {
+            console.warn("Client-side media encryption fallback:", encErr);
+          }
+
           let publicUrl = '';
           try {
-            publicUrl = await uploadToR2(finalBlob, finalName);
+            publicUrl = await uploadToR2(blobToUpload, uploadFilename);
+            // Cache local unencrypted blob so local device renders instantly with 0ms delay
+            try {
+              const localBlobUrl = URL.createObjectURL(finalBlob);
+              CryptoService.cacheDecryptedMedia(publicUrl, localBlobUrl);
+            } catch (_) {}
           } catch (upErr) {
             console.warn("Cloud upload failed, evaluating fallback:", upErr);
             if (file.type.startsWith('image/')) {
@@ -167,29 +189,33 @@ const useR2Storage = ({
           handleInsertWidget(blockType, {
             url: publicUrl,
             name: finalName,
-            size: readableSize
+            size: readableSize,
+            mimeType: fileMime,
+            isEncrypted: true,
+            encKey: encKey,
           });
           uploadedCount++;
         }
 
         const isImage = files.some(f => f.type.startsWith('image/'));
-        if (isImage && totalOriginal > totalCompressed && lastRatio > 0) {
-          setToast({
-            title: `📸 Görsel %${lastRatio} Sıkıştırıldı!`,
-            msg: `${formatBytes(totalOriginal)} ➔ ${formatBytes(totalCompressed)} (${lastRatio}% depolama tasarrufu sağlandı).`
-          });
-        } else {
-          setToast({
-            title: "✅ Yükleme Başarılı",
-            msg: `${uploadedCount} adet dosya başarıyla eklendi.`
-          });
-        }
+        setToast({
+          id: 'media-upload',
+          status: 'success',
+          title: isImage ? "Görsel Yüklendi!" : "Yükleme Tamamlandı!",
+          msg: isImage
+            ? (uploadedCount === 1 ? "Görsel başarıyla eklendi." : `${uploadedCount} adet görsel başarıyla eklendi.`)
+            : (uploadedCount === 1 ? "Dosya başarıyla eklendi." : `${uploadedCount} adet dosya başarıyla eklendi.`),
+          duration: 2500
+        });
 
       } catch (err) {
         console.error("File upload failed:", err);
         setToast({
+          id: 'media-upload',
+          status: 'error',
           title: "❌ Yükleme Hatası",
-          msg: err?.message || "Dosyalar yüklenirken bir sorun oluştu."
+          msg: err?.message || "Dosyalar yüklenirken bir sorun oluştu.",
+          duration: 4000
         });
       } finally {
         e.target.value = '';
@@ -258,18 +284,32 @@ const useR2Storage = ({
 
       setToast({ title: "🔄 Hazırlanıyor...", msg: "Belge hazırlanıyor..." });
 
+      let resolvedUrl = rawUrl;
+      if (block.encKey || (typeof rawUrl === 'string' && rawUrl.includes('.enc'))) {
+        try {
+          resolvedUrl = await CryptoService.getOrDecryptMedia(rawUrl, block.encKey, mimeType);
+        } catch (decErr) {
+          console.warn("Media decryption in handleOpenFile failed:", decErr);
+        }
+      }
+
       const isImg = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext);
 
-      // Görseller için: doğrudan R2 URL'sini lightbox'a ver (Base64 spike yok)
+      // Görseller için: Lightbox aç
       if (isImg) {
-        setLightboxUrl(rawUrl);
+        setLightboxUrl({
+          url: rawUrl,
+          displaySrc: resolvedUrl,
+          encKey: block.encKey,
+          mimeType: mimeType,
+        });
         return;
       }
 
       // Native Android: AppSettings.openFile zorunlu olarak Base64 istiyor
       if (Capacitor.isNativePlatform()) {
         try {
-          const base64DataUrl = await urlOrBlobToBase64DataUrl(rawUrl, mimeType);
+          const base64DataUrl = await urlOrBlobToBase64DataUrl(resolvedUrl, mimeType);
           await AppSettings.openFile({ base64: base64DataUrl, fileName: filename });
           return;
         } catch (e) {
@@ -278,7 +318,7 @@ const useR2Storage = ({
       }
 
       // Web modal: URL.createObjectURL ile Base64 spike'ı engelle
-      const res = await fetch(rawUrl);
+      const res = await fetch(resolvedUrl);
       const blob = await res.blob();
       objectUrl = URL.createObjectURL(blob);
 

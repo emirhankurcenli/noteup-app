@@ -32,24 +32,24 @@ const SplitWidget = ({
   };
 
   return (
-    <div className="split-widget" style={{ borderRadius: '18px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', padding: '16px' }} onClick={(e) => e.stopPropagation()}>
-      <div className="split-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #F97316, #EA580C)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <div className="split-widget" style={{ borderRadius: '16px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', padding: '16px' }} onClick={(e) => e.stopPropagation()}>
+      <div className="split-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+        <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: 'rgba(249, 115, 22, 0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F97316' }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
             <circle cx="8.5" cy="7" r="4" />
             <polyline points="17 8 20 11 23 8" />
           </svg>
         </div>
-        <span className="split-title" style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{getTr('splitTitle', 'Hesap Bölümü')}</span>
+        <span className="split-title" style={{ fontWeight: 700, fontSize: '0.94rem', color: 'var(--text-primary)' }}>{getTr('splitTitle', 'Hesap Bölümü')}</span>
         <button
-          style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#EF4444', cursor: 'pointer', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginLeft: 'auto' }}
+          style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#EF4444', cursor: 'pointer', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginLeft: 'auto' }}
           onClick={() => {
             if (triggerHaptic) triggerHaptic('medium');
             handleDeleteBlock(block.id);
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -101,7 +101,12 @@ const SplitWidget = ({
                               if (triggerHaptic) triggerHaptic('medium');
                               handleDeleteSplitExpense(block.id, exp.id);
                             }}
-                          >×</button>
+                          >
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -174,7 +179,7 @@ const SplitWidget = ({
                   }}>
                   {getTr('splitCancel', 'İptal')}
                 </button>
-                <button className="btn-primary" style={{ flex: 1, fontSize: '0.82rem', padding: '9px', borderRadius: '10px', background: 'linear-gradient(135deg, #F97316, #EA580C)', border: 'none', color: '#FFF' }}
+                <button className="btn-primary" style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600, padding: '9px', borderRadius: '10px', background: '#F97316', border: 'none', color: '#FFF', boxShadow: 'none' }}
                   onClick={() => {
                     if (triggerHaptic) triggerHaptic('success');
                     handleAddSplitExpense(block.id);
@@ -186,13 +191,17 @@ const SplitWidget = ({
           ) : (
             <button
               className="split-add-expense-btn"
-              style={{ marginTop: '10px', borderRadius: '10px', fontSize: '0.82rem', padding: '10px' }}
+              style={{ marginTop: '10px', borderRadius: '10px', fontSize: '0.82rem', fontWeight: 600, padding: '10px', justifyContent: 'center' }}
               onClick={() => {
                 if (triggerHaptic) triggerHaptic('light');
                 setBlockFormStates(prev => ({ ...prev, [block.id]: { ...prev[block.id], splitShowForm: true, splitAmong: [...participants] } }));
               }}
             >
-              <span className="split-add-icon">＋</span> {getTr('splitAddExpense', 'Harcama Ekle')}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>{getTr('splitAddExpense', 'Harcama Ekle')}</span>
             </button>
           )}
 

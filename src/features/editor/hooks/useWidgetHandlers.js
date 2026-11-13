@@ -83,7 +83,9 @@ const useWidgetHandlers = ({
     if (focusedBlock.type !== 'text') {
       // 2. Odak zaten bir widget üzerindeyse -> O widget'ın altına ekle
       const updated = [...blocks];
-      updated.splice(focusedIdx + 1, 0, ...widgetGroup, newTextAfterBlock);
+      const nextBlock = updated[focusedIdx + 1];
+      const hasEmptyTextNext = nextBlock && nextBlock.type === 'text' && (nextBlock.content || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() === '';
+      updated.splice(focusedIdx + 1, 0, ...widgetGroup, ...(hasEmptyTextNext ? [] : [newTextAfterBlock]));
       handleUpdateNote('blocks', updated, true);
       return newWidget.id;
     }

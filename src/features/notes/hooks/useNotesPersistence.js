@@ -80,6 +80,9 @@ export default function useNotesPersistence({ user, getUserScopedKey, setNotes }
 
         // Received notes: Sadece kullanıcının bu oturumda bizzat değiştirdiği gelen notları gönder
         for (const rn of receivedDirtyNotes) {
+          if (rn.permission === 'view') {
+            continue; // Salt okunur yetkisine sahip kullanıcılar uzaktaki notu değiştiremez
+          }
           try {
             const updateTime = rn.updatedAt ? new Date(rn.updatedAt).toISOString() : new Date().toISOString();
             const { error: updateErr } = await supabase

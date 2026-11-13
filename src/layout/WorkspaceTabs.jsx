@@ -30,6 +30,7 @@ const WorkspaceTabs = ({
   handleRequestStoragePermission,
   handleRequestAudioPermission,
   handleRequestLocationPermission,
+  handleRequestCameraPermission,
   setReminderNoteId,
   setShowReminderModal,
   setActiveShareNoteId,
@@ -40,7 +41,6 @@ const WorkspaceTabs = ({
   handlePermanentDelete,
   handleBulkRestoreNotes,
   handleBulkPermanentDelete,
-  userPlan,
   theme,
   setTheme,
   lang,
@@ -179,7 +179,6 @@ const WorkspaceTabs = ({
       {/* TAB 4: PROFILE & COLLABORATION VIEW */}
       {activeTab === 'profile' && (
         <ProfileTab
-          userPlan={userPlan}
           theme={theme}
           setTheme={setTheme}
           lang={lang}
@@ -211,6 +210,7 @@ const WorkspaceTabs = ({
           handleRequestStoragePermission={handleRequestStoragePermission}
           handleRequestAudioPermission={handleRequestAudioPermission}
           handleRequestLocationPermission={handleRequestLocationPermission}
+          handleRequestCameraPermission={handleRequestCameraPermission}
           checkAndRequestNotificationPermission={checkAndRequestNotificationPermission}
           handleLogout={handleLogout}
           DEFAULT_AVATARS={DEFAULT_AVATARS}

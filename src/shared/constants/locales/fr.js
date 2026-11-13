@@ -256,6 +256,8 @@ const fr = {
   changeLanguage: 'Modifier',
   locationGps: 'Position (GPS)',
   locationGpsSub: 'Pour le widget parking et l\'emplacement du véhicule',
+  camera: 'Appareil photo',
+  cameraSub: 'Pour scanner les codes QR et prendre des photos',
   shareAsImage: 'Partager en tant qu\'image',
   shareAsImageSub: 'Crée une carte image de haute qualité pour la note',
   shareWithFriendSub: 'Envoyer la note directement à votre ami',
@@ -325,6 +327,7 @@ const fr = {
   noSharedWithMeSub: 'Lorsque vos amis partagent des notes avec vous, elles apparaîtront ici.',
   onlyOwnerCanShareNotice: 'Cette note ayant été partagée avec vous, seul le propriétaire peut la partager.',
   ownerBadge: 'Propriétaire',
+  pendingShareRequests: 'Invitations reçues',
   newInvite: 'Nouvelle invitation',
 };
 

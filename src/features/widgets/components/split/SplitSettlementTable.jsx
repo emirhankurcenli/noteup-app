@@ -12,7 +12,7 @@ export const SplitSettlementTable = ({ settlements, getTr }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '10px 0' }}>
-      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-secondary)' }}>
+      <span style={{ fontSize: '0.76rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
         {getTr('splitSettlementTitle', 'Hesaplaşma Özeti')}
       </span>
       {settlements.map((s, idx) => (
@@ -29,9 +29,9 @@ export const SplitSettlementTable = ({ settlements, getTr }) => {
           }}
         >
           <span>
-            <strong style={{ color: '#F97316' }}>{s.from}</strong> → <strong>{s.to}</strong>
+            <strong style={{ color: '#F97316', fontWeight: 600 }}>{s.from}</strong> → <strong style={{ fontWeight: 600 }}>{s.to}</strong>
           </span>
-          <span style={{ fontWeight: 800, color: '#10B981' }}>
+          <span style={{ fontWeight: 600, color: '#10B981' }}>
             {formatTurkishMoneyDisplay(s.amount)} TL
           </span>
         </div>
